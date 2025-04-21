@@ -1,0 +1,303 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../../core/widgets/animated_list_item.dart';
+import '../../../../core/widgets/hover_scale.dart';
+import '../../../../core/animations/app_animations.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../data/models/time_block_model.dart';
+
+class TimeBlockTimeline extends StatefulWidget {
+  final List<TimeBlockModel> timeBlocks;
+  final Function(TimeBlockModel) onTimeBlockTap;
+  final Function(TimeBlockModel) onTimeBlockDelete;
+
+  const TimeBlockTimeline({
+    super.key,
+    required this.timeBlocks,
+    required this.onTimeBlockTap,
+    required this.onTimeBlockDelete,
+  });
+
+  @override
+  State<TimeBlockTimeline> createState() => _TimeBlockTimelineState();
+}
+
+class _TimeBlockTimelineState extends State<TimeBlockTimeline>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _timelineAnimation;
+  final _timeFormat = DateFormat('HH:mm');
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _timelineAnimation = AppAnimations.fadeIn(_controller);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _timelineAnimation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _timelineAnimation.value,
+          child: child,
+        );
+      },
+      child: ListView.builder(
+        controller: _scrollController,
+        itemCount: widget.timeBlocks.length,
+        itemBuilder: (context, index) {
+          final timeBlock = widget.timeBlocks[index];
+          return AnimatedListItem(
+            index: index,
+            child: HoverScale(
+              child: _buildTimeBlockCard(timeBlock),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTimeBlockCard(TimeBlockModel timeBlock) {
+    final now = DateTime.now();
+    final isCurrent =
+        timeBlock.startTime.isBefore(now) && timeBlock.endTime.isAfter(now);
+    final isPast = timeBlock.endTime.isBefore(now);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTimeIndicator(timeBlock, isCurrent, isPast),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildBlockContent(timeBlock, isCurrent, isPast),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeIndicator(
+      TimeBlockModel timeBlock, bool isCurrent, bool isPast) {
+    return Column(
+      children: [
+        Text(
+          _timeFormat.format(timeBlock.startTime),
+          style: TextStyle(
+            color: isCurrent ? AppColors.blue : AppColors.text.withOpacity(0.6),
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          width: 2,
+          height: 40,
+          color: isCurrent
+              ? AppColors.blue
+              : isPast
+                  ? AppColors.text.withOpacity(0.3)
+                  : AppColors.text.withOpacity(0.6),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _timeFormat.format(timeBlock.endTime),
+          style: TextStyle(
+            color: isCurrent ? AppColors.blue : AppColors.text.withOpacity(0.6),
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBlockContent(
+      TimeBlockModel timeBlock, bool isCurrent, bool isPast) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: isCurrent
+            ? _getBlockColor(timeBlock).withOpacity(0.2)
+            : AppColors.surface1,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isCurrent
+              ? _getBlockColor(timeBlock)
+              : _getBlockColor(timeBlock).withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: isCurrent
+            ? [
+                BoxShadow(
+                  color: _getBlockColor(timeBlock).withOpacity(0.3),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
+      ),
+      child: InkWell(
+        onTap: () => widget.onTimeBlockTap(timeBlock),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      timeBlock.title,
+                      style: TextStyle(
+                        color: isCurrent
+                            ? _getBlockColor(timeBlock)
+                            : AppColors.text,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  if (isCurrent)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.blue.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            color: AppColors.blue,
+                            size: 8,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'En curso',
+                            style: TextStyle(
+                              color: AppColors.blue,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              ...[
+                const SizedBox(height: 8),
+                Text(
+                  timeBlock.description,
+                  style: TextStyle(
+                    color: AppColors.text.withOpacity(0.8),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.category,
+                        size: 16,
+                        color: _getBlockColor(timeBlock),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        timeBlock.category,
+                        style: TextStyle(
+                          color: _getBlockColor(timeBlock),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getBlockColor(TimeBlockModel block) {
+    try {
+      if (block.isFocusTime) {
+        return AppColors.mauve;
+      }
+
+      switch (block.category.toLowerCase()) {
+        case 'work':
+          return AppColors.blue;
+        case 'study':
+          return AppColors.green;
+        case 'personal':
+          return AppColors.mauve;
+        case 'lunch':
+        case 'break':
+          return AppColors.peach;
+        case 'meeting':
+          return AppColors.yellow;
+        default:
+          return AppColors.blue;
+      }
+    } catch (e) {
+      return AppColors.surface0;
+    }
+  }
+}
+
+class TimelineLinePainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  TimelineLinePainter({
+    required this.progress,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(0, size.height * progress);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(TimelineLinePainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
+  }
+}
