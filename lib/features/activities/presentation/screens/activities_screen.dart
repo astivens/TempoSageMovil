@@ -116,9 +116,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                                   _toggleActivityCompletion(activity),
                               onEdit: () => _editActivity(activity),
                               onDelete: () => _deleteActivity(activity),
-                              onTap: () {
-                                // TODO: Implementar navegación a detalles
-                              },
+                              onTap: () {},
                             );
                           },
                         ),

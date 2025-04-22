@@ -27,7 +27,8 @@ class AccessibleCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: padding ?? EdgeInsets.all(AccessibilityStyles.spacingMedium),
+          padding: padding ??
+              const EdgeInsets.all(AccessibilityStyles.spacingMedium),
           child: child,
         ),
       ),

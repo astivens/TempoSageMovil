@@ -14,7 +14,7 @@ class SettingsScreen extends StatelessWidget {
       body: Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
           return ListView(
-            padding: EdgeInsets.all(AccessibilityStyles.spacingMedium),
+            padding: const EdgeInsets.all(AccessibilityStyles.spacingMedium),
             children: [
               _buildSection(
                 title: 'Apariencia',
@@ -42,7 +42,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: AccessibilityStyles.spacingLarge),
+              const SizedBox(height: AccessibilityStyles.spacingLarge),
               _buildSection(
                 title: 'Notificaciones',
                 children: [
@@ -60,7 +60,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: AccessibilityStyles.spacingLarge),
+              const SizedBox(height: AccessibilityStyles.spacingLarge),
               _buildSection(
                 title: 'Accesibilidad',
                 children: [
@@ -72,7 +72,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: AccessibilityStyles.spacingLarge),
+              const SizedBox(height: AccessibilityStyles.spacingLarge),
               _buildSection(
                 title: 'Idioma',
                 children: [
@@ -108,7 +108,7 @@ class SettingsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(AccessibilityStyles.spacingMedium),
+            padding: const EdgeInsets.all(AccessibilityStyles.spacingMedium),
             child: Text(
               title,
               style: AccessibilityStyles.accessibleTitleLarge,
@@ -146,7 +146,7 @@ class SettingsScreen extends StatelessWidget {
     required ValueChanged<double> onChanged,
   }) {
     return Padding(
-      padding: EdgeInsets.all(AccessibilityStyles.spacingMedium),
+      padding: const EdgeInsets.all(AccessibilityStyles.spacingMedium),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

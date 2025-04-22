@@ -45,7 +45,6 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      // TODO: Show error message
     }
   }
 
@@ -245,7 +244,32 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline, color: AppColors.overlay0),
-              onPressed: () {},
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Eliminar actividad'),
+                    content: Text(
+                        '¿Estás seguro de que quieres eliminar "${activity.title}"?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancelar'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Eliminar',
+                            style: TextStyle(color: AppColors.red)),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  await _repository.deleteActivity(activity.id);
+                  await _loadActivities();
+                }
+              },
             ),
           ],
         ),

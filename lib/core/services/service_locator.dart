@@ -3,6 +3,7 @@ import 'package:temposage/features/activities/domain/services/activity_to_timebl
 import 'package:temposage/features/timeblocks/data/repositories/time_block_repository.dart';
 import 'package:temposage/features/habits/data/repositories/habit_repository.dart';
 import 'package:temposage/features/habits/data/repositories/habit_repository_impl.dart';
+import 'package:temposage/features/habits/domain/services/habit_to_timeblock_service.dart';
 
 class ServiceLocator {
   static final ServiceLocator instance = ServiceLocator._internal();
@@ -20,6 +21,7 @@ class ServiceLocator {
 
   // Services
   ActivityToTimeBlockService? _activityToTimeBlockService;
+  HabitToTimeBlockService? _habitToTimeBlockService;
 
   ActivityRepository get activityRepository {
     _activityRepository ??= ActivityRepository();
@@ -42,5 +44,13 @@ class ServiceLocator {
       timeBlockRepository: timeBlockRepository,
     );
     return _activityToTimeBlockService!;
+  }
+
+  HabitToTimeBlockService get habitToTimeBlockService {
+    _habitToTimeBlockService ??= HabitToTimeBlockService(
+      habitRepository: habitRepository,
+      timeBlockRepository: timeBlockRepository,
+    );
+    return _habitToTimeBlockService!;
   }
 }

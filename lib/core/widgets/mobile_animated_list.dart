@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_animations.dart';
+import '../constants/app_colors.dart';
 
 class MobileAnimatedList extends StatefulWidget {
   final List<Widget> children;
@@ -102,7 +103,7 @@ class _MobileAnimatedListState extends State<MobileAnimatedList>
                 background: Container(
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 20.0),
-                  color: Colors.red,
+                  color: AppColors.red,
                   child: const Icon(
                     Icons.delete,
                     color: Colors.white,

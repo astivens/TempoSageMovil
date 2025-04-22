@@ -1,6 +1,7 @@
 import '../models/habit_model.dart';
 
 abstract class HabitRepository {
+  Future<void> init();
   Future<List<HabitModel>> getHabits();
   Future<List<HabitModel>> getHabitsForToday();
   Future<HabitModel> getHabitById(String id);

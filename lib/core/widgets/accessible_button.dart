@@ -41,11 +41,11 @@ class AccessibleButton extends StatelessWidget {
           children: [
             if (icon != null) ...[
               Icon(icon),
-              SizedBox(width: AccessibilityStyles.spacingSmall),
+              const SizedBox(width: AccessibilityStyles.spacingSmall),
             ],
             Text(
               text,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),

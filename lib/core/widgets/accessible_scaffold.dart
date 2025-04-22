@@ -39,7 +39,7 @@ class AccessibleScaffold extends StatelessWidget {
           : null,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(AccessibilityStyles.spacingMedium),
+          padding: const EdgeInsets.all(AccessibilityStyles.spacingMedium),
           child: body,
         ),
       ),

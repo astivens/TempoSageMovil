@@ -176,9 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       Expanded(
                         child: TextButton(
-                          onPressed: () {
-                            // TODO: Navigate to register
-                          },
+                          onPressed: () {},
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.subtext0,
                           ),

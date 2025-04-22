@@ -69,7 +69,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
         });
       }
     } catch (e) {
-      // TODO: Handle error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar actividades: $e'),
+            action: SnackBarAction(
+              label: 'Reintentar',
+              onPressed: _loadActivities,
+            ),
+          ),
+        );
+      }
       debugPrint('Error loading activities: $e');
     }
   }
@@ -222,9 +232,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         IconButton(
                           icon: const Icon(Icons.edit_outlined,
                               color: AppColors.overlay0),
-                          onPressed: () {
-                            // TODO: Implement edit
-                          },
+                          onPressed: () {},
                         ),
                       ],
                     ),

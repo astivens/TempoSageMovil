@@ -13,6 +13,7 @@ class ActivityCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final int index;
+  final bool isHabit;
 
   const ActivityCard({
     super.key,
@@ -22,6 +23,7 @@ class ActivityCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     this.index = 0,
+    this.isHabit = false,
   });
 
   @override
@@ -69,14 +71,26 @@ class ActivityCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          activity.title,
-                          style: AppStyles.titleSmall.copyWith(
-                            color: AppColors.text,
-                            decoration: activity.isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                activity.title,
+                                style: AppStyles.titleSmall.copyWith(
+                                  color: AppColors.text,
+                                  decoration: activity.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            if (isHabit)
+                              const Icon(
+                                Icons.repeat,
+                                color: AppColors.mauve,
+                                size: 20,
+                              ),
+                          ],
                         ),
                         if (activity.description.isNotEmpty) ...[
                           const SizedBox(height: 4),

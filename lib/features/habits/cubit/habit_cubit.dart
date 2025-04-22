@@ -22,4 +22,11 @@ class HabitCubit extends Cubit<List<HabitModel>> {
     await _repository.deleteHabit(habit.id);
     await getHabitsForToday();
   }
+
+  Future<void> toggleHabitCompletion(String habitId) async {
+    final habits = state;
+    final habit = habits.firstWhere((h) => h.id == habitId);
+    await _repository.completeHabit(habit);
+    await getHabitsForToday();
+  }
 }

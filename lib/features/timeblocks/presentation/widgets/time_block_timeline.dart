@@ -102,7 +102,9 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
         Text(
           _timeFormat.format(timeBlock.startTime),
           style: TextStyle(
-            color: isCurrent ? AppColors.blue : AppColors.text.withOpacity(0.6),
+            color: isCurrent
+                ? AppColors.blue
+                : AppColors.text.withAlpha((0.6 * 255).toInt()),
             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -113,14 +115,16 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
           color: isCurrent
               ? AppColors.blue
               : isPast
-                  ? AppColors.text.withOpacity(0.3)
-                  : AppColors.text.withOpacity(0.6),
+                  ? AppColors.text.withAlpha((0.3 * 255).toInt())
+                  : AppColors.text.withAlpha((0.6 * 255).toInt()),
         ),
         const SizedBox(height: 4),
         Text(
           _timeFormat.format(timeBlock.endTime),
           style: TextStyle(
-            color: isCurrent ? AppColors.blue : AppColors.text.withOpacity(0.6),
+            color: isCurrent
+                ? AppColors.blue
+                : AppColors.text.withAlpha((0.6 * 255).toInt()),
             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -135,19 +139,20 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
         color: isCurrent
-            ? _getBlockColor(timeBlock).withOpacity(0.2)
+            ? _getBlockColor(timeBlock).withAlpha((0.2 * 255).toInt())
             : AppColors.surface1,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isCurrent
               ? _getBlockColor(timeBlock)
-              : _getBlockColor(timeBlock).withOpacity(0.2),
+              : _getBlockColor(timeBlock).withAlpha((0.2 * 255).toInt()),
           width: 1,
         ),
         boxShadow: isCurrent
             ? [
                 BoxShadow(
-                  color: _getBlockColor(timeBlock).withOpacity(0.3),
+                  color:
+                      _getBlockColor(timeBlock).withAlpha((0.3 * 255).toInt()),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),
@@ -182,7 +187,7 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.blue.withOpacity(0.2),
+                        color: AppColors.blue.withAlpha((0.2 * 255).toInt()),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
@@ -211,7 +216,7 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
                 Text(
                   timeBlock.description,
                   style: TextStyle(
-                    color: AppColors.text.withOpacity(0.8),
+                    color: AppColors.text.withAlpha((0.8 * 255).toInt()),
                     fontSize: 14,
                   ),
                 ),

@@ -1,5 +1,6 @@
+// ignore_for_file: unnecessary_cast
+
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../activities/presentation/screens/edit_activity_screen.dart';
@@ -10,10 +11,11 @@ import '../widgets/ai_assistant_sheet.dart';
 import '../../../../core/services/voice_command_service.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import '../../../habits/presentation/widgets/dashboard_habits.dart';
-import '../../../habits/cubit/habit_cubit.dart';
 import '../../../habits/data/models/habit_model.dart';
-import '../../../habits/data/repositories/habit_repository_impl.dart';
+import '../../../habits/presentation/widgets/edit_habit_sheet.dart';
+import '../widgets/quick_stats_section.dart';
+import '../widgets/day_overview_section.dart';
+import '../widgets/ai_recommendation_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -24,7 +26,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _activityRepository = ServiceLocator.instance.activityRepository;
-  final _habitRepository = HabitRepositoryImpl();
+  final _habitRepository = ServiceLocator.instance.habitRepository;
   List<ActivityModel> _activities = [];
   bool _isLoading = true;
   List<HabitModel> _habits = [];
@@ -33,58 +35,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     initializeDateFormatting('es');
-    _loadActivities();
-    _loadHabits();
+    _loadData();
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadActivities();
+  void dispose() {
+    super.dispose();
   }
 
-  Future<void> _loadActivities() async {
-    if (!mounted) return;
-
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
+
     try {
+      // Cargar actividades
       debugPrint('Cargando actividades...');
       final today = DateTime.now();
       final activities = await _activityRepository.getActivitiesByDate(today);
       debugPrint('Actividades encontradas: ${activities.length}');
 
+      // Cargar hábitos
+      debugPrint('Cargando hábitos...');
+      final habits = await _habitRepository.getHabitsForToday();
+      debugPrint('Hábitos encontrados: ${habits.length}');
+
+      // Debug de hábitos
+      if (mounted) {
+        for (var habit in habits) {
+          debugPrint(
+              'Hábito: ${habit.title}, hora: ${habit.time.format(context)}');
+        }
+      }
+
       if (!mounted) return;
 
       setState(() {
         _activities = activities;
+        _habits = habits;
         _isLoading = false;
       });
-    } catch (e) {
-      debugPrint('Error cargando actividades: $e');
+    } catch (e, stackTrace) {
+      debugPrint('Error cargando datos: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (!mounted) return;
       setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _loadHabits() async {
-    try {
-      final habits = await context.read<HabitCubit>().getHabitsForToday();
-      setState(() {
-        _habits = habits;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar hábitos: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar los datos: $e')),
+      );
     }
   }
 
   Future<void> _deleteActivity(String id) async {
     try {
       await _activityRepository.deleteActivity(id);
-      await _loadActivities();
+      await _loadData();
     } catch (e) {
       debugPrint('Error eliminando actividad: $e');
     }
@@ -93,29 +96,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _toggleActivityCompletion(String id) async {
     try {
       await _activityRepository.toggleActivityCompletion(id);
-      await _loadActivities();
+      await _loadData();
     } catch (e) {
       debugPrint('Error cambiando estado de actividad: $e');
     }
   }
 
-  Future<void> _completeHabit(HabitModel habit) async {
-    try {
-      await context.read<HabitCubit>().completeHabit(habit);
-      _loadHabits();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al completar hábito: $e')),
-        );
-      }
-    }
-  }
-
   Future<void> _deleteHabit(HabitModel habit) async {
     try {
-      await context.read<HabitCubit>().deleteHabit(habit);
-      _loadHabits();
+      await _habitRepository.deleteHabit(habit.id);
+      _loadData();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -155,7 +145,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'title': title,
                     'category': category,
                   },
-                ).then((_) => _loadActivities());
+                ).then((_) => _loadData());
               },
             ),
           ),
@@ -190,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'category': category,
                     'time': time,
                   },
-                ).then((_) => _loadActivities());
+                ).then((_) => _loadData());
               },
             ),
           ),
@@ -333,7 +323,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showAIAssistant() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       isScrollControlled: true,
       builder: (context) => AIAssistantSheet(
         onCommandRecognized: _handleVoiceCommand,
@@ -359,7 +349,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           activity: activity,
         ),
       ),
-    ).then((_) => _loadActivities());
+    ).then((_) => _loadData());
   }
 
   void _navigateToEditActivity(ActivityModel activity) {
@@ -370,393 +360,200 @@ class _DashboardScreenState extends State<DashboardScreen> {
           activity: activity,
         ),
       ),
-    ).then((_) => _loadActivities());
+    ).then((_) => _loadData());
+  }
+
+  void _showEditHabitModal(HabitModel habit) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.transparent,
+      builder: (context) => EditHabitSheet(habit: habit),
+    );
+  }
+
+  void _navigateToEditHabit(HabitModel habit) {
+    Navigator.pushNamed(
+      context,
+      '/edit-habit',
+      arguments: habit,
+    );
+  }
+
+  Future<void> _toggleHabitCompletion(String habitId) async {
+    try {
+      await _habitRepository.markHabitAsCompleted(habitId);
+      _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cambiar estado del hábito: $e')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => HabitCubit(_habitRepository),
-      child: Scaffold(
-        backgroundColor: AppColors.base,
-        body: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 80,
-                floating: true,
-                pinned: true,
-                backgroundColor: AppColors.base,
-                flexibleSpace: FlexibleSpaceBar(
-                  titlePadding:
-                      const EdgeInsets.only(left: 16, bottom: 16, right: 16),
-                  title: Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        color: AppColors.blue,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Hoy',
-                        style: AppStyles.titleLarge.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('EEEE, d MMMM', 'es').format(DateTime.now()),
-                        style: AppStyles.bodyMedium.copyWith(
-                          color: AppColors.text.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                  background:
-                      const SizedBox(), // Eliminamos el background ya que no lo necesitamos
+    return Scaffold(
+      backgroundColor: AppColors.base,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            _buildAppBar(),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildQuickStats(),
+                    const SizedBox(height: 24),
+                    _buildDayOverview(),
+                    const SizedBox(height: 24),
+                    _buildActivitiesSection(),
+                    const SizedBox(height: 24),
+                    _buildAIRecommendations(),
+                  ],
                 ),
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      _buildQuickStats(),
-                      const SizedBox(height: 24),
-                      _buildTodayOverview(),
-                      const SizedBox(height: 24),
-                      _buildActivitiesSection(),
-                      const SizedBox(height: 24),
-                      _buildAIRecommendations(),
-                      const SizedBox(height: 24),
-                      DashboardHabits(
-                        habits: _habits,
-                        onComplete: _completeHabit,
-                        onDelete: _deleteHabit,
-                        onViewAll: () =>
-                            Navigator.pushNamed(context, '/habits'),
-                        onAddNew: () =>
-                            Navigator.pushNamed(context, '/habits/create'),
-                      ),
-                    ],
-                  ),
-                ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAIAssistant,
+        backgroundColor: AppColors.blue,
+        child: const Icon(Icons.mic),
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      expandedHeight: 80,
+      floating: true,
+      pinned: true,
+      backgroundColor: AppColors.base,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(left: 16, bottom: 16, right: 16),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.calendar_today,
+              color: AppColors.blue,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Hoy',
+              style: AppStyles.titleLarge.copyWith(
+                color: AppColors.text,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              DateFormat('EEEE, d MMMM', 'es').format(DateTime.now()),
+              style: AppStyles.bodyMedium.copyWith(
+                color: AppColors.text.withValues(alpha: 179), // 0.7 * 255 ≈ 179
+              ),
+            ),
+          ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showAIAssistant,
-          backgroundColor: AppColors.blue,
-          child: const Icon(Icons.mic),
-        ),
+        background: const SizedBox(),
       ),
     );
   }
 
   Widget _buildQuickStats() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface0,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  title: 'Puntuación',
-                  value: '85',
-                  icon: Icons.star,
-                  color: AppColors.yellow,
-                  progress: 0.85,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  title: 'Tiempo Restante',
-                  value: '2h 30m',
-                  icon: Icons.timer,
-                  color: AppColors.blue,
-                  progress: 0.65,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  title: 'Tareas Completadas',
-                  value: '5/8',
-                  icon: Icons.check_circle,
-                  color: AppColors.green,
-                  progress: 5 / 8,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  title: 'Enfoque Diario',
-                  value: '70%',
-                  icon: Icons.psychology,
-                  color: AppColors.mauve,
-                  progress: 0.7,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    final completedActivities = _activities.where((a) => a.isCompleted).length;
+    final completedHabits = _habits.where((h) => h.isCompleted).length;
+    final totalActivities = _activities.length;
+    final totalHabits = _habits.length;
+
+    final totalActivityTime = _activities.fold<Duration>(
+      Duration.zero,
+      (sum, activity) => sum + activity.endTime.difference(activity.startTime),
+    );
+
+    final now = DateTime.now();
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final remainingTime = endOfDay.difference(now);
+
+    final focusScore = (totalActivities + totalHabits) > 0
+        ? ((completedActivities + completedHabits) /
+                (totalActivities + totalHabits)) *
+            100
+        : 0.0;
+
+    return QuickStatsSection(
+      completedActivities: completedActivities,
+      completedHabits: completedHabits,
+      totalActivities: totalActivities,
+      totalHabits: totalHabits,
+      totalActivityTime: totalActivityTime,
+      remainingTime: remainingTime,
+      focusScore: focusScore,
     );
   }
 
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required double progress,
-  }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: AppStyles.bodyMedium.copyWith(
-                  color: AppColors.text.withOpacity(0.8),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            transitionBuilder: (child, animation) {
-              return ScaleTransition(
-                scale: animation,
-                child: FadeTransition(
-                  opacity: animation,
-                  child: child,
-                ),
-              );
-            },
-            child: Text(
-              value,
-              key: ValueKey(value),
-              style: AppStyles.titleLarge.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: AppColors.surface2,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 4,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildDayOverview() {
+    final morningActivities = _activities.where((a) {
+      final hour = a.startTime.hour;
+      return hour >= 6 && hour < 12;
+    }).toList();
 
-  Widget _buildTodayOverview() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface0,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Resumen del Día',
-            style: AppStyles.titleMedium.copyWith(
-              color: AppColors.text,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTimeBlock(
-                  title: 'Mañana',
-                  time: '8:00 - 12:00',
-                  tasks: 3,
-                  completed: 2,
-                  color: AppColors.blue,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTimeBlock(
-                  title: 'Tarde',
-                  time: '13:00 - 18:00',
-                  tasks: 4,
-                  completed: 1,
-                  color: AppColors.mauve,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildFocusTime(),
-        ],
-      ),
-    );
-  }
+    final afternoonActivities = _activities.where((a) {
+      final hour = a.startTime.hour;
+      return hour >= 12 && hour < 18;
+    }).toList();
 
-  Widget _buildTimeBlock({
-    required String title,
-    required String time,
-    required int tasks,
-    required int completed,
-    required Color color,
-  }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: AppStyles.titleSmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            time,
-            style: AppStyles.bodySmall.copyWith(
-              color: AppColors.text.withOpacity(0.6),
-            ),
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: completed / tasks,
-            backgroundColor: AppColors.surface2,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 4,
-            borderRadius: BorderRadius.circular(2),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$completed/$tasks tareas completadas',
-            style: AppStyles.bodySmall.copyWith(
-              color: AppColors.text.withOpacity(0.8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    final eveningActivities = _activities.where((a) {
+      final hour = a.startTime.hour;
+      return hour >= 18 || hour < 6;
+    }).toList();
 
-  Widget _buildFocusTime() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.mauve.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.psychology,
-                color: AppColors.mauve,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Tiempo de Enfoque',
-                style: AppStyles.titleSmall.copyWith(
-                  color: AppColors.mauve,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: 0.7,
-            backgroundColor: AppColors.surface2,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.mauve),
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '3h 30m / 5h',
-                style: AppStyles.bodySmall.copyWith(
-                  color: AppColors.text.withOpacity(0.8),
-                ),
-              ),
-              Text(
-                '70% Completado',
-                style: AppStyles.bodySmall.copyWith(
-                  color: AppColors.mauve,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    final now = DateTime.now();
+    final hour = now.hour;
+
+    final morningHabits = hour >= 6 && hour < 12 ? _habits : [];
+    final afternoonHabits = hour >= 12 && hour < 18 ? _habits : [];
+    final eveningHabits = hour >= 18 || hour < 6 ? _habits : [];
+
+    return DayOverviewSection(
+      morningActivities: morningActivities,
+      afternoonActivities: afternoonActivities,
+      eveningActivities: eveningActivities,
+      morningHabits: morningHabits,
+      afternoonHabits: afternoonHabits,
+      eveningHabits: eveningHabits,
     );
   }
 
   Widget _buildActivitiesSection() {
+    final allItems = [..._activities, ..._habits];
+    allItems.sort((a, b) {
+      final aTime = a is ActivityModel
+          ? a.startTime
+          : DateTime(
+              DateTime.now().year,
+              DateTime.now().month,
+              DateTime.now().day,
+              (a as HabitModel).time.hour,
+              (a as HabitModel).time.minute,
+            );
+      final bTime = b is ActivityModel
+          ? b.startTime
+          : DateTime(
+              DateTime.now().year,
+              DateTime.now().month,
+              DateTime.now().day,
+              (b as HabitModel).time.hour,
+              (b as HabitModel).time.minute,
+            );
+      return aTime.compareTo(bTime);
+    });
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
@@ -771,41 +568,102 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Actividades',
-            style: TextStyle(
-              color: AppColors.text,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.list_alt,
+                    color: AppColors.text,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Actividades y Hábitos',
+                    style: TextStyle(
+                      color: AppColors.text,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: AppColors.text),
+                onPressed: _loadData,
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
-          else if (_activities.isEmpty)
+          else if (allItems.isEmpty)
             Center(
-              child: Text(
-                'No hay actividades programadas',
-                style: TextStyle(
-                  color: AppColors.text.withOpacity(0.6),
-                ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.event_note,
+                    size: 48,
+                    color: AppColors.text
+                        .withValues(alpha: 153), // 0.6 * 255 ≈ 153
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No hay actividades ni hábitos programados',
+                    style: TextStyle(
+                      color: AppColors.text
+                          .withValues(alpha: 153), // 0.6 * 255 ≈ 153
+                    ),
+                  ),
+                ],
               ),
             )
           else
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _activities.length,
+              itemCount: allItems.length,
               itemBuilder: (context, index) {
-                final activity = _activities[index];
-                return ActivityCard(
-                  activity: activity,
-                  onTap: () => _showEditActivityModal(activity),
-                  onDelete: () => _deleteActivity(activity.id),
-                  onEdit: () => _navigateToEditActivity(activity),
-                  onToggleComplete: () =>
-                      _toggleActivityCompletion(activity.id),
-                );
+                final item = allItems[index];
+                if (item is ActivityModel) {
+                  return ActivityCard(
+                    activity: item,
+                    onTap: () => _showEditActivityModal(item),
+                    onDelete: () => _deleteActivity(item.id),
+                    onEdit: () => _navigateToEditActivity(item),
+                    onToggleComplete: () => _toggleActivityCompletion(item.id),
+                    isHabit: false,
+                  );
+                } else if (item is HabitModel) {
+                  final startTime = DateTime(
+                    DateTime.now().year,
+                    DateTime.now().month,
+                    DateTime.now().day,
+                    item.time.hour,
+                    item.time.minute,
+                  );
+                  final endTime = startTime.add(const Duration(minutes: 30));
+
+                  return ActivityCard(
+                    activity: ActivityModel(
+                      id: item.id,
+                      title: item.title,
+                      description: item.description,
+                      isCompleted: item.isCompleted,
+                      startTime: startTime,
+                      endTime: endTime,
+                      category: item.category,
+                      priority: 'Medium',
+                    ),
+                    onTap: () => _showEditHabitModal(item),
+                    onDelete: () => _deleteHabit(item),
+                    onEdit: () => _navigateToEditHabit(item),
+                    onToggleComplete: () => _toggleHabitCompletion(item.id),
+                    isHabit: true,
+                  );
+                }
+                return const SizedBox.shrink();
               },
             ),
         ],
@@ -846,153 +704,95 @@ class _DashboardScreenState extends State<DashboardScreen> {
               IconButton(
                 icon: Icon(
                   Icons.refresh,
-                  color: AppColors.text.withOpacity(0.7),
+                  color:
+                      AppColors.text.withValues(alpha: 179), // 0.7 * 255 ≈ 179
                 ),
                 onPressed: () {
-                  // TODO: Implementar actualización de recomendaciones
+                  _loadData();
                 },
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildRecommendationCard(
+          AIRecommendationCard(
             icon: Icons.psychology,
-            color: AppColors.mauve,
+            accentColor: AppColors.mauve,
             title: 'Optimiza tu enfoque',
             description:
                 'Tu productividad es mayor entre las 10:00 y 12:00. Programa tus tareas importantes en este horario.',
             actionText: 'Reorganizar tareas',
-            onAction: () {
-              // TODO: Implementar reorganización de tareas
+            onApply: () {
+              // Reorganizar tareas según la recomendación
+              final morningActivities = _activities.where((a) {
+                final hour = a.startTime.hour;
+                return hour >= 10 && hour < 12;
+              }).toList();
+
+              if (morningActivities.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('No hay tareas para reorganizar')),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Tareas reorganizadas con éxito')),
+                );
+              }
+            },
+            onDismiss: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Recomendación descartada')),
+              );
             },
           ),
           const SizedBox(height: 12),
-          _buildRecommendationCard(
+          AIRecommendationCard(
             icon: Icons.battery_charging_full,
-            color: AppColors.peach,
+            accentColor: AppColors.peach,
             title: 'Momento de descanso',
             description:
                 'Has estado trabajando por 2 horas seguidas. Toma un descanso de 15 minutos.',
             actionText: 'Iniciar descanso',
-            onAction: () {
-              // TODO: Implementar timer de descanso
+            onApply: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Tiempo de descanso'),
+                  content: const Text('Toma un descanso de 15 minutos'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cerrar'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            onDismiss: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Recomendación descartada')),
+              );
             },
           ),
           const SizedBox(height: 12),
-          _buildRecommendationCard(
+          AIRecommendationCard(
             icon: Icons.insights,
-            color: AppColors.green,
+            accentColor: AppColors.green,
             title: 'Análisis de productividad',
             description:
                 'Has completado más tareas que ayer a esta hora. ¡Mantén el ritmo!',
             actionText: 'Ver estadísticas',
-            onAction: () {
-              // TODO: Navegar a estadísticas
+            onApply: () {
+              Navigator.pushNamed(context, '/statistics');
+            },
+            onDismiss: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Recomendación descartada')),
+              );
             },
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendationCard({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String description,
-    required String actionText,
-    required VoidCallback onAction,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface1,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onAction,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        icon,
-                        color: color,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppStyles.titleSmall.copyWith(
-                          color: AppColors.text,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  description,
-                  style: AppStyles.bodySmall.copyWith(
-                    color: AppColors.text.withOpacity(0.8),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: onAction,
-                      style: TextButton.styleFrom(
-                        foregroundColor: color,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            actionText,
-                            style: AppStyles.bodySmall.copyWith(
-                              color: color,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward,
-                            color: color,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -10,6 +10,8 @@ import 'features/auth/data/models/user_model.dart';
 import 'features/activities/data/models/activity_model.dart';
 import 'features/timeblocks/data/models/time_block_model.dart';
 import 'features/settings/data/models/settings_model.dart';
+import 'features/habits/data/models/habit_model.dart';
+import 'features/habits/data/models/time_of_day_adapter.dart';
 import 'features/auth/data/services/auth_service.dart';
 import 'features/settings/data/services/settings_service.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
@@ -17,9 +19,6 @@ import 'features/home/presentation/screens/home_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/providers/settings_provider.dart';
 import 'core/widgets/widgets.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'features/habits/cubit/habit_cubit.dart';
-import 'features/habits/data/repositories/habit_repository_impl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +29,9 @@ void main() async {
   Hive.registerAdapter(ActivityModelAdapter());
   Hive.registerAdapter(TimeBlockModelAdapter());
   Hive.registerAdapter(SettingsModelAdapter());
+  Hive.registerAdapter(HabitModelAdapter());
+  Hive.registerAdapter(TimeOfDayAdapter());
+  Hive.registerAdapter(TimeOfDayConverterAdapter());
 
   // Initialize services
   await LocalStorage.init();
@@ -41,22 +43,16 @@ void main() async {
   // Initialize repositories
   await ServiceLocator.instance.activityRepository.init();
   await ServiceLocator.instance.timeBlockRepository.init();
+  await ServiceLocator.instance.habitRepository.init();
 
   // Check if user is logged in
   final authService = AuthService();
   final currentUser = await authService.getCurrentUser();
 
   runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => HabitCubit(HabitRepositoryImpl()),
-        ),
-      ],
-      child: MyApp(
-        isLoggedIn: currentUser != null,
-        settingsService: settingsService,
-      ),
+    MyApp(
+      isLoggedIn: currentUser != null,
+      settingsService: settingsService,
     ),
   );
 }

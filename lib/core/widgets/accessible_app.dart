@@ -21,7 +21,7 @@ class AccessibleApp extends StatelessWidget {
             ),
 
         // Estilos de AppBar
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           elevation: 0,
           centerTitle: true,
           backgroundColor: AppColors.base,
@@ -29,10 +29,16 @@ class AccessibleApp extends StatelessWidget {
           titleTextStyle: AccessibilityStyles.accessibleTitleLarge,
         ),
 
+        // Estilos de iconos
+        iconTheme: const IconThemeData(
+          color: AppColors.text,
+          size: 24,
+        ),
+
         // Estilos de tarjetas
         cardTheme: CardTheme(
           elevation: 2,
-          margin: EdgeInsets.all(AccessibilityStyles.spacingMedium),
+          margin: const EdgeInsets.all(AccessibilityStyles.spacingMedium),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -69,7 +75,8 @@ class AccessibleApp extends StatelessWidget {
 
         // Estilos de listas
         listTileTheme: ListTileThemeData(
-          contentPadding: EdgeInsets.all(AccessibilityStyles.spacingMedium),
+          contentPadding:
+              const EdgeInsets.all(AccessibilityStyles.spacingMedium),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

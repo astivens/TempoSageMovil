@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'time_block_model.g.dart';
 
-@HiveType(typeId: 3)
+@HiveType(typeId: 6)
 class TimeBlockModel extends HiveObject {
   @HiveField(0)
   final String id;

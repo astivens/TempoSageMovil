@@ -209,7 +209,7 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
             height: 20 + (_soundLevels[index] * 80),
             margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
-              color: AppColors.blue.withOpacity(_isListening ? 1.0 : 0.3),
+              color: AppColors.blue.withValues(alpha: 77),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -241,12 +241,14 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
         height: 72,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: _isListening ? AppColors.blue : AppColors.surface1,
+          color: _isListening
+              ? AppColors.surface1
+              : AppColors.surface0.withValues(alpha: 26),
           boxShadow: [
             BoxShadow(
               color: _isListening
-                  ? AppColors.blue.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.1),
+                  ? AppColors.blue.withValues(alpha: 77)
+                  : Colors.black.withValues(alpha: 26),
               blurRadius: _isListening ? 16 : 8,
               spreadRadius: _isListening ? 4 : 0,
             ),
@@ -254,7 +256,7 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
         ),
         child: Icon(
           _isListening ? Icons.mic : Icons.mic_none,
-          color: _isListening ? Colors.white : AppColors.text,
+          color: _isListening ? AppColors.text : AppColors.text,
           size: 32,
         ),
       ),

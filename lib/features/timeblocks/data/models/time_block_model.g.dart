@@ -8,7 +8,7 @@ part of 'time_block_model.dart';
 
 class TimeBlockModelAdapter extends TypeAdapter<TimeBlockModel> {
   @override
-  final int typeId = 3;
+  final int typeId = 6;
 
   @override
   TimeBlockModel read(BinaryReader reader) {
