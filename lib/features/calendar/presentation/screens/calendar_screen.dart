@@ -3,6 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
+import '../../../../core/services/service_locator.dart';
 import '../../../activities/data/models/activity_model.dart';
 import '../../../activities/data/repositories/activity_repository.dart';
 import '../../../activities/presentation/screens/create_activity_screen.dart';
@@ -15,7 +16,8 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  final ActivityRepository _repository = ActivityRepository();
+  final ActivityRepository _repository =
+      ServiceLocator.instance.activityRepository;
   late DateTime _focusedDay;
   late DateTime _selectedDay;
   Map<DateTime, List<ActivityModel>> _events = {};

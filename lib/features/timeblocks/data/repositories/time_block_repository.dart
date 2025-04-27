@@ -29,11 +29,33 @@ class TimeBlockRepository {
   Future<List<TimeBlockModel>> getTimeBlocksByDate(DateTime date) async {
     try {
       final box = await _getBox();
+      final normalizedDate = DateTime(date.year, date.month, date.day);
+
+      debugPrint('Cargando timeblocks para fecha normalizada: $normalizedDate');
+      debugPrint('Timeblocks totales en box: ${box.values.length}');
+
       final timeBlocks = box.values.where((timeBlock) {
-        return timeBlock.startTime.year == date.year &&
-            timeBlock.startTime.month == date.month &&
-            timeBlock.startTime.day == date.day;
+        // Normalizamos la fecha del timeblock (eliminando la hora)
+        final blockDate = DateTime(
+          timeBlock.startTime.year,
+          timeBlock.startTime.month,
+          timeBlock.startTime.day,
+        );
+
+        // Comparamos solo año, mes y día
+        final matches = blockDate.year == normalizedDate.year &&
+            blockDate.month == normalizedDate.month &&
+            blockDate.day == normalizedDate.day;
+
+        if (matches) {
+          debugPrint(
+              'TimeBlock coincide con la fecha: ${timeBlock.title} - ${timeBlock.startTime}');
+        }
+
+        return matches;
       }).toList();
+
+      debugPrint('Timeblocks encontrados para la fecha: ${timeBlocks.length}');
       return timeBlocks;
     } catch (e) {
       debugPrint('Error al obtener timeblocks por fecha: $e');

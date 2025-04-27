@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_styles.dart';
 import 'metric_card.dart';
 
 class QuickStatsSection extends StatelessWidget {
@@ -24,69 +25,82 @@ class QuickStatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalCompleted = completedActivities + completedHabits;
-    final totalTasks = totalActivities + totalHabits;
-    final completionRate = totalTasks > 0 ? totalCompleted / totalTasks : 0.0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface0,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: MetricCard(
-                  title: 'Tareas Completadas',
-                  value: '$totalCompleted/$totalTasks',
-                  subtitle: 'Progreso diario',
-                  icon: Icon(Icons.check_circle, color: AppColors.green),
-                  progress: completionRate,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: MetricCard(
-                  title: 'Tiempo Restante',
-                  value:
-                      '${remainingTime.inHours}h ${remainingTime.inMinutes % 60}m',
-                  subtitle: 'Hasta el final del día',
-                  icon: Icon(Icons.timer, color: AppColors.blue),
-                  progress: 1 - (remainingTime.inMinutes / (24 * 60)),
-                ),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Estadísticas rápidas',
+          style: AppStyles.titleMedium.copyWith(
+            color: AppColors.text,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: MetricCard(
-                  title: 'Tiempo Activo',
-                  value:
-                      '${totalActivityTime.inHours}h ${totalActivityTime.inMinutes % 60}m',
-                  subtitle: 'Tiempo total en actividades',
-                  icon: Icon(Icons.timer_outlined, color: AppColors.mauve),
-                  progress: totalActivityTime.inMinutes / (8 * 60),
-                ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: MetricCard(
+                title: 'Actividades',
+                value: '$completedActivities/$totalActivities',
+                subtitle: 'completadas',
+                icon: const Icon(Icons.task_alt, color: AppColors.blue),
+                progress: totalActivities > 0
+                    ? completedActivities / totalActivities
+                    : 0,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: MetricCard(
-                  title: 'Enfoque Diario',
-                  value: '${focusScore.toStringAsFixed(0)}%',
-                  subtitle: 'Nivel de productividad',
-                  icon: Icon(Icons.psychology, color: AppColors.yellow),
-                  progress: focusScore / 100,
-                ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: MetricCard(
+                title: 'Hábitos',
+                value: '$completedHabits/$totalHabits',
+                subtitle: 'completados',
+                icon: const Icon(Icons.auto_awesome, color: AppColors.mauve),
+                progress: totalHabits > 0 ? completedHabits / totalHabits : 0,
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: MetricCard(
+                title: 'Tiempo total',
+                value: _formatDuration(totalActivityTime),
+                subtitle: 'de actividades',
+                icon: const Icon(Icons.timer, color: AppColors.peach),
+                showProgress: false,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: MetricCard(
+                title: 'Tiempo restante',
+                value: _formatDuration(remainingTime),
+                subtitle: 'del día',
+                icon:
+                    const Icon(Icons.hourglass_empty, color: AppColors.yellow),
+                showProgress: false,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        MetricCard(
+          title: 'Puntuación de enfoque',
+          value: '${focusScore.toStringAsFixed(1)}%',
+          subtitle: 'de productividad',
+          icon: const Icon(Icons.trending_up, color: AppColors.green),
+          progress: focusScore / 100,
+        ),
+      ],
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    return '${hours}h ${minutes}m';
   }
 }

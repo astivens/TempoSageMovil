@@ -43,9 +43,10 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
     super.dispose();
   }
 
-  Future<void> _createTimeBlock() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      final startDateTime = DateTime(
+  Future<void> _saveTimeBlock() async {
+    if (_formKey.currentState!.validate()) {
+      // Crear fechas con año, mes y día correctos
+      final DateTime startDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
         _selectedDate.day,
@@ -53,13 +54,19 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
         _startTime.minute,
       );
 
-      final endDateTime = DateTime(
+      final DateTime endDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
         _selectedDate.day,
         _endTime.hour,
         _endTime.minute,
       );
+
+      debugPrint('Creando nuevo TimeBlock...');
+      debugPrint('Fecha seleccionada: ${_selectedDate.toString()}');
+      debugPrint('Hora inicio: ${_startTime.format(context)}');
+      debugPrint('Hora fin: ${_endTime.format(context)}');
+      debugPrint('StartDateTime: ${startDateTime.toString()}');
 
       final timeBlock = TimeBlockModel.create(
         title: _titleController.text,
@@ -71,7 +78,14 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
         color: _selectedColor,
       );
 
+      debugPrint('Agregando timeblock: ${timeBlock.title}');
       await _repository.addTimeBlock(timeBlock);
+
+      // Verificar que se guardó correctamente
+      final todayBlocks = await _repository.getTimeBlocksByDate(startDateTime);
+      debugPrint(
+          'TimeBlocks para hoy después de agregar: ${todayBlocks.length}');
+
       if (mounted) {
         Navigator.pop(context);
       }
@@ -372,7 +386,7 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
               SizedBox(
                 width: double.infinity,
                 child: PrimaryButton(
-                  onPressed: _createTimeBlock,
+                  onPressed: _saveTimeBlock,
                   text: 'Create Time Block',
                 ),
               ),

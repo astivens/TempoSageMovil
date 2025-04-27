@@ -1,0 +1,233 @@
+openapi: 3.0.0
+info:
+  title: TempoSage API
+  description: API para la aplicación de gestión de tiempo y hábitos TempoSage
+  version: 1.0.0
+
+servers:
+  - url: https://api.temposage.com/v1
+    description: Servidor de producción
+
+components:
+  schemas:
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        category:
+          type: string
+        isCompleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Habit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        category:
+          type: string
+        isCompleted:
+          type: boolean
+        streak:
+          type: integer
+        completedDates:
+          type: array
+          items:
+            type: string
+            format: date
+        daysOfWeek:
+          type: array
+          items:
+            type: integer
+        time:
+          type: string
+          format: time
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  /activities:
+    get:
+      summary: Obtener todas las actividades
+      responses:
+        '200':
+          description: Lista de actividades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+    post:
+      summary: Crear una nueva actividad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Activity'
+      responses:
+        '201':
+          description: Actividad creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+
+  /activities/{id}:
+    get:
+      summary: Obtener una actividad específica
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalles de la actividad
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+    put:
+      summary: Actualizar una actividad
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Activity'
+      responses:
+        '200':
+          description: Actividad actualizada exitosamente
+    delete:
+      summary: Eliminar una actividad
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Actividad eliminada exitosamente
+
+  /habits:
+    get:
+      summary: Obtener todos los hábitos
+      responses:
+        '200':
+          description: Lista de hábitos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Habit'
+    post:
+      summary: Crear un nuevo hábito
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Habit'
+      responses:
+        '201':
+          description: Hábito creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+
+  /habits/{id}:
+    get:
+      summary: Obtener un hábito específico
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalles del hábito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+    put:
+      summary: Actualizar un hábito
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Habit'
+      responses:
+        '200':
+          description: Hábito actualizado exitosamente
+    delete:
+      summary: Eliminar un hábito
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Hábito eliminado exitosamente
+
+  /habits/{id}/complete:
+    post:
+      summary: Marcar un hábito como completado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Hábito marcado como completado 

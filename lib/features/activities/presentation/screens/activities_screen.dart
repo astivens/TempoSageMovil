@@ -8,6 +8,7 @@ import 'package:temposage/features/activities/presentation/screens/create_activi
 import 'package:temposage/features/activities/presentation/widgets/activity_card.dart';
 import 'package:temposage/features/activities/presentation/widgets/add_activity_button.dart';
 import 'package:temposage/features/activities/presentation/widgets/daily_habits.dart';
+import 'package:temposage/core/services/service_locator.dart';
 
 class ActivitiesScreen extends StatefulWidget {
   const ActivitiesScreen({super.key});
@@ -17,7 +18,8 @@ class ActivitiesScreen extends StatefulWidget {
 }
 
 class _ActivitiesScreenState extends State<ActivitiesScreen> {
-  final ActivityRepository _activityRepository = ActivityRepository();
+  final ActivityRepository _activityRepository =
+      ServiceLocator.instance.activityRepository;
   List<ActivityModel> _activities = [];
   bool _isLoading = true;
 

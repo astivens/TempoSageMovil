@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../data/models/activity_model.dart';
-import '../../data/repositories/activity_repository.dart';
+import '../../../../core/services/service_locator.dart';
 
 class EditActivityScreen extends StatefulWidget {
   final ActivityModel activity;
@@ -20,7 +20,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _repository = ActivityRepository();
+  final _repository = ServiceLocator.instance.activityRepository;
 
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _startTime = TimeOfDay.now();

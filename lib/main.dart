@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/constants/constants.dart';
 import 'core/services/local_storage.dart';
 import 'core/services/navigation_service.dart';
@@ -18,12 +20,16 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/providers/settings_provider.dart';
+import 'features/dashboard/controllers/dashboard_controller.dart';
 import 'core/widgets/widgets.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
+  // Initialize date formatting
+  await initializeDateFormatting('es');
+
+  // Initialize Hive and register adapters
   await Hive.initFlutter();
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(ActivityModelAdapter());
@@ -33,17 +39,18 @@ void main() async {
   Hive.registerAdapter(TimeOfDayAdapter());
   Hive.registerAdapter(TimeOfDayConverterAdapter());
 
-  // Initialize services
+  // Initialize local storage
   await LocalStorage.init();
+
+  // Initialize services
   final notificationService = NotificationService();
   await notificationService.initialize();
   final settingsService = SettingsService();
   await settingsService.init();
 
   // Initialize repositories
-  await ServiceLocator.instance.activityRepository.init();
-  await ServiceLocator.instance.timeBlockRepository.init();
-  await ServiceLocator.instance.habitRepository.init();
+  await ServiceLocator.instance.initializeAll();
+  debugPrint('Servicios y repositorios inicializados');
 
   // Check if user is logged in
   final authService = AuthService();
@@ -74,6 +81,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => SettingsProvider(settingsService),
         ),
+        ChangeNotifierProvider(
+          create: (_) => DashboardController(
+            activityRepository: ServiceLocator.instance.activityRepository,
+            habitRepository: ServiceLocator.instance.habitRepository,
+          ),
+        ),
       ],
       child: AccessibleApp(
         child: MaterialApp(
@@ -83,6 +96,16 @@ class MyApp extends StatelessWidget {
           themeMode: ThemeMode.dark,
           navigatorKey: NavigationService.navigatorKey,
           initialRoute: isLoggedIn ? '/home' : '/login',
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('es'),
+            Locale('en'),
+          ],
+          locale: const Locale('es'),
           routes: {
             '/login': (context) => const LoginScreen(),
             '/home': (context) => const HomeScreen(),

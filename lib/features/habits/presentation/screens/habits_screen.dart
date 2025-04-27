@@ -240,16 +240,21 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
           onPressed: () {
             final selectedDays = <int>[];
             for (int i = 0; i < 7; i++) {
-              if (_selectedDays[i]) selectedDays.add(i);
+              if (_selectedDays[i]) selectedDays.add(i + 1);
             }
 
             if (_titleController.text.isNotEmpty && selectedDays.isNotEmpty) {
+              final now = DateTime.now();
+
+              final today = DateTime(now.year, now.month, now.day);
+              debugPrint('Creando hábito para días: $selectedDays');
+
               final habit = HabitModel(
                 id: DateTime.now().millisecondsSinceEpoch.toString(),
                 title: _titleController.text,
                 description: _descriptionController.text,
-                startTime: DateTime.now(),
-                endTime: DateTime.now().add(const Duration(hours: 1)),
+                startTime: today,
+                endTime: today.add(const Duration(hours: 1)),
                 category: 'Hábito',
                 isCompleted: false,
                 streak: 0,
@@ -258,9 +263,15 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                 lastCompleted: null,
                 totalCompletions: 0,
                 time: _selectedTime,
-                createdAt: DateTime.now(),
+                createdAt: today,
               );
+
+              debugPrint(
+                  'Hábito creado: ${habit.title} - Días: ${habit.daysOfWeek}');
               Navigator.of(context).pop(habit);
+            } else {
+              debugPrint(
+                  'No se pudo crear el hábito: título vacío o sin días seleccionados');
             }
           },
           child: const Text('Guardar'),

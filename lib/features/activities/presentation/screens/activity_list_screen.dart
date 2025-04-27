@@ -3,8 +3,8 @@ import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/activity_model.dart';
-
 import '../../data/repositories/activity_repository.dart';
+import '../../../../core/services/service_locator.dart';
 import '../screens/create_activity_screen.dart';
 import '../screens/edit_activity_screen.dart';
 
@@ -16,7 +16,8 @@ class ActivityListScreen extends StatefulWidget {
 }
 
 class _ActivityListScreenState extends State<ActivityListScreen> {
-  final ActivityRepository _repository = ActivityRepository();
+  final ActivityRepository _repository =
+      ServiceLocator.instance.activityRepository;
   final TextEditingController _searchController = TextEditingController();
   List<ActivityModel> _activities = [];
   bool _isLoading = true;

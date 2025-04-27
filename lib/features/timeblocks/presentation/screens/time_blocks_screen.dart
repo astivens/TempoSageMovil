@@ -16,6 +16,8 @@ class TimeBlocksScreen extends StatefulWidget {
 
 class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
   final _repository = ServiceLocator.instance.timeBlockRepository;
+  final _habitToTimeBlockService =
+      ServiceLocator.instance.habitToTimeBlockService;
   final _timeFormat = DateFormat('HH:mm');
   List<TimeBlockModel> _timeBlocks = [];
   bool _isLoading = true;
@@ -30,7 +32,10 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadTimeBlocks();
+    // Evitar múltiples cargas innecesarias
+    if (_timeBlocks.isEmpty) {
+      _loadTimeBlocks();
+    }
   }
 
   @override
@@ -39,7 +44,10 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
   }
 
   Future<void> _loadTimeBlocks() async {
+    if (!mounted) return;
+
     setState(() => _isLoading = true);
+
     try {
       final now = DateTime.now();
       DateTime targetDate;
@@ -55,29 +63,74 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
           targetDate = now;
       }
 
-      debugPrint('Cargando timeblocks para: ${targetDate.toString()}');
-      final blocks = await _repository.getTimeBlocksByDate(targetDate);
-      debugPrint('Timeblocks encontrados: ${blocks.length}');
-      for (var block in blocks) {
-        debugPrint(
-            'TimeBlock: ${block.title}, Start: ${block.startTime}, End: ${block.endTime}');
-      }
+      // Normalizar la fecha para comparaciones consistentes
+      final normalizedDate =
+          DateTime(targetDate.year, targetDate.month, targetDate.day);
 
-      setState(() {
-        _timeBlocks = blocks;
-        _isLoading = false;
-      });
+      debugPrint('Cargando timeblocks para: ${normalizedDate.toString()}');
+
+      // Iniciar sincronización de hábitos primero
+      await _syncHabitsToTimeBlocks(normalizedDate);
+
+      // Obtener los bloques después de la sincronización
+      final blocks = await _repository.getTimeBlocksByDate(normalizedDate);
+      debugPrint('Timeblocks encontrados: ${blocks.length}');
+
+      // Ordenar los timeblocks por hora de inicio
+      blocks.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+      // Actualizar la UI con los timeblocks
+      if (mounted) {
+        setState(() {
+          _timeBlocks = blocks;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error cargando timeblocks: $e');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // Sincronizar hábitos a timeblocks en segundo plano
+  Future<void> _syncHabitsToTimeBlocks(DateTime date) async {
+    try {
+      debugPrint(
+          'Verificando sincronización de hábitos para ${date.toIso8601String()}');
+
+      // Verificar si hay bloques de tiempo existentes para la fecha
+      final existingBlocks = await _repository.getTimeBlocksByDate(date);
+
+      // Buscar específicamente bloques generados automáticamente desde hábitos
+      final habitBlocksExist = existingBlocks.any((block) =>
+          block.title.contains('Hábito:') ||
+          block.description.contains('Hábito generado automáticamente'));
+
+      if (habitBlocksExist) {
+        debugPrint(
+            'Bloques de hábitos ya existen para ${date.toIso8601String()}. Omitiendo sincronización.');
+        return;
+      }
+
+      debugPrint('Sincronizando hábitos para ${date.toIso8601String()}');
+      // Convertir hábitos a bloques de tiempo
+      await _habitToTimeBlockService.convertHabitsToTimeBlocks(date);
+
+      // No es necesario recargar los bloques aquí porque _loadTimeBlocks ya lo hará
+    } catch (e) {
+      debugPrint('Error sincronizando hábitos: $e');
     }
   }
 
   void _setActiveSection(String section) {
-    setState(() {
-      _activeSection = section;
-    });
-    _loadTimeBlocks();
+    if (_activeSection != section) {
+      setState(() {
+        _activeSection = section;
+      });
+      _loadTimeBlocks();
+    }
   }
 
   void _handleTimeBlockTap(TimeBlockModel block) {
@@ -163,6 +216,7 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
       try {
         await _repository.deleteTimeBlock(block.id);
         _loadTimeBlocks();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${block.title} eliminado'),
@@ -170,6 +224,7 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
           ),
         );
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al eliminar: $e'),
