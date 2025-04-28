@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      freezed:
+        generate_for:
+          include:
+            - lib/features/habits/cubit/habit_cubit.dart
+            - lib/features/habits/domain/entities/habit.dart
+        options:
+          copy_with: true
+          equals: true
+          to_string: true 

@@ -1,12 +1,10 @@
 {
-    "providers": {
-      "local‑mistral": {
-        "provider": "openai",
-        "endpoint": "http://localhost:3000/v1",
-        "apiKey": "sk‑test",
-        "model": "mistral:7b-int4"
-      }
-    },
-    "activeProvider": "local‑mistral"
-  }
-  
+  "providers": {
+    "local-mistral": {
+      "provider": "openai",
+      "endpoint": "https://mounting-collectors-garbage-suit.trycloudflare.com/v1",
+      "model": "mistral:instruct"
+    }
+  },
+  "activeProvider": "local-mistral"
+}

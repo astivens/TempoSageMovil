@@ -8,7 +8,7 @@ part of 'habit_model.dart';
 
 class TimeOfDayConverterAdapter extends TypeAdapter<TimeOfDayConverter> {
   @override
-  final int typeId = 3;
+  final int typeId = 9;
 
   @override
   TimeOfDayConverter read(BinaryReader reader) {
@@ -33,7 +33,7 @@ class TimeOfDayConverterAdapter extends TypeAdapter<TimeOfDayConverter> {
 
 class HabitModelAdapter extends TypeAdapter<HabitModel> {
   @override
-  final int typeId = 5;
+  final int typeId = 3;
 
   @override
   HabitModel read(BinaryReader reader) {
@@ -45,24 +45,22 @@ class HabitModelAdapter extends TypeAdapter<HabitModel> {
       id: fields[0] as String,
       title: fields[1] as String,
       description: fields[2] as String,
-      startTime: fields[3] as DateTime,
-      endTime: fields[4] as DateTime,
-      category: fields[5] as String,
-      isCompleted: fields[6] as bool,
-      streak: fields[7] as int,
-      completedDates: (fields[8] as List).cast<DateTime>(),
-      daysOfWeek: (fields[9] as List).cast<int>(),
-      lastCompleted: fields[10] as DateTime?,
-      totalCompletions: fields[11] as int,
-      time: fields[12] as TimeOfDay,
-      createdAt: fields[13] as DateTime,
+      daysOfWeek: (fields[3] as List).cast<String>(),
+      category: fields[4] as String,
+      reminder: fields[5] as String,
+      time: fields[6] as String,
+      isCompleted: fields[7] as bool,
+      lastCompleted: fields[8] as DateTime?,
+      streak: fields[9] as int,
+      totalCompletions: fields[10] as int,
+      dateCreation: fields[11] as DateTime,
     );
   }
 
   @override
   void write(BinaryWriter writer, HabitModel obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -70,27 +68,23 @@ class HabitModelAdapter extends TypeAdapter<HabitModel> {
       ..writeByte(2)
       ..write(obj.description)
       ..writeByte(3)
-      ..write(obj.startTime)
-      ..writeByte(4)
-      ..write(obj.endTime)
-      ..writeByte(5)
-      ..write(obj.category)
-      ..writeByte(6)
-      ..write(obj.isCompleted)
-      ..writeByte(7)
-      ..write(obj.streak)
-      ..writeByte(8)
-      ..write(obj.completedDates)
-      ..writeByte(9)
       ..write(obj.daysOfWeek)
-      ..writeByte(10)
-      ..write(obj.lastCompleted)
-      ..writeByte(11)
-      ..write(obj.totalCompletions)
-      ..writeByte(12)
+      ..writeByte(4)
+      ..write(obj.category)
+      ..writeByte(5)
+      ..write(obj.reminder)
+      ..writeByte(6)
       ..write(obj.time)
-      ..writeByte(13)
-      ..write(obj.createdAt);
+      ..writeByte(7)
+      ..write(obj.isCompleted)
+      ..writeByte(8)
+      ..write(obj.lastCompleted)
+      ..writeByte(9)
+      ..write(obj.streak)
+      ..writeByte(10)
+      ..write(obj.totalCompletions)
+      ..writeByte(11)
+      ..write(obj.dateCreation);
   }
 
   @override
@@ -103,50 +97,3 @@ class HabitModelAdapter extends TypeAdapter<HabitModel> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
-
-// **************************************************************************
-// JsonSerializableGenerator
-// **************************************************************************
-
-_$HabitModelImpl _$$HabitModelImplFromJson(Map<String, dynamic> json) =>
-    _$HabitModelImpl(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      startTime: DateTime.parse(json['startTime'] as String),
-      endTime: DateTime.parse(json['endTime'] as String),
-      category: json['category'] as String,
-      isCompleted: json['isCompleted'] as bool,
-      streak: (json['streak'] as num).toInt(),
-      completedDates: (json['completedDates'] as List<dynamic>)
-          .map((e) => DateTime.parse(e as String))
-          .toList(),
-      daysOfWeek: (json['daysOfWeek'] as List<dynamic>)
-          .map((e) => (e as num).toInt())
-          .toList(),
-      lastCompleted: json['lastCompleted'] == null
-          ? null
-          : DateTime.parse(json['lastCompleted'] as String),
-      totalCompletions: (json['totalCompletions'] as num).toInt(),
-      time: const TimeOfDayConverter().fromJson(json['time'] as String),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-    );
-
-Map<String, dynamic> _$$HabitModelImplToJson(_$HabitModelImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'title': instance.title,
-      'description': instance.description,
-      'startTime': instance.startTime.toIso8601String(),
-      'endTime': instance.endTime.toIso8601String(),
-      'category': instance.category,
-      'isCompleted': instance.isCompleted,
-      'streak': instance.streak,
-      'completedDates':
-          instance.completedDates.map((e) => e.toIso8601String()).toList(),
-      'daysOfWeek': instance.daysOfWeek,
-      'lastCompleted': instance.lastCompleted?.toIso8601String(),
-      'totalCompletions': instance.totalCompletions,
-      'time': const TimeOfDayConverter().toJson(instance.time),
-      'createdAt': instance.createdAt.toIso8601String(),
-    };

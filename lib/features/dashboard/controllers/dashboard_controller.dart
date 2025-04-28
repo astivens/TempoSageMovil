@@ -3,11 +3,13 @@ import 'dart:async';
 import '../../activities/data/models/activity_model.dart';
 import '../../habits/data/models/habit_model.dart';
 import '../../activities/data/repositories/activity_repository.dart';
-import '../../habits/data/repositories/habit_repository.dart';
+import '../../habits/domain/repositories/habit_repository.dart';
 import '../../timeblocks/data/repositories/time_block_repository.dart';
 import '../../timeblocks/data/models/time_block_model.dart';
 import '../../habits/domain/services/habit_to_timeblock_service.dart';
 import '../../../../core/services/service_locator.dart';
+import '../../../../core/utils/date_time_helper.dart';
+import '../../habits/domain/entities/habit.dart';
 
 class DashboardController extends ChangeNotifier {
   final ActivityRepository _activityRepository;
@@ -41,18 +43,22 @@ class DashboardController extends ChangeNotifier {
     try {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
+      final currentDay = DateTimeHelper.getDayOfWeek(now);
 
       // Precarga asíncrona de timeblocks de hábitos para que estén listos antes
       _preloadHabitTimeBlocks(today);
 
       // Cargamos todos los datos al mismo tiempo
       final futures = await Future.wait([
-        _habitRepository.getHabitsForToday(),
+        _habitRepository.getHabitsByDayOfWeek(currentDay),
         _activityRepository.getActivitiesByDate(today),
         _timeBlockRepository.getTimeBlocksByDate(today),
       ]);
 
-      _habits = futures[0] as List<HabitModel>;
+      // La lista de entidades Habit debe convertirse a HabitModel para que funcionen los métodos existentes
+      final habitsEntities = futures[0] as List<Habit>;
+      _habits = habitsEntities.map(_mapEntityToModel).toList();
+
       _activities = futures[1] as List<ActivityModel>;
       _timeBlocks = futures[2] as List<TimeBlockModel>;
 
@@ -82,7 +88,13 @@ class DashboardController extends ChangeNotifier {
   Future<void> _preloadHabitTimeBlocks(DateTime date) async {
     try {
       // Obtener los hábitos para hoy
-      final habitsForToday = await _habitRepository.getHabitsForToday();
+      final now = DateTime.now();
+      final currentDay = DateTimeHelper.getDayOfWeek(now);
+      final habitsEntities =
+          await _habitRepository.getHabitsByDayOfWeek(currentDay);
+
+      // Convertir a modelo
+      final habitsForToday = habitsEntities.map(_mapEntityToModel).toList();
 
       // Si no hay hábitos, no hacemos nada
       if (habitsForToday.isEmpty) return;
@@ -113,11 +125,30 @@ class DashboardController extends ChangeNotifier {
     // Ordenar actividades por hora de inicio
     _activities.sort((a, b) => a.startTime.compareTo(b.startTime));
 
-    // Ordenar hábitos por hora
-    _habits.sort((a, b) => a.time.hour.compareTo(b.time.hour));
+    // Ordenar hábitos por hora (extraer hora de string)
+    _habits.sort((a, b) {
+      final timeA = _parseTimeToMinutes(a.time);
+      final timeB = _parseTimeToMinutes(b.time);
+      return timeA.compareTo(timeB);
+    });
 
     // Ordenar timeblocks por hora de inicio
     _timeBlocks.sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
+  // Parse time string to minutes for sorting
+  int _parseTimeToMinutes(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length == 2) {
+        final hour = int.tryParse(parts[0]) ?? 0;
+        final minute = int.tryParse(parts[1]) ?? 0;
+        return hour * 60 + minute;
+      }
+    } catch (e) {
+      debugPrint('Error parsing time: $e');
+    }
+    return 0;
   }
 
   Future<void> deleteActivity(String activityId) async {
@@ -154,7 +185,13 @@ class DashboardController extends ChangeNotifier {
 
   Future<void> toggleHabitCompletion(HabitModel habit) async {
     try {
-      await _habitRepository.markHabitAsCompleted(habit.id);
+      // Crear la entidad Habit desde el modelo
+      final habitEntity = _mapModelToEntity(habit);
+      // Actualizar al estado opuesto
+      final updatedHabit = habitEntity.copyWith(isDone: !habitEntity.isDone);
+      // Actualizar en el repositorio
+      await _habitRepository.updateHabit(updatedHabit);
+
       // Actualizar el estado de los timeblocks asociados
       await _habitToTimeBlockService.syncTimeBlocksForHabit(habit);
       await loadData();
@@ -203,7 +240,10 @@ class DashboardController extends ChangeNotifier {
     final filteredHabits = <HabitModel>[];
 
     for (final habit in _habits) {
-      final hour = habit.time.hour;
+      final time = _parseTimeToHourMinute(habit.time);
+      if (time == null) continue;
+
+      final hour = time.hour;
 
       if (period == 'morning' && hour >= 5 && hour < 12) {
         filteredHabits.add(habit);
@@ -217,24 +257,77 @@ class DashboardController extends ChangeNotifier {
     return filteredHabits;
   }
 
+  TimeOfDay? _parseTimeToHourMinute(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length == 2) {
+        final hour = int.tryParse(parts[0]) ?? 0;
+        final minute = int.tryParse(parts[1]) ?? 0;
+        return TimeOfDay(hour: hour, minute: minute);
+      }
+    } catch (e) {
+      debugPrint('Error parsing time: $e');
+    }
+    return null;
+  }
+
   List<HabitModel> getMorningHabits() {
     return _habits.where((habit) {
-      final hour = habit.time.hour;
+      final time = _parseTimeToHourMinute(habit.time);
+      if (time == null) return false;
+
+      final hour = time.hour;
       return hour >= 5 && hour < 12;
     }).toList();
   }
 
   List<HabitModel> getAfternoonHabits() {
     return _habits.where((habit) {
-      final hour = habit.time.hour;
+      final time = _parseTimeToHourMinute(habit.time);
+      if (time == null) return false;
+
+      final hour = time.hour;
       return hour >= 12 && hour < 18;
     }).toList();
   }
 
   List<HabitModel> getEveningHabits() {
     return _habits.where((habit) {
-      final hour = habit.time.hour;
+      final time = _parseTimeToHourMinute(habit.time);
+      if (time == null) return false;
+
+      final hour = time.hour;
       return hour >= 18 || hour < 5;
     }).toList();
+  }
+
+  // Mapper from HabitModel to Habit entity
+  Habit _mapModelToEntity(HabitModel model) {
+    return Habit(
+      id: model.id,
+      name: model.title,
+      description: model.description,
+      daysOfWeek: model.daysOfWeek,
+      category: model.category,
+      reminder: model.reminder,
+      time: model.time,
+      isDone: model.isCompleted,
+      dateCreation: model.dateCreation,
+    );
+  }
+
+  // Mapper from Habit entity to HabitModel
+  HabitModel _mapEntityToModel(Habit entity) {
+    return HabitModel(
+      id: entity.id,
+      title: entity.name,
+      description: entity.description,
+      daysOfWeek: entity.daysOfWeek,
+      category: entity.category,
+      reminder: entity.reminder,
+      time: entity.time,
+      isCompleted: entity.isDone,
+      dateCreation: entity.dateCreation,
+    );
   }
 }

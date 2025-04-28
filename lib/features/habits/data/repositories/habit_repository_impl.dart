@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import '../../../../core/services/local_storage.dart';
 import '../models/habit_model.dart';
-import 'habit_repository.dart';
+import '../../domain/entities/habit.dart';
+import '../../domain/repositories/habit_repository.dart';
 
 class HabitRepositoryException implements Exception {
   final String message;
@@ -26,16 +26,14 @@ class HabitRepositoryImpl implements HabitRepository {
   Future<void> init() async {
     try {
       await _getHabits();
-      debugPrint('Repositorio de hábitos inicializado');
     } catch (e) {
-      debugPrint('Error inicializando repositorio de hábitos: $e');
       throw HabitRepositoryException(
           'Error inicializando repositorio de hábitos: $e');
     }
   }
 
   @override
-  Future<HabitModel> getHabitById(String id) async {
+  Future<Habit> getHabitById(String id) async {
     try {
       if (id.isEmpty) {
         throw HabitRepositoryException('El ID no puede estar vacío');
@@ -45,39 +43,62 @@ class HabitRepositoryImpl implements HabitRepository {
       if (habit == null) {
         throw HabitRepositoryException('Hábito no encontrado');
       }
-      return habit;
+      return _mapModelToEntity(habit);
     } catch (e) {
-      debugPrint('Error al obtener hábito: $e');
       throw HabitRepositoryException('Error al obtener hábito: $e');
     }
   }
 
   @override
-  Future<void> createHabit(HabitModel habit) async {
+  Future<List<Habit>> getAllHabits() async {
     try {
-      if (habit.title.isEmpty) {
-        throw HabitRepositoryException('El título no puede estar vacío');
+      final habits = await _getHabits();
+      return habits.map(_mapModelToEntity).toList();
+    } catch (e) {
+      throw HabitRepositoryException('Error al obtener todos los hábitos: $e');
+    }
+  }
+
+  @override
+  Future<List<Habit>> getHabitsByDayOfWeek(String dayOfWeek) async {
+    try {
+      final habits = await _getHabits();
+      return habits
+          .where((habit) => habit.daysOfWeek.contains(dayOfWeek))
+          .map(_mapModelToEntity)
+          .toList();
+    } catch (e) {
+      throw HabitRepositoryException(
+          'Error al obtener hábitos por día de la semana: $e');
+    }
+  }
+
+  @override
+  Future<void> addHabit(Habit habit) async {
+    try {
+      if (habit.name.isEmpty) {
+        throw HabitRepositoryException('El nombre no puede estar vacío');
       }
 
-      debugPrint('Creando hábito: ${habit.title}');
-      await LocalStorage.saveData<HabitModel>(_boxName, habit.id, habit);
+      final habitModel = _mapEntityToModel(habit);
+      await LocalStorage.saveData<HabitModel>(
+          _boxName, habitModel.id, habitModel);
     } catch (e) {
-      debugPrint('Error al crear hábito: $e');
       throw HabitRepositoryException('Error al crear hábito: $e');
     }
   }
 
   @override
-  Future<void> updateHabit(HabitModel habit) async {
+  Future<void> updateHabit(Habit habit) async {
     try {
-      if (habit.title.isEmpty) {
-        throw HabitRepositoryException('El título no puede estar vacío');
+      if (habit.name.isEmpty) {
+        throw HabitRepositoryException('El nombre no puede estar vacío');
       }
 
-      debugPrint('Actualizando hábito: ${habit.title}');
-      await LocalStorage.saveData<HabitModel>(_boxName, habit.id, habit);
+      final habitModel = _mapEntityToModel(habit);
+      await LocalStorage.saveData<HabitModel>(
+          _boxName, habitModel.id, habitModel);
     } catch (e) {
-      debugPrint('Error al actualizar hábito: $e');
       throw HabitRepositoryException('Error al actualizar hábito: $e');
     }
   }
@@ -91,107 +112,39 @@ class HabitRepositoryImpl implements HabitRepository {
 
       await LocalStorage.deleteData(_boxName, id);
     } catch (e) {
-      debugPrint('Error al eliminar hábito: $e');
       throw HabitRepositoryException('Error al eliminar hábito: $e');
     }
   }
 
-  @override
-  Future<List<HabitModel>> getHabitsForToday() async {
-    try {
-      final habits = await _getHabits();
-      final now = DateTime.now();
-      final dayOfWeek = now.weekday;
-
-      debugPrint('Cargando hábitos para hoy: ${now.toString()}');
-      debugPrint('Día de la semana: $dayOfWeek');
-      debugPrint('Total de hábitos encontrados: ${habits.length}');
-
-      final result = habits.where((habit) {
-        final matches = habit.daysOfWeek.contains(dayOfWeek);
-        if (matches) {
-          debugPrint(
-              'Hábito coincide con el día actual: ${habit.title} - días: ${habit.daysOfWeek}');
-        } else {
-          debugPrint(
-              'Hábito NO coincide con el día actual: ${habit.title} - días: ${habit.daysOfWeek}');
-        }
-        return matches;
-      }).toList();
-
-      debugPrint('Hábitos filtrados para hoy: ${result.length}');
-      return result;
-    } catch (e) {
-      debugPrint('Error al obtener hábitos para hoy: $e');
-      throw HabitRepositoryException('Error al obtener hábitos para hoy: $e');
-    }
+  // Mappers
+  Habit _mapModelToEntity(HabitModel model) {
+    return Habit(
+      id: model.id,
+      name: model.title,
+      description: model.description,
+      daysOfWeek: model.daysOfWeek,
+      category: model.category,
+      reminder: model.reminder,
+      time: model.time,
+      isDone: model.isCompleted,
+      dateCreation: model.dateCreation,
+    );
   }
 
-  @override
-  Future<void> markHabitAsCompleted(String id) async {
-    try {
-      final habit = await getHabitById(id);
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-
-      final updatedHabit = habit.copyWith(
-        isCompleted: !habit.isCompleted,
-        lastCompleted: today,
-        totalCompletions: habit.isCompleted
-            ? habit.totalCompletions - 1
-            : habit.totalCompletions + 1,
-        streak: _calculateStreak(habit, today),
-      );
-
-      await updateHabit(updatedHabit);
-    } catch (e) {
-      debugPrint('Error al marcar hábito como completado: $e');
-      throw HabitRepositoryException(
-          'Error al marcar hábito como completado: $e');
-    }
-  }
-
-  int _calculateStreak(HabitModel habit, DateTime today) {
-    if (habit.lastCompleted == null) {
-      return 1;
-    }
-
-    final difference = today.difference(habit.lastCompleted!).inDays;
-    if (difference > 1) {
-      return 1;
-    }
-
-    return habit.isCompleted ? habit.streak - 1 : habit.streak + 1;
-  }
-
-  @override
-  Future<List<HabitModel>> getHabits() async {
-    try {
-      return await _getHabits();
-    } catch (e) {
-      debugPrint('Error al obtener todos los hábitos: $e');
-      throw HabitRepositoryException('Error al obtener todos los hábitos: $e');
-    }
-  }
-
-  @override
-  Future<void> completeHabit(HabitModel habit) async {
-    await markHabitAsCompleted(habit.id);
-  }
-
-  @override
-  Future<List<HabitModel>> getHabitsForDate(DateTime date) async {
-    try {
-      final habits = await _getHabits();
-      final dayOfWeek = date.weekday;
-
-      return habits.where((habit) {
-        return habit.daysOfWeek.contains(dayOfWeek);
-      }).toList();
-    } catch (e) {
-      debugPrint('Error al obtener hábitos para la fecha: $e');
-      throw HabitRepositoryException(
-          'Error al obtener hábitos para la fecha: $e');
-    }
+  HabitModel _mapEntityToModel(Habit entity) {
+    return HabitModel(
+      id: entity.id,
+      title: entity.name,
+      description: entity.description,
+      daysOfWeek: entity.daysOfWeek,
+      category: entity.category,
+      reminder: entity.reminder,
+      time: entity.time,
+      isCompleted: entity.isDone,
+      dateCreation: entity.dateCreation,
+      lastCompleted: null,
+      streak: 0,
+      totalCompletions: 0,
+    );
   }
 }

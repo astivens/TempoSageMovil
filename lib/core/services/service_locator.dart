@@ -1,50 +1,93 @@
-import 'package:temposage/features/activities/data/repositories/activity_repository.dart';
-import 'package:temposage/features/activities/domain/services/activity_to_timeblock_service.dart';
-import 'package:temposage/features/timeblocks/data/repositories/time_block_repository.dart';
-import 'package:temposage/features/habits/data/repositories/habit_repository.dart';
-import 'package:temposage/features/habits/data/repositories/habit_repository_impl.dart';
-import 'package:temposage/features/habits/domain/services/habit_to_timeblock_service.dart';
-import 'package:flutter/foundation.dart';
+import '../../features/activities/data/repositories/activity_repository.dart';
+import '../../features/activities/domain/services/activity_to_timeblock_service.dart';
+import '../../features/timeblocks/data/repositories/time_block_repository.dart';
+import '../../features/habits/domain/repositories/habit_repository.dart';
+import '../../features/habits/data/repositories/habit_repository_impl.dart';
+import '../../features/habits/domain/services/habit_to_timeblock_service.dart';
+import '../../features/habits/domain/usecases/get_habits_use_case.dart';
+import '../utils/logger.dart';
 
+/// Localizador de servicios e implementación de inyección de dependencias.
+///
+/// Responsable de:
+/// - Crear e inicializar repositorios y servicios
+/// - Proporcionar acceso a las dependencias en toda la aplicación
+/// - Gestionar el ciclo de vida de las dependencias
 class ServiceLocator {
   static final ServiceLocator instance = ServiceLocator._internal();
+  final Logger _logger = Logger.instance;
 
-  factory ServiceLocator() {
-    return instance;
-  }
-
+  /// Constructor privado para el patrón Singleton
   ServiceLocator._internal() {
     _initRepositories();
   }
 
-  // Repositories
+  // Repositories (almacenamiento)
   late final ActivityRepository _activityRepository;
   late final TimeBlockRepository _timeBlockRepository;
   late final HabitRepository _habitRepository;
 
-  // Services
+  // Services (lógica de dominio)
   ActivityToTimeBlockService? _activityToTimeBlockService;
   HabitToTimeBlockService? _habitToTimeBlockService;
 
+  // Casos de uso
+  GetHabitsUseCase? _getHabitsUseCase;
+
+  /// Inicializa los repositorios de la aplicación.
+  /// Este método se llama automáticamente al crear la instancia del ServiceLocator.
   void _initRepositories() {
-    _timeBlockRepository = TimeBlockRepository();
-    _habitRepository = HabitRepositoryImpl();
-    _activityRepository = ActivityRepository(
-      timeBlockRepository: _timeBlockRepository,
-    );
+    try {
+      _logger.i('Inicializando repositorios...', tag: 'ServiceLocator');
+
+      // Crear repositorios
+      _timeBlockRepository = TimeBlockRepository();
+      _habitRepository = HabitRepositoryImpl();
+      _activityRepository = ActivityRepository(
+        timeBlockRepository: _timeBlockRepository,
+      );
+
+      _logger.i('Repositorios inicializados correctamente',
+          tag: 'ServiceLocator');
+    } catch (e, stackTrace) {
+      _logger.e('Error al inicializar repositorios',
+          tag: 'ServiceLocator', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
+  /// Obtiene el repositorio de actividades.
   ActivityRepository get activityRepository => _activityRepository;
+
+  /// Obtiene el repositorio de bloques de tiempo.
   TimeBlockRepository get timeBlockRepository => _timeBlockRepository;
+
+  /// Obtiene el repositorio de hábitos.
   HabitRepository get habitRepository => _habitRepository;
 
+  /// Inicializa todos los repositorios, preparándolos para su uso.
+  /// Debe llamarse al inicio de la aplicación antes de acceder a los repositorios.
   Future<void> initializeAll() async {
-    await _activityRepository.init();
-    await _timeBlockRepository.init();
-    await _habitRepository.init();
-    debugPrint('Todos los repositorios inicializados');
+    try {
+      _logger.i('Inicializando todos los repositorios...',
+          tag: 'ServiceLocator');
+
+      // Inicializar repositorios
+      await _activityRepository.init();
+      await _timeBlockRepository.init();
+      await _habitRepository.init();
+
+      _logger.i('Todos los repositorios inicializados correctamente',
+          tag: 'ServiceLocator');
+    } catch (e, stackTrace) {
+      _logger.e('Error al inicializar todos los repositorios',
+          tag: 'ServiceLocator', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
+  /// Obtiene el servicio para convertir actividades a bloques de tiempo.
+  /// El servicio se crea bajo demanda (lazy initialization).
   ActivityToTimeBlockService get activityToTimeBlockService {
     _activityToTimeBlockService ??= ActivityToTimeBlockService(
       activityRepository: activityRepository,
@@ -53,9 +96,27 @@ class ServiceLocator {
     return _activityToTimeBlockService!;
   }
 
+  /// Obtiene el servicio para convertir hábitos a bloques de tiempo.
+  /// El servicio se crea bajo demanda (lazy initialization).
   HabitToTimeBlockService get habitToTimeBlockService {
     _habitToTimeBlockService ??=
-        HabitToTimeBlockService(habitRepository, timeBlockRepository);
+        HabitToTimeBlockService(_habitRepository, timeBlockRepository);
     return _habitToTimeBlockService!;
+  }
+
+  /// Obtiene el caso de uso para gestionar hábitos.
+  /// Se crea bajo demanda (lazy initialization).
+  GetHabitsUseCase get getHabitsUseCase {
+    _getHabitsUseCase ??= GetHabitsUseCase(_habitRepository);
+    return _getHabitsUseCase!;
+  }
+
+  /// Reinicia todos los servicios y limpia cachés.
+  /// Útil para pruebas o cuando se requiere un estado limpio.
+  void resetServices() {
+    _activityToTimeBlockService = null;
+    _habitToTimeBlockService = null;
+    _getHabitsUseCase = null;
+    _logger.i('Servicios reiniciados', tag: 'ServiceLocator');
   }
 }

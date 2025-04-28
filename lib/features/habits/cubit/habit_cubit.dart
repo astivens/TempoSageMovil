@@ -1,32 +1,140 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../data/models/habit_model.dart';
-import '../data/repositories/habit_repository.dart';
+import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:injectable/injectable.dart';
+import 'package:temposage/core/utils/date_time_helper.dart';
+import 'package:temposage/features/habits/domain/entities/habit.dart';
+import 'package:temposage/features/habits/domain/repositories/habit_repository.dart';
 
-class HabitCubit extends Cubit<List<HabitModel>> {
-  final HabitRepository _repository;
+part 'habit_state.dart';
+part 'habit_cubit.freezed.dart';
 
-  HabitCubit(this._repository) : super([]);
+@injectable
+class HabitCubit extends Cubit<HabitState> {
+  final HabitRepository repository;
 
-  Future<List<HabitModel>> getHabitsForToday() async {
-    final habits = await _repository.getHabitsForToday();
-    emit(habits);
-    return habits;
+  HabitCubit(this.repository) : super(const HabitState.initial());
+
+  Future<void> _initialize() async {
+    try {
+      emit(const HabitState.loading());
+      final habits = await repository.getAllHabits();
+      emit(HabitState.loaded(habits: habits));
+    } catch (e) {
+      emit(HabitState.error(errorMessage: e.toString()));
+    }
   }
 
-  Future<void> completeHabit(HabitModel habit) async {
-    await _repository.completeHabit(habit);
-    await getHabitsForToday();
+  Future<void> getHabitsForToday() async {
+    try {
+      emit(const HabitState.loading());
+
+      final now = DateTime.now();
+      final currentDay = DateTimeHelper.getDayOfWeek(now);
+
+      final habits = await repository.getHabitsByDayOfWeek(currentDay);
+      emit(HabitState.loaded(habits: habits));
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      emit(HabitState.error(errorMessage: e.toString()));
+    }
   }
 
-  Future<void> deleteHabit(HabitModel habit) async {
-    await _repository.deleteHabit(habit.id);
-    await getHabitsForToday();
+  Future<void> completeHabit({required Habit habit}) async {
+    try {
+      emit(const HabitState.loading());
+      await repository.updateHabit(
+        habit.copyWith(isDone: !habit.isDone),
+      );
+      await getHabitsForToday();
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      emit(HabitState.error(errorMessage: e.toString()));
+    }
   }
 
-  Future<void> toggleHabitCompletion(String habitId) async {
-    final habits = state;
-    final habit = habits.firstWhere((h) => h.id == habitId);
-    await _repository.completeHabit(habit);
-    await getHabitsForToday();
+  Future<void> deleteHabit({required String id}) async {
+    try {
+      emit(const HabitState.loading());
+      await repository.deleteHabit(id);
+      await _initialize();
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      emit(HabitState.error(errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> createHabit({
+    required String name,
+    required String description,
+    required List<String> daysOfWeek,
+    required String category,
+    required String reminder,
+    required String time,
+  }) async {
+    try {
+      emit(const HabitState.loading());
+
+      final habit = Habit(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        description: description,
+        daysOfWeek: daysOfWeek,
+        category: category,
+        reminder: reminder,
+        time: time,
+        isDone: false,
+        dateCreation: DateTime.now(),
+      );
+
+      await repository.addHabit(habit);
+      await _initialize();
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      emit(HabitState.error(errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> updateHabit({
+    required String id,
+    required String name,
+    required String description,
+    required List<String> daysOfWeek,
+    required String category,
+    required String reminder,
+    required String time,
+    required bool isDone,
+  }) async {
+    try {
+      emit(const HabitState.loading());
+
+      final habit = Habit(
+        id: id,
+        name: name,
+        description: description,
+        daysOfWeek: daysOfWeek,
+        category: category,
+        reminder: reminder,
+        time: time,
+        isDone: isDone,
+        dateCreation: DateTime.now(),
+      );
+
+      await repository.updateHabit(habit);
+      await _initialize();
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      emit(HabitState.error(errorMessage: e.toString()));
+    }
   }
 }

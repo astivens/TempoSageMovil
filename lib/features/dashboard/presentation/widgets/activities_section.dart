@@ -113,12 +113,17 @@ class ActivitiesSection extends StatelessWidget {
       return item.startTime;
     } else if (item is HabitModel) {
       final now = DateTime.now();
+      // Convertir el string de tiempo (HH:MM) a horas y minutos
+      final timeParts = item.time.split(':');
+      final hour = int.tryParse(timeParts[0]) ?? 0;
+      final minute = int.tryParse(timeParts[1]) ?? 0;
+
       return DateTime(
         now.year,
         now.month,
         now.day,
-        item.time.hour,
-        item.time.minute,
+        hour,
+        minute,
       );
     } else if (item is TimeBlockModel) {
       return item.startTime;
@@ -137,6 +142,7 @@ class ActivitiesSection extends StatelessWidget {
         onDelete: () => onDeleteActivity(item),
       );
     } else if (item is HabitModel) {
+      // Modificar el HabitCard para adaptarse a la nueva estructura
       return HabitCard(
         habit: item,
         onComplete: () => onToggleHabit(item),

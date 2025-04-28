@@ -3,6 +3,7 @@ import 'package:temposage/core/constants/app_colors.dart';
 import 'package:temposage/core/constants/app_styles.dart';
 import 'package:temposage/core/services/service_locator.dart';
 import 'package:temposage/features/habits/data/models/habit_model.dart';
+import 'package:temposage/features/habits/domain/entities/habit.dart';
 import 'package:temposage/features/habits/presentation/widgets/habit_card.dart';
 
 class HabitsScreen extends StatefulWidget {
@@ -26,14 +27,47 @@ class _HabitsScreenState extends State<HabitsScreen> {
   Future<void> _loadHabits() async {
     setState(() => _isLoading = true);
     try {
-      final habits = await _repository.getHabits();
+      final habitsEntities = await _repository.getAllHabits();
       setState(() {
-        _habits = habits;
+        _habits =
+            habitsEntities.map(_mapEntityToModel).toList().cast<HabitModel>();
         _isLoading = false;
       });
     } catch (e) {
       setState(() => _isLoading = false);
     }
+  }
+
+  // Métodos para convertir entre entidad y modelo
+  HabitModel _mapEntityToModel(Habit entity) {
+    return HabitModel(
+      id: entity.id,
+      title: entity.name,
+      description: entity.description,
+      daysOfWeek: entity.daysOfWeek,
+      category: entity.category,
+      reminder: entity.reminder,
+      time: entity.time,
+      isCompleted: entity.isDone,
+      dateCreation: entity.dateCreation,
+      lastCompleted: null,
+      streak: 0,
+      totalCompletions: 0,
+    );
+  }
+
+  Habit _mapModelToEntity(HabitModel model) {
+    return Habit(
+      id: model.id,
+      name: model.title,
+      description: model.description,
+      daysOfWeek: model.daysOfWeek,
+      category: model.category,
+      reminder: model.reminder,
+      time: model.time,
+      isDone: model.isCompleted,
+      dateCreation: model.dateCreation,
+    );
   }
 
   Future<void> _showAddHabitDialog() async {
@@ -43,7 +77,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
     );
 
     if (result != null) {
-      await _repository.createHabit(result);
+      final habitEntity = _mapModelToEntity(result);
+      await _repository.addHabit(habitEntity);
       _loadHabits();
     }
   }
@@ -72,19 +107,23 @@ class _HabitsScreenState extends State<HabitsScreen> {
       try {
         await _repository.deleteHabit(habit.id);
         _loadHabits();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${habit.title} eliminado'),
-            backgroundColor: AppColors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${habit.title} eliminado'),
+              backgroundColor: AppColors.green,
+            ),
+          );
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al eliminar: $e'),
-            backgroundColor: AppColors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al eliminar: $e'),
+              backgroundColor: AppColors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -136,9 +175,13 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             return HabitCard(
                               habit: habit,
                               onComplete: () async {
-                                await _repository
-                                    .markHabitAsCompleted(habit.id);
-                                _loadHabits();
+                                final habitEntity = _mapModelToEntity(habit);
+                                final updatedEntity =
+                                    habitEntity.copyWith(isDone: true);
+                                await _repository.updateHabit(updatedEntity);
+                                if (mounted) {
+                                  _loadHabits();
+                                }
                               },
                               onDelete: () => _deleteHabit(habit),
                             );
@@ -245,25 +288,41 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
 
             if (_titleController.text.isNotEmpty && selectedDays.isNotEmpty) {
               final now = DateTime.now();
-
               final today = DateTime(now.year, now.month, now.day);
-              debugPrint('Creando hábito para días: $selectedDays');
+
+              // Convertir los días de la semana de enteros a strings
+              final daysOfWeekStr = selectedDays.map((day) {
+                const days = [
+                  'Lunes',
+                  'Martes',
+                  'Miércoles',
+                  'Jueves',
+                  'Viernes',
+                  'Sábado',
+                  'Domingo'
+                ];
+                return days[day - 1];
+              }).toList();
+
+              // Formatear la hora como string (HH:MM)
+              final timeStr =
+                  '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+
+              debugPrint('Creando hábito para días: $daysOfWeekStr');
 
               final habit = HabitModel(
                 id: DateTime.now().millisecondsSinceEpoch.toString(),
                 title: _titleController.text,
                 description: _descriptionController.text,
-                startTime: today,
-                endTime: today.add(const Duration(hours: 1)),
                 category: 'Hábito',
                 isCompleted: false,
                 streak: 0,
-                completedDates: [],
-                daysOfWeek: selectedDays,
-                lastCompleted: null,
                 totalCompletions: 0,
-                time: _selectedTime,
-                createdAt: today,
+                daysOfWeek: daysOfWeekStr,
+                lastCompleted: null,
+                time: timeStr,
+                dateCreation: today,
+                reminder: 'none', // Valor por defecto
               );
 
               debugPrint(
