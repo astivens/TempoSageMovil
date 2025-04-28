@@ -126,11 +126,60 @@ class TimeBlockRepository {
     }
   }
 
+  /// Verifica si ya existe un bloque de tiempo similar.
+  ///
+  /// Comprueba si ya existe un time block con el mismo título para la misma fecha
+  /// y con horas de inicio y fin cercanas.
+  ///
+  /// Retorna `true` si existe un duplicado potencial.
+  Future<bool> isDuplicate(TimeBlockModel timeBlock) async {
+    try {
+      final date = DateTime(
+        timeBlock.startTime.year,
+        timeBlock.startTime.month,
+        timeBlock.startTime.day,
+      );
+
+      final existingBlocks = await getTimeBlocksByDate(date);
+
+      for (final existing in existingBlocks) {
+        // Si no es el mismo objeto pero tiene el mismo título
+        if (existing.id != timeBlock.id && existing.title == timeBlock.title) {
+          // Y los tiempos son similares (dentro de un rango de 15 minutos)
+          final startDiff =
+              (existing.startTime.difference(timeBlock.startTime).inMinutes)
+                  .abs();
+          final endDiff =
+              (existing.endTime.difference(timeBlock.endTime).inMinutes).abs();
+
+          if (startDiff < 15 && endDiff < 15) {
+            debugPrint('Posible duplicado detectado: ${timeBlock.title}');
+            return true;
+          }
+        }
+      }
+
+      return false;
+    } catch (e) {
+      ErrorHandler.logError(
+          'Error al verificar duplicado de timeblock', e, null);
+      return false; // En caso de error, permitimos la operación
+    }
+  }
+
   /// Añade un nuevo bloque de tiempo a la base de datos.
   ///
   /// [timeBlock] El bloque de tiempo a guardar.
   Future<void> addTimeBlock(TimeBlockModel timeBlock) async {
     try {
+      // Verificar si es un duplicado potencial
+      final duplicate = await isDuplicate(timeBlock);
+      if (duplicate) {
+        debugPrint(
+            'Evitando guardar un timeblock duplicado: ${timeBlock.title}');
+        return; // No guardar si es un duplicado
+      }
+
       debugPrint('Guardando timeblock: ${timeBlock.title}');
       final box = await _getBox();
       await box.put(timeBlock.id, timeBlock);

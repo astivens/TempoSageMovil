@@ -32,15 +32,7 @@ void main() async {
   // Initialize Hive and register adapters
   await Hive.initFlutter();
 
-  // Limpiar cajas Hive existentes para evitar problemas de migración
-  try {
-    await Hive.deleteBoxFromDisk('habits');
-    await Hive.deleteBoxFromDisk('timeblocks');
-    debugPrint('Cajas Hive limpiadas correctamente');
-  } catch (e) {
-    debugPrint('Error al limpiar cajas Hive: $e');
-  }
-
+  // Registrar adaptadores
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(ActivityModelAdapter());
   Hive.registerAdapter(TimeBlockModelAdapter());

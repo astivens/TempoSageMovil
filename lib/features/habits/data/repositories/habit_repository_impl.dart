@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../../../../core/services/local_storage.dart';
 import '../models/habit_model.dart';
 import '../../domain/entities/habit.dart';
@@ -73,6 +74,33 @@ class HabitRepositoryImpl implements HabitRepository {
     }
   }
 
+  Future<bool> _isDuplicate(HabitModel habitToCheck) async {
+    try {
+      final habits = await _getHabits();
+
+      for (final existingHabit in habits) {
+        if (existingHabit.id != habitToCheck.id &&
+            existingHabit.title.toLowerCase() ==
+                habitToCheck.title.toLowerCase()) {
+          final commonDays = existingHabit.daysOfWeek
+              .where((day) => habitToCheck.daysOfWeek.contains(day))
+              .length;
+
+          if (commonDays > 0) {
+            debugPrint(
+                'Posible duplicado de hábito detectado: ${habitToCheck.title}');
+            return true;
+          }
+        }
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('Error al verificar duplicado de hábito: $e');
+      return false;
+    }
+  }
+
   @override
   Future<void> addHabit(Habit habit) async {
     try {
@@ -81,8 +109,16 @@ class HabitRepositoryImpl implements HabitRepository {
       }
 
       final habitModel = _mapEntityToModel(habit);
+
+      final isDuplicate = await _isDuplicate(habitModel);
+      if (isDuplicate) {
+        debugPrint('Evitando guardar un hábito duplicado: ${habit.name}');
+        return;
+      }
+
       await LocalStorage.saveData<HabitModel>(
           _boxName, habitModel.id, habitModel);
+      debugPrint('Hábito guardado correctamente: ${habit.name}');
     } catch (e) {
       throw HabitRepositoryException('Error al crear hábito: $e');
     }
@@ -116,7 +152,6 @@ class HabitRepositoryImpl implements HabitRepository {
     }
   }
 
-  // Mappers
   Habit _mapModelToEntity(HabitModel model) {
     return Habit(
       id: model.id,
