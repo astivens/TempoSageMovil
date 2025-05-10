@@ -1,14 +1,16 @@
-# Guía para consumir la API de TempoSage
+# Guía para la Actualización de la API de TempoSage (Nuevas Funcionalidades de ML)
 
-Esta guía explica cómo interactuar con la API de Machine Learning de TempoSage para obtener predicciones de productividad, sugerencias de horarios y análisis de patrones.
+Esta guía describe las nuevas funcionalidades y endpoints que se han añadido a la API de Machine Learning de TempoSage para expandir sus capacidades de asistencia inteligente. Estas actualizaciones se basan en las funcionalidades existentes y buscan ofrecer un mayor valor al usuario.
 
-## Información general
+## Información General (Actualización)
 
-- **URL Base**: http://localhost:5000 (desarrollo local)
-- **Formato de datos**: JSON
-- **Autenticación**: No implementada en esta versión
+- **URL Base**: (Se mantiene la misma, ej. `http://localhost:5000` para desarrollo local, o la URL de producción)
+- **Formato de datos**: JSON (Consistente con la API actual)
+- **Autenticación**: (Se mantiene el esquema de autenticación existente)
 
-## Endpoints disponibles
+## Nuevos Endpoints Disponibles
+
+A continuación, se detallan las nuevas funcionalidades y endpoints añadidos:
 
 ### 1. Verificación de estado
 

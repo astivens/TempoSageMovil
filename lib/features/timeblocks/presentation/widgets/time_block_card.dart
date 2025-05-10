@@ -26,7 +26,7 @@ class TimeBlockCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: blockColor.withOpacity(0.5),
+          color: blockColor.withValues(alpha: 128),
           width: 2,
         ),
       ),

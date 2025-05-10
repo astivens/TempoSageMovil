@@ -35,7 +35,7 @@ class HabitCard extends StatelessWidget {
         subtitle: Text(
           habit.description,
           style: AppStyles.bodySmall.copyWith(
-            color: AppColors.text.withOpacity(0.7),
+            color: AppColors.text.withValues(alpha: 179),
           ),
         ),
         trailing: IconButton(

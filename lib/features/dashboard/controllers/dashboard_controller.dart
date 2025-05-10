@@ -32,10 +32,25 @@ class DashboardController extends ChangeNotifier {
   // Estados para la API
   bool _isApiLoading = false;
   String? _apiError;
-  double? _productivityPrediction = null;
-  String? _productivityExplanation = null;
-  List<Map<String, dynamic>>? _timeSuggestions = null;
-  List<Map<String, dynamic>>? _activityPatterns = null;
+  double? _productivityPrediction;
+  String? _productivityExplanation;
+  List<Map<String, dynamic>>? _timeSuggestions;
+  List<Map<String, dynamic>>? _activityPatterns;
+
+  // Estado para la predicción de logro de metas
+  bool _isGoalPredictionLoading = false;
+  String? _goalPredictionError;
+  Map<String, dynamic>? _goalPredictionResult;
+
+  // Estado para la predicción de energía
+  bool _isEnergyPredictionLoading = false;
+  String? _energyPredictionError;
+  Map<String, dynamic>? _energyPredictionResult;
+
+  // Estado para la recomendación de hábitos
+  bool _isHabitRecommendationLoading = false;
+  String? _habitRecommendationError;
+  Map<String, dynamic>? _habitRecommendationResult;
 
   DashboardController({
     required ActivityRepository activityRepository,
@@ -67,6 +82,22 @@ class DashboardController extends ChangeNotifier {
   String? get productivityExplanation => _productivityExplanation;
   List<Map<String, dynamic>>? get timeSuggestions => _timeSuggestions;
   List<Map<String, dynamic>>? get activityPatterns => _activityPatterns;
+
+  // Nuevos getters para la predicción de logro de metas
+  bool get isGoalPredictionLoading => _isGoalPredictionLoading;
+  String? get goalPredictionError => _goalPredictionError;
+  Map<String, dynamic>? get goalPredictionResult => _goalPredictionResult;
+
+  // Nuevos getters para la predicción de energía
+  bool get isEnergyPredictionLoading => _isEnergyPredictionLoading;
+  String? get energyPredictionError => _energyPredictionError;
+  Map<String, dynamic>? get energyPredictionResult => _energyPredictionResult;
+
+  // Nuevos getters para la recomendación de hábitos
+  bool get isHabitRecommendationLoading => _isHabitRecommendationLoading;
+  String? get habitRecommendationError => _habitRecommendationError;
+  Map<String, dynamic>? get habitRecommendationResult =>
+      _habitRecommendationResult;
 
   Future<void> loadData() async {
     _isLoading = true;
@@ -511,6 +542,117 @@ class DashboardController extends ChangeNotifier {
       _activityPatterns = []; // Inicializar como lista vacía en caso de error
     } finally {
       _isApiLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Predice el logro de una meta a largo plazo
+  Future<void> predictGoalAchievement({
+    required String goalDescription,
+    required DateTime targetDeadline,
+  }) async {
+    _isGoalPredictionLoading = true;
+    _goalPredictionError = null;
+    _goalPredictionResult = null;
+    notifyListeners();
+
+    try {
+      final activities = _activities.map(_mapActivityModelToEntity).toList();
+      final habits = _habits.map(_mapModelToEntity).toList();
+      final api = ServiceLocator.instance.tempoSageApiService;
+
+      final result = await api.predictGoalAchievement(
+        goalDescription: goalDescription,
+        targetDeadline: targetDeadline.toIso8601String(),
+        currentActivities: activities,
+        currentHabits: habits,
+      );
+      _goalPredictionResult = result;
+    } catch (e) {
+      _goalPredictionError = e.toString();
+      debugPrint('Error al predecir logro de meta: $e');
+    } finally {
+      _isGoalPredictionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Predice los niveles de energía y riesgo de burnout
+  Future<void> predictEnergyLevels(
+      {Map<String, dynamic>? selfAssessment}) async {
+    _isEnergyPredictionLoading = true;
+    _energyPredictionError = null;
+    _energyPredictionResult = null;
+    notifyListeners();
+
+    try {
+      final activities = _activities
+          .map(_mapActivityModelToEntity)
+          .map((a) => {
+                'startTime': a.date.toIso8601String(),
+                'endTime':
+                    a.date.add(const Duration(hours: 1)).toIso8601String(),
+                'category': a.category,
+                'isCompleted': a.isCompleted,
+              })
+          .toList();
+      final habits = _habits
+          .map(_mapModelToEntity)
+          .map((h) => {
+                'category': h.category,
+                'date': h.dateCreation.toIso8601String().split('T')[0],
+                'completed': h.isDone,
+              })
+          .toList();
+      final api = ServiceLocator.instance.tempoSageApiService;
+
+      final result = await api.predictEnergyLevels(
+        activitiesHistory: activities,
+        habitsHistory: habits,
+        selfAssessment: selfAssessment,
+      );
+      _energyPredictionResult = result;
+    } catch (e) {
+      _energyPredictionError = e.toString();
+      debugPrint('Error al predecir niveles de energía: $e');
+    } finally {
+      _isEnergyPredictionLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Recomienda hábitos personalizados y contextuales
+  Future<void> recommendHabits({required List<String> userGoals}) async {
+    _isHabitRecommendationLoading = true;
+    _habitRecommendationError = null;
+    _habitRecommendationResult = null;
+    notifyListeners();
+
+    try {
+      // Patrón de actividades actuales (puede ser vacío o usar activityPatterns)
+      final activitiesPattern = _activityPatterns ?? [];
+      // Hábitos existentes
+      final habits = _habits
+          .map(_mapModelToEntity)
+          .map((h) => {
+                'category': h.category,
+                'date': h.dateCreation.toIso8601String().split('T')[0],
+                'completed': h.isDone,
+              })
+          .toList();
+      final api = ServiceLocator.instance.tempoSageApiService;
+
+      final result = await api.recommendHabits(
+        userGoals: userGoals,
+        currentActivitiesPattern: activitiesPattern,
+        existingHabits: habits,
+      );
+      _habitRecommendationResult = result;
+    } catch (e) {
+      _habitRecommendationError = e.toString();
+      debugPrint('Error al recomendar hábitos: $e');
+    } finally {
+      _isHabitRecommendationLoading = false;
       notifyListeners();
     }
   }

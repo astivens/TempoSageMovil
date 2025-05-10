@@ -1,71 +1,142 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/constants/app_animations.dart';
 
-class MetricCard extends StatelessWidget {
+class MetricCard extends StatefulWidget {
   final String title;
   final String value;
-  final String subtitle;
-  final Widget? icon;
-  final double progress;
-  final bool showProgress;
+  final String? subtitle;
+  final IconData icon;
+  final Color? color;
+  final VoidCallback? onTap;
+  final bool isLoading;
 
   const MetricCard({
     super.key,
     required this.title,
     required this.value,
-    required this.subtitle,
-    this.icon,
-    this.progress = 0.0,
-    this.showProgress = true,
+    this.subtitle,
+    required this.icon,
+    this.color,
+    this.onTap,
+    this.isLoading = false,
   });
 
   @override
+  State<MetricCard> createState() => _MetricCardState();
+}
+
+class _MetricCardState extends State<MetricCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: AppAnimations.fast,
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: AppAnimations.smoothCurve,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if (widget.onTap != null) {
+      _controller.forward();
+    }
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    if (widget.onTap != null) {
+      _controller.reverse();
+    }
+  }
+
+  void _handleTapCancel() {
+    if (widget.onTap != null) {
+      _controller.reverse();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: AppColors.surface0,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: AppStyles.bodyMedium.copyWith(
-                    color: AppColors.subtext0,
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Card(
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        widget.icon,
+                        color: widget.color ?? AppColors.blue,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.title,
+                          style: AppStyles.titleSmall.copyWith(
+                            color: widget.color ?? AppColors.blue,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                if (icon != null) icon!,
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: AppStyles.headlineMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: AppStyles.bodySmall,
-            ),
-            if (showProgress) ...[
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: AppColors.surface1,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.mauve),
-                  minHeight: 4,
-                ),
+                  const SizedBox(height: 8),
+                  if (widget.isLoading)
+                    const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.value,
+                          style: AppStyles.headlineLarge.copyWith(
+                            color: AppColors.text,
+                          ),
+                        ),
+                        if (widget.subtitle != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.subtitle!,
+                            style: AppStyles.bodySmall.copyWith(
+                              color: AppColors.subtext1,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                ],
               ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );

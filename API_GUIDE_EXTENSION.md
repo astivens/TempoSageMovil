@@ -1,4 +1,4 @@
- # Guía para la Extensión de la API de TempoSage (Nuevas Funcionalidades de ML)
+# Guía para la Extensión de la API de TempoSage (Nuevas Funcionalidades de ML)
 
 Esta guía describe nuevas funcionalidades y endpoints que podrían añadirse a la API de Machine Learning de TempoSage para expandir sus capacidades de asistencia inteligente. Estas propuestas se basan en las funcionalidades existentes y buscan ofrecer un mayor valor al usuario.
 

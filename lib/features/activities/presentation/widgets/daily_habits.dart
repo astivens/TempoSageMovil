@@ -117,7 +117,7 @@ class _DailyHabitsState extends State<DailyHabits> {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
                 color: habit.isCompleted
-                    ? AppColors.green.withOpacity(0.5)
+                    ? AppColors.green.withValues(alpha: 128)
                     : AppColors.surface1,
                 width: 1,
               ),
@@ -128,9 +128,9 @@ class _DailyHabitsState extends State<DailyHabits> {
             leading: Checkbox(
               value: habit.isCompleted,
               onChanged: (bool? value) => _toggleHabit(habit),
-              fillColor: MaterialStateProperty.resolveWith<Color>(
-                (Set<MaterialState> states) {
-                  if (states.contains(MaterialState.selected)) {
+              fillColor: WidgetStateProperty.resolveWith<Color>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
                     return AppColors.green;
                   }
                   return AppColors.overlay0;
