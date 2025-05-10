@@ -8,6 +8,7 @@ import 'core/services/local_storage.dart';
 import 'core/services/navigation_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/service_locator.dart';
+import 'core/utils/logger.dart';
 import 'features/auth/data/models/user_model.dart';
 import 'features/activities/data/models/activity_model.dart';
 import 'features/timeblocks/data/models/time_block_model.dart';
@@ -24,48 +25,78 @@ import 'features/dashboard/controllers/dashboard_controller.dart';
 import 'core/widgets/widgets.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize date formatting
-  await initializeDateFormatting('es');
-
-  // Initialize Hive and register adapters
-  await Hive.initFlutter();
-
-  // Registrar adaptadores
-  Hive.registerAdapter(UserModelAdapter());
-  Hive.registerAdapter(ActivityModelAdapter());
-  Hive.registerAdapter(TimeBlockModelAdapter());
-  Hive.registerAdapter(SettingsModelAdapter());
-  Hive.registerAdapter(HabitModelAdapter());
-  Hive.registerAdapter(TimeOfDayAdapter());
-  // Hive.registerAdapter(TimeOfDayConverterAdapter()); // Comentado para evitar conflicto de typeId
-
-  // Initialize local storage
-  await LocalStorage.init();
-
-  // Initialize services
-  final notificationService = NotificationService();
-  await notificationService.initialize();
-  final settingsService = SettingsService();
-  await settingsService.init();
-
-  // Initialize repositories
-  await ServiceLocator.instance.initializeAll();
-  debugPrint('Servicios y repositorios inicializados');
-
-  // Check if user is logged in
-  final authService = AuthService();
-  final currentUser = await authService.getCurrentUser();
-
-  runApp(
-    MyApp(
-      isLoggedIn: currentUser != null,
-      settingsService: settingsService,
-    ),
-  );
+  await _initializeApp();
 }
 
+/// Inicializa todos los componentes necesarios para la aplicación
+Future<void> _initializeApp() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final logger = Logger.instance;
+
+  try {
+    // Inicializar formateo de fechas
+    await initializeDateFormatting('es');
+    logger.i('Formateo de fechas inicializado', tag: 'App');
+
+    // Inicializar servicios de almacenamiento
+    await _initializeStorage();
+
+    // Inicializar servicios de la aplicación
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+
+    final settingsService = SettingsService();
+    await settingsService.init();
+
+    // Inicializar repositorios
+    await ServiceLocator.instance.initializeAll();
+    logger.i('Servicios y repositorios inicializados', tag: 'App');
+
+    // Verificar autenticación
+    final authService = AuthService();
+    final currentUser = await authService.getCurrentUser();
+
+    // Iniciar la aplicación
+    runApp(
+      MyApp(
+        isLoggedIn: currentUser != null,
+        settingsService: settingsService,
+      ),
+    );
+  } catch (e, stackTrace) {
+    logger.c('Error al inicializar la aplicación',
+        tag: 'App', error: e, stackTrace: stackTrace);
+    // En caso de error crítico, mostrar una pantalla de error
+    runApp(const ErrorApp());
+  }
+}
+
+/// Inicializa los componentes de almacenamiento
+Future<void> _initializeStorage() async {
+  final logger = Logger.instance;
+
+  try {
+    // Inicializar Hive para almacenamiento local
+    await LocalStorage.init();
+
+    // Registrar adaptadores de modelos
+    Hive.registerAdapter(UserModelAdapter());
+    Hive.registerAdapter(ActivityModelAdapter());
+    Hive.registerAdapter(TimeBlockModelAdapter());
+    Hive.registerAdapter(SettingsModelAdapter());
+    Hive.registerAdapter(HabitModelAdapter());
+    Hive.registerAdapter(TimeOfDayAdapter());
+    // Hive.registerAdapter(TimeOfDayConverterAdapter()); // Comentado para evitar conflicto de typeId
+
+    logger.i('Adaptadores de Hive registrados', tag: 'Storage');
+  } catch (e, stackTrace) {
+    logger.e('Error al inicializar almacenamiento',
+        tag: 'Storage', error: e, stackTrace: stackTrace);
+    rethrow;
+  }
+}
+
+/// Aplicación principal
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final SettingsService settingsService;
@@ -90,37 +121,88 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ],
-      child: AccessibleApp(
-        child: MaterialApp(
-          title: 'TempoSage',
-          theme: AppStyles.lightTheme,
-          darkTheme: AppStyles.darkTheme,
-          themeMode: ThemeMode.dark,
-          navigatorKey: NavigationService.navigatorKey,
-          initialRoute: isLoggedIn ? '/home' : '/login',
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('es'),
-            Locale('en'),
-          ],
-          locale: const Locale('es'),
-          routes: {
-            '/login': (context) => const LoginScreen(),
-            '/home': (context) => const HomeScreen(),
-            '/settings': (context) => const SettingsScreen(),
-          },
-          builder: (context, child) {
-            return MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: const TextScaler.linear(1.0),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, _) {
+          return AccessibleApp(
+            highContrast: settingsProvider.settings.highContrastMode,
+            textScale: settingsProvider.settings.fontSizeScale.toDouble(),
+            child: MaterialApp(
+              title: 'TempoSage',
+              theme: AppStyles.lightTheme,
+              darkTheme: AppStyles.darkTheme,
+              themeMode: settingsProvider.settings.darkMode
+                  ? ThemeMode.dark
+                  : ThemeMode.light,
+              navigatorKey: NavigationService.navigatorKey,
+              initialRoute: isLoggedIn ? '/home' : '/login',
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('es'),
+                Locale('en'),
+              ],
+              locale: const Locale('es'),
+              routes: {
+                '/login': (context) => const LoginScreen(),
+                '/home': (context) => const HomeScreen(),
+                '/settings': (context) => const SettingsScreen(),
+              },
+              builder: (context, child) {
+                return MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: TextScaler.linear(
+                        settingsProvider.settings.fontSizeScale.toDouble()),
+                  ),
+                  child: child!,
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Pantalla para mostrar cuando la aplicación no pudo inicializarse
+class ErrorApp extends StatelessWidget {
+  const ErrorApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 80,
+                color: Colors.red,
               ),
-              child: child!,
-            );
-          },
+              const SizedBox(height: 16),
+              const Text(
+                'Error al iniciar la aplicación',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Por favor, reinicie la aplicación o contacte soporte.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  _initializeApp();
+                },
+                child: const Text('Reintentar'),
+              ),
+            ],
+          ),
         ),
       ),
     );

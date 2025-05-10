@@ -2,7 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import '../models/time_block_model.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/errors/app_exception.dart';
+import '../../../../core/utils/logger.dart';
+import '../../../../core/services/local_storage.dart';
+
+/// Excepción para el repositorio de bloques de tiempo
+class RepositoryException implements Exception {
+  final String message;
+  final dynamic originalError;
+
+  RepositoryException({required this.message, this.originalError});
+
+  @override
+  String toString() => 'RepositoryException: $message';
+}
 
 /// Repositorio que maneja el acceso y persistencia de bloques de tiempo (TimeBlock).
 ///
@@ -13,21 +25,16 @@ import '../../../../core/errors/app_exception.dart';
 /// - Realizar cálculos sobre colecciones de bloques (duración total, etc)
 class TimeBlockRepository {
   static const String _boxName = 'timeblocks';
+  final Logger _logger = Logger.instance;
 
-  /// Obtiene la referencia a la caja (box) de Hive para los bloques de tiempo.
-  /// Si la caja no está abierta, la abre.
-  ///
-  /// Lanza [RepositoryException] si hay un error al acceder a la base de datos.
+  /// Obtiene la caja (box) de Hive para timeblocks
   Future<Box<TimeBlockModel>> _getBox() async {
     try {
-      if (!Hive.isBoxOpen(_boxName)) {
-        return await Hive.openBox<TimeBlockModel>(_boxName);
-      }
-      return Hive.box<TimeBlockModel>(_boxName);
+      return await LocalStorage.getBox<TimeBlockModel>(_boxName);
     } catch (e) {
-      ErrorHandler.logError('Error al abrir la caja de timeblocks', e, null);
+      ErrorHandler.logError('Error al abrir box de timeblocks', e, null);
       throw RepositoryException(
-          message: 'Error al acceder a la base de datos de timeblocks',
+          message: 'Error al acceder a los datos de bloques de tiempo',
           originalError: e);
     }
   }
@@ -36,7 +43,8 @@ class TimeBlockRepository {
   Future<void> init() async {
     try {
       await _getBox();
-      debugPrint('Repositorio de timeblocks inicializado correctamente');
+      _logger.i('Repositorio de timeblocks inicializado correctamente',
+          tag: 'TimeBlockRepo');
     } catch (e) {
       ErrorHandler.logError(
           'Error al inicializar repositorio de timeblocks', e, null);
@@ -71,9 +79,11 @@ class TimeBlockRepository {
       final normalizedDate = DateTime(date.year, date.month, date.day);
 
       if (debugMode) {
-        debugPrint(
-            'Buscando timeblocks para fecha: ${normalizedDate.toIso8601String()}');
-        debugPrint('Total timeblocks en base de datos: ${box.values.length}');
+        _logger.d(
+            'Buscando timeblocks para fecha: ${normalizedDate.toIso8601String()}',
+            tag: 'TimeBlockRepo');
+        _logger.d('Total timeblocks en base de datos: ${box.values.length}',
+            tag: 'TimeBlockRepo');
       }
 
       final timeBlocks = box.values.where((timeBlock) {
@@ -90,15 +100,16 @@ class TimeBlockRepository {
             blockDate.day == normalizedDate.day;
 
         if (matches && debugMode) {
-          debugPrint(
-              'Coincidencia: ${timeBlock.title} - ${timeBlock.startTime}');
+          _logger.d('Coincidencia: ${timeBlock.title} - ${timeBlock.startTime}',
+              tag: 'TimeBlockRepo');
         }
 
         return matches;
       }).toList();
 
       if (debugMode) {
-        debugPrint('Encontrados ${timeBlocks.length} timeblocks para la fecha');
+        _logger.d('Encontrados ${timeBlocks.length} timeblocks para la fecha',
+            tag: 'TimeBlockRepo');
       }
 
       return timeBlocks;
@@ -152,7 +163,8 @@ class TimeBlockRepository {
               (existing.endTime.difference(timeBlock.endTime).inMinutes).abs();
 
           if (startDiff < 15 && endDiff < 15) {
-            debugPrint('Posible duplicado detectado: ${timeBlock.title}');
+            _logger.w('Posible duplicado detectado: ${timeBlock.title}',
+                tag: 'TimeBlockRepo');
             return true;
           }
         }
@@ -174,12 +186,13 @@ class TimeBlockRepository {
       // Verificar si es un duplicado potencial
       final duplicate = await isDuplicate(timeBlock);
       if (duplicate) {
-        debugPrint(
-            'Evitando guardar un timeblock duplicado: ${timeBlock.title}');
+        _logger.w('Evitando guardar un timeblock duplicado: ${timeBlock.title}',
+            tag: 'TimeBlockRepo');
         return; // No guardar si es un duplicado
       }
 
-      debugPrint('Guardando timeblock: ${timeBlock.title}');
+      _logger.i('Guardando timeblock: ${timeBlock.title}',
+          tag: 'TimeBlockRepo');
       final box = await _getBox();
       await box.put(timeBlock.id, timeBlock);
     } catch (e) {
@@ -195,7 +208,8 @@ class TimeBlockRepository {
   /// [timeBlock] El bloque de tiempo con las actualizaciones.
   Future<void> updateTimeBlock(TimeBlockModel timeBlock) async {
     try {
-      debugPrint('Actualizando timeblock: ${timeBlock.title}');
+      _logger.i('Actualizando timeblock: ${timeBlock.title}',
+          tag: 'TimeBlockRepo');
       final box = await _getBox();
       await box.put(timeBlock.id, timeBlock);
     } catch (e) {
@@ -213,7 +227,7 @@ class TimeBlockRepository {
     try {
       final box = await _getBox();
       await box.delete(id);
-      debugPrint('Eliminado timeblock con ID: $id');
+      _logger.i('Eliminado timeblock con ID: $id', tag: 'TimeBlockRepo');
     } catch (e) {
       ErrorHandler.logError('Error al eliminar timeblock con ID: $id', e, null);
       throw RepositoryException(
@@ -274,8 +288,9 @@ class TimeBlockRepository {
       final deleteOperations = blocks.map((block) => box.delete(block.id));
       await Future.wait(deleteOperations);
 
-      debugPrint(
-          'Eliminados ${blocks.length} timeblocks para la fecha ${date.toIso8601String()}');
+      _logger.i(
+          'Eliminados ${blocks.length} timeblocks para la fecha ${date.toIso8601String()}',
+          tag: 'TimeBlockRepo');
     } catch (e) {
       ErrorHandler.logError('Error al eliminar timeblocks para fecha', e, null);
       throw RepositoryException(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
-import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/accessible_button.dart';
 import '../../../../core/utils/validators/form_validators.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../data/models/activity_model.dart';
@@ -299,11 +299,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
               // Save Button
               SizedBox(
                 width: double.infinity,
-                child: PrimaryButton(
-                  onPressed: _saveActivity,
+                child: AccessibleButton.primary(
                   text: widget.activity != null
                       ? 'Save Changes'
                       : 'Create Activity',
+                  onPressed: _saveActivity,
                 ),
               ),
             ],

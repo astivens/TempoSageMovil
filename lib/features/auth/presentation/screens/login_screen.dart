@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/validators/form_validators.dart';
-import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/accessible_button.dart';
 import '../../../../core/services/speech_service.dart';
 import '../../data/services/auth_service.dart';
 import '../../../../core/services/navigation_service.dart';
@@ -228,11 +228,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: true,
                       ),
                       const SizedBox(height: 24),
-                      PrimaryButton(
-                        text: 'Sign In',
+                      AccessibleButton.primary(
+                        text: 'Iniciar Sesión',
                         onPressed: _handleLogin,
                         isLoading: _isLoading,
-                        width: double.infinity,
                       ),
                     ],
                   ),

@@ -73,6 +73,13 @@ class _MetricCardState extends State<MetricCard>
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final textColor =
+        Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.text;
+    final subtextColor = textColor.withOpacity(0.7);
+    final cardColor = Theme.of(context).cardColor;
+    final effectiveColor = widget.color ?? primaryColor;
+
     return GestureDetector(
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
@@ -83,9 +90,17 @@ class _MetricCardState extends State<MetricCard>
         builder: (context, child) => Transform.scale(
           scale: _scaleAnimation.value,
           child: Card(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Container(
               padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: cardColor,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -93,7 +108,7 @@ class _MetricCardState extends State<MetricCard>
                     children: [
                       Icon(
                         widget.icon,
-                        color: widget.color ?? AppColors.blue,
+                        color: effectiveColor,
                         size: 24,
                       ),
                       const SizedBox(width: 8),
@@ -101,16 +116,19 @@ class _MetricCardState extends State<MetricCard>
                         child: Text(
                           widget.title,
                           style: AppStyles.titleSmall.copyWith(
-                            color: widget.color ?? AppColors.blue,
+                            color: effectiveColor,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   if (widget.isLoading)
-                    const Center(
-                      child: CircularProgressIndicator(),
+                    Center(
+                      child: CircularProgressIndicator(
+                        color: effectiveColor,
+                      ),
                     )
                   else
                     Column(
@@ -119,7 +137,8 @@ class _MetricCardState extends State<MetricCard>
                         Text(
                           widget.value,
                           style: AppStyles.headlineLarge.copyWith(
-                            color: AppColors.text,
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         if (widget.subtitle != null) ...[
@@ -127,7 +146,7 @@ class _MetricCardState extends State<MetricCard>
                           Text(
                             widget.subtitle!,
                             style: AppStyles.bodySmall.copyWith(
-                              color: AppColors.subtext1,
+                              color: subtextColor,
                             ),
                           ),
                         ],

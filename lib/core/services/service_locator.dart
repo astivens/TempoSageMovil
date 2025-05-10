@@ -23,17 +23,17 @@ class ServiceLocator {
     _initRepositories();
   }
 
-  // Repositories (almacenamiento)
+  // Repositorios (almacenamiento)
   late final ActivityRepository _activityRepository;
   late final TimeBlockRepository _timeBlockRepository;
   late final HabitRepository _habitRepository;
 
-  // Services (lógica de dominio)
+  // Servicios (lógica de dominio) - inicialización perezosa
   ActivityToTimeBlockService? _activityToTimeBlockService;
   HabitToTimeBlockService? _habitToTimeBlockService;
   TempoSageApiService? _tempoSageApiService;
 
-  // Casos de uso
+  // Casos de uso - inicialización perezosa
   GetHabitsUseCase? _getHabitsUseCase;
 
   /// Inicializa los repositorios de la aplicación.
@@ -114,6 +114,7 @@ class ServiceLocator {
   }
 
   /// Obtiene el servicio de API de TempoSage.
+  /// Se crea bajo demanda (lazy initialization).
   TempoSageApiService get tempoSageApiService {
     _tempoSageApiService ??= TempoSageApiService();
     return _tempoSageApiService!;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
-import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/accessible_button.dart';
 import '../../data/models/time_block_model.dart';
 import '../../data/repositories/time_block_repository.dart';
 
@@ -383,12 +383,9 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
               ),
               const SizedBox(height: 24),
               // Create Button
-              SizedBox(
-                width: double.infinity,
-                child: PrimaryButton(
-                  onPressed: _saveTimeBlock,
-                  text: 'Create Time Block',
-                ),
+              AccessibleButton.primary(
+                text: 'Create Time Block',
+                onPressed: _saveTimeBlock,
               ),
             ],
           ),

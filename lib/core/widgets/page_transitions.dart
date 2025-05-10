@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_animations.dart';
 
+/// Clase para transiciones de página con animaciones suaves
 class MobilePageTransition extends StatelessWidget {
   final Widget child;
   final bool isPopup;
@@ -34,6 +35,7 @@ class MobilePageTransition extends StatelessWidget {
   }
 }
 
+/// Crea una ruta de página con animaciones suaves
 Route<T> createMobilePageRoute<T>({
   required Widget page,
   bool isPopup = false,
@@ -77,4 +79,27 @@ Route<T> createMobilePageRoute<T>({
     transitionDuration: AppAnimations.normal,
     reverseTransitionDuration: AppAnimations.fast,
   );
+}
+
+/// Transición de página que incluye efectos de Hero
+class HeroPageTransition extends PageRouteBuilder {
+  final Widget page;
+  final String heroTag;
+
+  HeroPageTransition({
+    required this.page,
+    required this.heroTag,
+  }) : super(
+          pageBuilder: (context, animation, secondaryAnimation) => page,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return Hero(
+              tag: heroTag,
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+          transitionDuration: AppAnimations.normal,
+        );
 }

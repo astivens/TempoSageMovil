@@ -20,9 +20,17 @@ class Logger {
   /// Configuración del nivel mínimo de log
   LogLevel _minLevel = kDebugMode ? LogLevel.debug : LogLevel.info;
 
+  /// Determina si se muestran registros completos o simplificados
+  bool _verboseMode = false;
+
   /// Configura el nivel mínimo de log
   void setMinLevel(LogLevel level) {
     _minLevel = level;
+  }
+
+  /// Configura el modo verboso para logs detallados
+  void setVerboseMode(bool verbose) {
+    _verboseMode = verbose;
   }
 
   /// Log de nivel debug (solo para desarrollo)
@@ -109,17 +117,29 @@ class Logger {
     // Formato básico del mensaje
     String logMessage = '[$dateTime][$logLevel]$logTag $message';
 
-    // Agregar datos adicionales si existen
-    if (data != null && data.isNotEmpty) {
+    // En modo no verboso, solo agregamos información adicional para niveles superiores a info
+    bool shouldAddDetails =
+        _verboseMode || level.index >= LogLevel.warning.index;
+
+    // Agregar datos adicionales si existen y se permite
+    if (shouldAddDetails && data != null && data.isNotEmpty) {
       logMessage += '\nData: $data';
     }
 
-    // Agregar información de error si existe
-    if (error != null) {
+    // Agregar información de error si existe y se permite
+    if (shouldAddDetails && error != null) {
       logMessage += '\nError: $error';
 
       if (stackTrace != null) {
-        logMessage += '\nStackTrace: $stackTrace';
+        // En modo no verboso, limitamos la traza a las primeras 5 líneas
+        String stackTraceStr = stackTrace.toString();
+        if (!_verboseMode) {
+          final lines = stackTraceStr.split('\n');
+          if (lines.length > 5) {
+            stackTraceStr = '${lines.take(5).join('\n')}\n...';
+          }
+        }
+        logMessage += '\nStackTrace: $stackTraceStr';
       }
     }
 

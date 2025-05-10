@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/services/service_locator.dart';
-import '../../../../core/widgets/page_transition.dart';
+import '../../../../core/widgets/page_transitions.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../data/models/time_block_model.dart';
 import '../widgets/time_block_timeline.dart';
@@ -164,8 +164,8 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
   void _handleTimeBlockTap(TimeBlockModel block) {
     Navigator.of(context).push(
       HeroPageTransition(
-        heroTag: 'timeblock_${block.id}',
         page: _buildTimeBlockDetailScreen(block),
+        heroTag: 'timeblock_${block.id}',
       ),
     );
   }
