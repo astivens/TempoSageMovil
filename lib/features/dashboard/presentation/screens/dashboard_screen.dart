@@ -34,7 +34,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       controller: _controller,
     );
-    _controller.loadData();
+
+    // Cargar los datos básicos de la aplicación
+    _controller.loadData().then((_) {
+      // Realizamos las llamadas a la API en segundo plano para no bloquear la UI
+      _loadAIRecommendations();
+    });
+  }
+
+  // Método para cargar las recomendaciones de la IA en segundo plano
+  Future<void> _loadAIRecommendations() async {
+    try {
+      // Si no hay actividades, no tiene sentido hacer llamadas a la API
+      if (_controller.activities.isEmpty) {
+        debugPrint('No hay actividades para generar recomendaciones.');
+        return;
+      }
+
+      // Cargamos las predicciones de productividad
+      await _controller.predictProductivity();
+
+      // Si hay actividades, intentamos obtener sugerencias de horarios
+      final categories =
+          _controller.activities.map((a) => a.category).toSet().toList();
+
+      if (categories.isNotEmpty) {
+        await _controller.suggestOptimalTimes(
+          activityCategory: categories.first,
+        );
+      }
+
+      // Analizamos patrones de actividades solo si hay suficientes
+      if (_controller.activities.length >= 3) {
+        await _controller.analyzePatterns();
+      } else {
+        debugPrint(
+            'Insuficientes actividades para análisis de patrones (${_controller.activities.length})');
+      }
+    } catch (e) {
+      // Solo registramos el error, no interrumpimos la experiencia del usuario
+      debugPrint('Error al cargar recomendaciones de IA: $e');
+    } finally {
+      // Forzar una reconstrucción para asegurarnos de que la UI se actualice
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 
   @override

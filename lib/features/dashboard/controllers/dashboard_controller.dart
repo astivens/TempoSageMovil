@@ -10,31 +10,63 @@ import '../../habits/domain/services/habit_to_timeblock_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/utils/date_time_helper.dart';
 import '../../habits/domain/entities/habit.dart';
+import '../../activities/domain/usecases/predict_productivity_use_case.dart';
+import '../../activities/domain/usecases/suggest_optimal_time_use_case.dart';
+import '../../activities/domain/usecases/analyze_patterns_use_case.dart';
+import '../../activities/domain/entities/activity.dart';
 
 class DashboardController extends ChangeNotifier {
   final ActivityRepository _activityRepository;
   final HabitRepository _habitRepository;
   final TimeBlockRepository _timeBlockRepository;
   final HabitToTimeBlockService _habitToTimeBlockService;
+  final PredictProductivityUseCase _predictProductivityUseCase;
+  final SuggestOptimalTimeUseCase _suggestOptimalTimeUseCase;
+  final AnalyzePatternsUseCase _analyzePatternsUseCase;
 
   List<ActivityModel> _activities = [];
   List<HabitModel> _habits = [];
   List<TimeBlockModel> _timeBlocks = [];
   bool _isLoading = false;
 
+  // Estados para la API
+  bool _isApiLoading = false;
+  String? _apiError;
+  double? _productivityPrediction = null;
+  String? _productivityExplanation = null;
+  List<Map<String, dynamic>>? _timeSuggestions = null;
+  List<Map<String, dynamic>>? _activityPatterns = null;
+
   DashboardController({
     required ActivityRepository activityRepository,
     required HabitRepository habitRepository,
+    PredictProductivityUseCase? predictProductivityUseCase,
+    SuggestOptimalTimeUseCase? suggestOptimalTimeUseCase,
+    AnalyzePatternsUseCase? analyzePatternsUseCase,
   })  : _activityRepository = activityRepository,
         _habitRepository = habitRepository,
         _timeBlockRepository = ServiceLocator.instance.timeBlockRepository,
         _habitToTimeBlockService =
-            ServiceLocator.instance.habitToTimeBlockService;
+            ServiceLocator.instance.habitToTimeBlockService,
+        _predictProductivityUseCase =
+            predictProductivityUseCase ?? PredictProductivityUseCase(),
+        _suggestOptimalTimeUseCase =
+            suggestOptimalTimeUseCase ?? SuggestOptimalTimeUseCase(),
+        _analyzePatternsUseCase =
+            analyzePatternsUseCase ?? AnalyzePatternsUseCase();
 
   List<ActivityModel> get activities => _activities;
   List<HabitModel> get habits => _habits;
   List<TimeBlockModel> get timeBlocks => _timeBlocks;
   bool get isLoading => _isLoading;
+
+  // Nuevos getters para la API
+  bool get isApiLoading => _isApiLoading;
+  String? get apiError => _apiError;
+  double? get productivityPrediction => _productivityPrediction;
+  String? get productivityExplanation => _productivityExplanation;
+  List<Map<String, dynamic>>? get timeSuggestions => _timeSuggestions;
+  List<Map<String, dynamic>>? get activityPatterns => _activityPatterns;
 
   Future<void> loadData() async {
     _isLoading = true;
@@ -329,5 +361,157 @@ class DashboardController extends ChangeNotifier {
       isCompleted: entity.isDone,
       dateCreation: entity.dateCreation,
     );
+  }
+
+  // Convertir ActivityModel a Activity para la API
+  Activity _mapActivityModelToEntity(ActivityModel model) {
+    return Activity(
+      id: model.id,
+      name: model.title,
+      date: model.startTime,
+      category: model.category,
+      description: model.description,
+      isCompleted: model.isCompleted,
+    );
+  }
+
+  /// Predice la productividad para la fecha objetivo
+  Future<void> predictProductivity({DateTime? targetDate}) async {
+    _isApiLoading = true;
+    // Reset de datos previos
+    _productivityPrediction = null;
+    _productivityExplanation = null;
+    _apiError = null;
+    notifyListeners();
+
+    try {
+      final date = targetDate ?? DateTime.now();
+      // Convertir las actividades y hábitos al formato de entidad para la API
+      final activities = _activities.map(_mapActivityModelToEntity).toList();
+      final habits = _habits.map(_mapModelToEntity).toList();
+
+      // Si no hay suficientes datos, no realizar la llamada
+      if (activities.isEmpty) {
+        debugPrint('Insuficientes actividades para predecir productividad');
+        _isApiLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final result = await _predictProductivityUseCase.executeWithExplanation(
+        activities: activities,
+        habits: habits,
+        targetDate: date,
+      );
+
+      // Verificamos que haya resultados válidos
+      if (result.containsKey('prediction')) {
+        _productivityPrediction = result['prediction'] as double;
+        _productivityExplanation = result['explanation'] as String? ??
+            'Predicción basada en tus actividades y hábitos recientes.';
+      } else {
+        debugPrint('Respuesta de API sin predicción');
+      }
+    } catch (e) {
+      _apiError = e.toString();
+      debugPrint('Error al predecir productividad: $e');
+    } finally {
+      _isApiLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Sugiere horarios óptimos para una categoría de actividad
+  Future<void> suggestOptimalTimes({
+    required String activityCategory,
+    DateTime? targetDate,
+  }) async {
+    _isApiLoading = true;
+    // Reset de datos previos
+    _timeSuggestions = [];
+    _apiError = null;
+    notifyListeners();
+
+    try {
+      final date = targetDate ?? DateTime.now();
+      // Filtrar actividades de la misma categoría y convertirlas
+      final pastActivities = _activities
+          .where((a) => a.category == activityCategory)
+          .map(_mapActivityModelToEntity)
+          .toList();
+
+      // Si no hay suficientes actividades previas, no realizar la llamada
+      if (pastActivities.isEmpty || pastActivities.length < 2) {
+        _timeSuggestions = [];
+        debugPrint('Insuficientes actividades previas para sugerir horarios');
+        _isApiLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final result = await _suggestOptimalTimeUseCase.executeWithExplanation(
+        activityCategory: activityCategory,
+        pastActivities: pastActivities,
+        targetDate: date,
+      );
+
+      // Verificar si hay sugerencias en la respuesta
+      final suggestions = result['suggestions'];
+      if (suggestions == null) {
+        _timeSuggestions = [];
+      } else {
+        _timeSuggestions = List<Map<String, dynamic>>.from(suggestions);
+      }
+    } catch (e) {
+      _apiError = e.toString();
+      debugPrint('Error al sugerir horarios: $e');
+      _timeSuggestions = []; // Inicializar como lista vacía en caso de error
+    } finally {
+      _isApiLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Analiza patrones en las actividades
+  Future<void> analyzePatterns({int timePeriod = 30}) async {
+    _isApiLoading = true;
+    // Reset de datos previos
+    _activityPatterns = [];
+    _apiError = null;
+    notifyListeners();
+
+    try {
+      // Convertir actividades al formato de entidad para la API
+      final activities = _activities.map(_mapActivityModelToEntity).toList();
+
+      // Si no hay suficientes actividades, no realizar la llamada
+      if (activities.isEmpty || activities.length < 2) {
+        _activityPatterns = [];
+        debugPrint('Insuficientes actividades para análisis de patrones');
+        _isApiLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final result = await _analyzePatternsUseCase.executeWithExplanation(
+        activities: activities,
+        timePeriod: timePeriod,
+      );
+
+      // Verificar si hay patrones en la respuesta
+      final patterns = result['patterns'];
+      if (patterns == null) {
+        _activityPatterns = [];
+      } else {
+        _activityPatterns = List<Map<String, dynamic>>.from(patterns);
+      }
+    } catch (e) {
+      _apiError = e.toString();
+      debugPrint('Error al analizar patrones: $e');
+      _activityPatterns = []; // Inicializar como lista vacía en caso de error
+    } finally {
+      _isApiLoading = false;
+      notifyListeners();
+    }
   }
 }

@@ -6,6 +6,7 @@ import '../../features/habits/data/repositories/habit_repository_impl.dart';
 import '../../features/habits/domain/services/habit_to_timeblock_service.dart';
 import '../../features/habits/domain/usecases/get_habits_use_case.dart';
 import '../utils/logger.dart';
+import 'tempo_sage_api_service.dart';
 
 /// Localizador de servicios e implementación de inyección de dependencias.
 ///
@@ -30,6 +31,7 @@ class ServiceLocator {
   // Services (lógica de dominio)
   ActivityToTimeBlockService? _activityToTimeBlockService;
   HabitToTimeBlockService? _habitToTimeBlockService;
+  TempoSageApiService? _tempoSageApiService;
 
   // Casos de uso
   GetHabitsUseCase? _getHabitsUseCase;
@@ -111,12 +113,19 @@ class ServiceLocator {
     return _getHabitsUseCase!;
   }
 
+  /// Obtiene el servicio de API de TempoSage.
+  TempoSageApiService get tempoSageApiService {
+    _tempoSageApiService ??= TempoSageApiService();
+    return _tempoSageApiService!;
+  }
+
   /// Reinicia todos los servicios y limpia cachés.
   /// Útil para pruebas o cuando se requiere un estado limpio.
   void resetServices() {
     _activityToTimeBlockService = null;
     _habitToTimeBlockService = null;
     _getHabitsUseCase = null;
+    _tempoSageApiService = null;
     _logger.i('Servicios reiniciados', tag: 'ServiceLocator');
   }
 }
