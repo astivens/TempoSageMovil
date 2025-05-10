@@ -134,8 +134,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.base,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Consumer<DashboardController>(
           builder: (context, controller, child) {
@@ -186,8 +188,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAIAssistant,
-        backgroundColor: AppColors.blue,
-        child: const Icon(Icons.mic),
+        backgroundColor: theme.colorScheme.primary,
+        child: Icon(Icons.mic, color: theme.colorScheme.onPrimary),
       ),
     );
   }

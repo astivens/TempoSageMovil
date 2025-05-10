@@ -162,7 +162,9 @@ class _MobileAnimatedListState extends State<MobileAnimatedList>
         background: Container(
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20.0),
-          color: AppColors.red,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.mocha.red
+              : AppColors.latte.red,
           child: const Icon(
             Icons.delete,
             color: Colors.white,

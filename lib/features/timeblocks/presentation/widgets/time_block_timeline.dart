@@ -50,6 +50,8 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AnimatedBuilder(
       animation: _timelineAnimation,
       builder: (context, child) {
@@ -66,7 +68,7 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
           return AnimatedListItem(
             index: index,
             child: HoverScale(
-              child: _buildTimeBlockCard(timeBlock),
+              child: _buildTimeBlockCard(timeBlock, theme),
             ),
           );
         },
@@ -74,7 +76,7 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
     );
   }
 
-  Widget _buildTimeBlockCard(TimeBlockModel timeBlock) {
+  Widget _buildTimeBlockCard(TimeBlockModel timeBlock, ThemeData theme) {
     final now = DateTime.now();
     final isCurrent =
         timeBlock.startTime.isBefore(now) && timeBlock.endTime.isAfter(now);
@@ -85,10 +87,10 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTimeIndicator(timeBlock, isCurrent, isPast),
+          _buildTimeIndicator(timeBlock, isCurrent, isPast, theme),
           const SizedBox(width: 16),
           Expanded(
-            child: _buildBlockContent(timeBlock, isCurrent, isPast),
+            child: _buildBlockContent(timeBlock, isCurrent, isPast, theme),
           ),
         ],
       ),
@@ -96,15 +98,15 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
   }
 
   Widget _buildTimeIndicator(
-      TimeBlockModel timeBlock, bool isCurrent, bool isPast) {
+      TimeBlockModel timeBlock, bool isCurrent, bool isPast, ThemeData theme) {
     return Column(
       children: [
         Text(
           _timeFormat.format(timeBlock.startTime),
           style: TextStyle(
             color: isCurrent
-                ? AppColors.blue
-                : AppColors.text.withAlpha((0.6 * 255).toInt()),
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onBackground.withOpacity(0.6),
             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -113,18 +115,18 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
           width: 2,
           height: 40,
           color: isCurrent
-              ? AppColors.blue
+              ? theme.colorScheme.primary
               : isPast
-                  ? AppColors.text.withAlpha((0.3 * 255).toInt())
-                  : AppColors.text.withAlpha((0.6 * 255).toInt()),
+                  ? theme.colorScheme.onBackground.withOpacity(0.3)
+                  : theme.colorScheme.onBackground.withOpacity(0.6),
         ),
         const SizedBox(height: 4),
         Text(
           _timeFormat.format(timeBlock.endTime),
           style: TextStyle(
             color: isCurrent
-                ? AppColors.blue
-                : AppColors.text.withAlpha((0.6 * 255).toInt()),
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onBackground.withOpacity(0.6),
             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -133,35 +135,33 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
   }
 
   Widget _buildBlockContent(
-      TimeBlockModel timeBlock, bool isCurrent, bool isPast) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        color: isCurrent
-            ? _getBlockColor(timeBlock).withAlpha((0.2 * 255).toInt())
-            : AppColors.surface1,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
+      TimeBlockModel timeBlock, bool isCurrent, bool isPast, ThemeData theme) {
+    return GestureDetector(
+      onTap: () => widget.onTimeBlockTap(timeBlock),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
           color: isCurrent
-              ? _getBlockColor(timeBlock)
-              : _getBlockColor(timeBlock).withAlpha((0.2 * 255).toInt()),
-          width: 1,
+              ? _getBlockColor(timeBlock, theme).withOpacity(0.2)
+              : theme.cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isCurrent
+                ? _getBlockColor(timeBlock, theme)
+                : _getBlockColor(timeBlock, theme).withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: isCurrent
+              ? [
+                  BoxShadow(
+                    color: _getBlockColor(timeBlock, theme).withOpacity(0.3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
         ),
-        boxShadow: isCurrent
-            ? [
-                BoxShadow(
-                  color:
-                      _getBlockColor(timeBlock).withAlpha((0.3 * 255).toInt()),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: InkWell(
-        onTap: () => widget.onTimeBlockTap(timeBlock),
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -175,8 +175,8 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
                       timeBlock.title,
                       style: TextStyle(
                         color: isCurrent
-                            ? _getBlockColor(timeBlock)
-                            : AppColors.text,
+                            ? _getBlockColor(timeBlock, theme)
+                            : theme.colorScheme.onBackground,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -187,22 +187,22 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.blue.withAlpha((0.2 * 255).toInt()),
+                        color: theme.colorScheme.primary.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.circle,
-                            color: AppColors.blue,
+                            color: theme.colorScheme.primary,
                             size: 8,
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             'En curso',
                             style: TextStyle(
-                              color: AppColors.blue,
+                              color: theme.colorScheme.primary,
                               fontSize: 12,
                             ),
                           ),
@@ -216,7 +216,7 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
                 Text(
                   timeBlock.description,
                   style: TextStyle(
-                    color: AppColors.text.withAlpha((0.8 * 255).toInt()),
+                    color: theme.colorScheme.onBackground.withOpacity(0.8),
                     fontSize: 14,
                   ),
                 ),
@@ -230,13 +230,13 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
                       Icon(
                         Icons.category,
                         size: 16,
-                        color: _getBlockColor(timeBlock),
+                        color: _getBlockColor(timeBlock, theme),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         timeBlock.category,
                         style: TextStyle(
-                          color: _getBlockColor(timeBlock),
+                          color: _getBlockColor(timeBlock, theme),
                           fontSize: 12,
                         ),
                       ),
@@ -251,29 +251,31 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
     );
   }
 
-  Color _getBlockColor(TimeBlockModel block) {
+  Color _getBlockColor(TimeBlockModel block, ThemeData theme) {
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     try {
       if (block.isFocusTime) {
-        return AppColors.mauve;
+        return theme.colorScheme.secondary;
       }
 
       switch (block.category.toLowerCase()) {
         case 'work':
-          return AppColors.blue;
+          return theme.colorScheme.primary;
         case 'study':
-          return AppColors.green;
+          return isDarkMode ? AppColors.mocha.green : AppColors.latte.green;
         case 'personal':
-          return AppColors.mauve;
+          return theme.colorScheme.secondary;
         case 'lunch':
         case 'break':
-          return AppColors.peach;
+          return isDarkMode ? AppColors.mocha.peach : AppColors.latte.peach;
         case 'meeting':
-          return AppColors.yellow;
+          return isDarkMode ? AppColors.mocha.yellow : AppColors.latte.yellow;
         default:
-          return AppColors.blue;
+          return theme.colorScheme.primary;
       }
     } catch (e) {
-      return AppColors.surface0;
+      return theme.colorScheme.surface;
     }
   }
 }

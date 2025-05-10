@@ -108,7 +108,9 @@ class QuickStatsSection extends StatelessWidget {
             value: '${focusScore.toStringAsFixed(1)}%',
             subtitle: 'de productividad',
             icon: Icons.trending_up,
-            color: AppColors.green,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.mocha.green
+                : AppColors.latte.green,
           ),
         ],
       ),

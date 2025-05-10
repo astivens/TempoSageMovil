@@ -28,6 +28,8 @@ class ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedListItem(
       index: index,
       child: HoverScale(
@@ -37,14 +39,16 @@ class ActivityCard extends StatelessWidget {
             children: [
               SlidableAction(
                 onPressed: (_) => onEdit(),
-                backgroundColor: AppColors.blue,
+                backgroundColor:
+                    isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue,
                 foregroundColor: Colors.white,
                 icon: Icons.edit,
                 label: 'Editar',
               ),
               SlidableAction(
                 onPressed: (_) => onDelete(),
-                backgroundColor: AppColors.red,
+                backgroundColor:
+                    isDarkMode ? AppColors.mocha.red : AppColors.latte.red,
                 foregroundColor: Colors.white,
                 icon: Icons.delete,
                 label: 'Eliminar',
@@ -59,7 +63,9 @@ class ActivityCard extends StatelessWidget {
                 color: AppColors.surface0,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.surface2,
+                  color: isDarkMode
+                      ? AppColors.mocha.surface2
+                      : AppColors.latte.surface2,
                   width: 1,
                 ),
               ),
@@ -85,9 +91,12 @@ class ActivityCard extends StatelessWidget {
                               ),
                             ),
                             if (isHabit)
-                              const Icon(
+                              Icon(
                                 Icons.repeat,
-                                color: AppColors.mauve,
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? AppColors.mocha.mauve
+                                    : AppColors.latte.mauve,
                                 size: 20,
                               ),
                           ],
@@ -97,7 +106,10 @@ class ActivityCard extends StatelessWidget {
                           Text(
                             activity.description,
                             style: AppStyles.bodySmall.copyWith(
-                              color: AppColors.subtext0,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.mocha.subtext0
+                                  : AppColors.latte.subtext0,
                               decoration: activity.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
@@ -110,7 +122,7 @@ class ActivityCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _buildCategoryChip(),
+                  _buildCategoryChip(context),
                 ],
               ),
             ),
@@ -146,7 +158,9 @@ class ActivityCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryChip() {
+  Widget _buildCategoryChip(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -156,7 +170,8 @@ class ActivityCard extends StatelessWidget {
       child: Text(
         activity.category,
         style: AppStyles.bodySmall.copyWith(
-          color: AppColors.subtext0,
+          color:
+              isDarkMode ? AppColors.mocha.subtext0 : AppColors.latte.subtext0,
         ),
       ),
     );

@@ -50,10 +50,12 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
   }
 
   Future<void> _editActivity(ActivityModel activity) async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface0,
+      backgroundColor:
+          isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(20),
@@ -73,6 +75,8 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Activities',
@@ -110,12 +114,18 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
                   decoration: InputDecoration(
                     hintText: 'Search activities...',
                     hintStyle: AppStyles.bodyMedium.copyWith(
-                      color: AppColors.overlay0,
+                      color: isDarkMode
+                          ? AppColors.mocha.overlay0
+                          : AppColors.latte.overlay0,
                     ),
-                    prefixIcon:
-                        const Icon(Icons.search, color: AppColors.overlay0),
+                    prefixIcon: Icon(Icons.search,
+                        color: isDarkMode
+                            ? AppColors.mocha.overlay0
+                            : AppColors.latte.overlay0),
                     filled: true,
-                    fillColor: AppColors.surface0,
+                    fillColor: isDarkMode
+                        ? AppColors.mocha.surface0
+                        : AppColors.latte.surface0,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
@@ -173,10 +183,11 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
     List<String> items,
     void Function(String?) onChanged,
   ) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface0,
+        color: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButton<String>(
@@ -189,8 +200,12 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
             .toList(),
         onChanged: onChanged,
         style: AppStyles.bodyMedium,
-        dropdownColor: AppColors.surface0,
-        icon: const Icon(Icons.arrow_drop_down, color: AppColors.overlay0),
+        dropdownColor:
+            isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
+        icon: Icon(Icons.arrow_drop_down,
+            color: isDarkMode
+                ? AppColors.mocha.overlay0
+                : AppColors.latte.overlay0),
         isExpanded: true,
         underline: const SizedBox(),
       ),
@@ -198,10 +213,11 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
   }
 
   Widget _buildActivityCard(ActivityModel activity) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface0,
+        color: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
@@ -228,7 +244,8 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                _buildTag(activity.category, AppColors.blue),
+                _buildTag(
+                    activity.category, Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 _buildTag(
                     activity.priority, _getPriorityColor(activity.priority)),
@@ -240,11 +257,17 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppColors.overlay0),
+              icon: Icon(Icons.edit_outlined,
+                  color: isDarkMode
+                      ? AppColors.mocha.overlay0
+                      : AppColors.latte.overlay0),
               onPressed: () => _editActivity(activity),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.overlay0),
+              icon: Icon(Icons.delete_outline,
+                  color: isDarkMode
+                      ? AppColors.mocha.overlay0
+                      : AppColors.latte.overlay0),
               onPressed: () async {
                 final confirmed = await showDialog<bool>(
                   context: context,
@@ -259,8 +282,11 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Eliminar',
-                            style: TextStyle(color: AppColors.red)),
+                        child: Text('Eliminar',
+                            style: TextStyle(
+                                color: isDarkMode
+                                    ? AppColors.mocha.red
+                                    : AppColors.latte.red)),
                       ),
                     ],
                   ),
@@ -279,10 +305,11 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
   }
 
   Widget _buildTag(String text, Color color) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: isDarkMode ? AppColors.mocha.surface1 : AppColors.latte.surface1,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -293,15 +320,18 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
   }
 
   Color _getPriorityColor(String priority) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     switch (priority.toLowerCase()) {
       case 'alta':
-        return AppColors.red;
+        return isDarkMode ? AppColors.mocha.red : AppColors.latte.red;
       case 'media':
-        return AppColors.yellow;
+        return isDarkMode ? AppColors.mocha.yellow : AppColors.latte.yellow;
       case 'baja':
-        return AppColors.green;
+        return isDarkMode ? AppColors.mocha.green : AppColors.latte.green;
       default:
-        return AppColors.overlay0;
+        return isDarkMode ? AppColors.mocha.overlay0 : AppColors.latte.overlay0;
     }
   }
 }

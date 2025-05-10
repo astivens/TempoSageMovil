@@ -48,8 +48,8 @@ class AccessibleButton extends StatelessWidget {
       text: text,
       onPressed: onPressed,
       icon: icon,
-      backgroundColor: AppColors.blue,
-      textColor: AppColors.text,
+      backgroundColor: AppColors.mocha.blue,
+      textColor: AppColors.mocha.text,
       isFullWidth: isFullWidth,
       isLoading: isLoading,
       isEnabled: isEnabled,
@@ -61,15 +61,21 @@ class AccessibleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final primaryColor =
+        isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue;
+
     return SizedBox(
       width: isFullWidth ? double.infinity : width,
       height: height,
       child: ElevatedButton(
         onPressed: isEnabled && !isLoading ? onPressed : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: textColor,
-          disabledBackgroundColor: AppColors.surface0,
+          backgroundColor: backgroundColor ?? primaryColor,
+          foregroundColor: textColor ?? theme.colorScheme.onPrimary,
+          disabledBackgroundColor:
+              isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
           padding: padding ??
               const EdgeInsets.symmetric(
                 horizontal: 24,
@@ -84,7 +90,7 @@ class AccessibleButton extends StatelessWidget {
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  color: textColor ?? AppColors.text,
+                  color: textColor ?? theme.colorScheme.onPrimary,
                   strokeWidth: 2,
                 ),
               )

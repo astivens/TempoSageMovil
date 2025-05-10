@@ -1,39 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_styles.dart';
-import '../../../../core/constants/app_colors.dart';
 
 class DashboardAppBar extends StatelessWidget {
   const DashboardAppBar({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return SliverAppBar(
       expandedHeight: 80,
       floating: true,
       pinned: true,
-      backgroundColor: AppColors.base,
+      backgroundColor: theme.scaffoldBackgroundColor,
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.calendar_today,
-            color: AppColors.blue,
+            color: theme.colorScheme.primary,
             size: 20,
           ),
           const SizedBox(width: 8),
           Text(
             'Hoy',
-            style: AppStyles.titleLarge.copyWith(
-              color: AppColors.text,
+            style: theme.textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(width: 8),
           Text(
             DateFormat('EEEE, d MMMM', 'es').format(DateTime.now()),
-            style: AppStyles.bodyMedium.copyWith(
-              color: AppColors.text.withValues(alpha: 179),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onBackground.withOpacity(0.7),
             ),
           ),
         ],

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/constants/constants.dart';
 import '../providers/settings_provider.dart';
+import '../screens/theme_settings_screen.dart';
+import '../widgets/settings_section.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -11,27 +13,46 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AccessibleScaffold(
       title: 'Ajustes',
+      showBackButton: true,
       body: Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
           return ListView(
             padding: const EdgeInsets.all(AccessibilityStyles.spacingMedium),
             children: [
-              _buildSection(
+              SettingsSection(
                 title: 'Apariencia',
-                children: [
-                  _buildSwitchTile(
-                    title: 'Modo Oscuro',
-                    value: settingsProvider.settings.darkMode,
-                    onChanged: (value) =>
-                        settingsProvider.toggleDarkMode(value),
+                items: [
+                  SettingsItem(
+                    icon: Icons.color_lens,
+                    title: 'Tema',
+                    subtitle: 'Personaliza los colores y apariencia',
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ThemeSettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
-                  _buildSwitchTile(
+                  SettingsItem(
+                    icon: Icons.dark_mode,
+                    title: 'Modo oscuro',
+                    onChanged: (value) {
+                      settingsProvider.toggleDarkMode(value);
+                    },
+                    value: settingsProvider.settings.darkMode,
+                  ),
+                  SettingsItem(
+                    icon: Icons.contrast,
                     title: 'Alto Contraste',
                     value: settingsProvider.settings.highContrastMode,
                     onChanged: (value) =>
                         settingsProvider.toggleHighContrast(value),
                   ),
                   _buildSliderTile(
+                    context: context,
                     title: 'Tamaño de Texto',
                     value: settingsProvider.settings.fontSizeScale.toDouble(),
                     min: 1,
@@ -43,16 +64,18 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AccessibilityStyles.spacingLarge),
-              _buildSection(
+              SettingsSection(
                 title: 'Notificaciones',
-                children: [
-                  _buildSwitchTile(
+                items: [
+                  SettingsItem(
+                    icon: Icons.notifications,
                     title: 'Notificaciones',
                     value: settingsProvider.settings.notificationsEnabled,
                     onChanged: (value) =>
                         settingsProvider.toggleNotifications(value),
                   ),
-                  _buildSwitchTile(
+                  SettingsItem(
+                    icon: Icons.vibration,
                     title: 'Vibración',
                     value: settingsProvider.settings.vibrationEnabled,
                     onChanged: (value) =>
@@ -61,10 +84,11 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AccessibilityStyles.spacingLarge),
-              _buildSection(
+              SettingsSection(
                 title: 'Accesibilidad',
-                children: [
-                  _buildSwitchTile(
+                items: [
+                  SettingsItem(
+                    icon: Icons.animation,
                     title: 'Animaciones Reducidas',
                     value: settingsProvider.settings.reducedAnimations,
                     onChanged: (value) =>
@@ -73,10 +97,11 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AccessibilityStyles.spacingLarge),
-              _buildSection(
+              SettingsSection(
                 title: 'Idioma',
-                children: [
+                items: [
                   _buildLanguageTile(
+                    context: context,
                     title: 'Español',
                     value: 'es',
                     currentValue: settingsProvider.settings.language,
@@ -84,6 +109,7 @@ class SettingsScreen extends StatelessWidget {
                         settingsProvider.updateLanguage(value),
                   ),
                   _buildLanguageTile(
+                    context: context,
                     title: 'English',
                     value: 'en',
                     currentValue: settingsProvider.settings.language,
@@ -92,6 +118,26 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: AccessibilityStyles.spacingLarge),
+              // Botón de guardar (para efectos visuales, los cambios ya se guardan automáticamente)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AccessibilityStyles.spacingLarge),
+                child: ElevatedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Configuración guardada'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    // Volver a la pantalla anterior
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Guardar y volver'),
+                ),
+              ),
+              const SizedBox(height: AccessibilityStyles.spacingLarge),
             ],
           );
         },
@@ -99,45 +145,8 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required List<Widget> children,
-  }) {
-    return AccessibleCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(AccessibilityStyles.spacingMedium),
-            child: Text(
-              title,
-              style: AccessibilityStyles.accessibleTitleLarge,
-            ),
-          ),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSwitchTile({
-    required String title,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return ListTile(
-      title: Text(
-        title,
-        style: AccessibilityStyles.accessibleBodyLarge,
-      ),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-      ),
-    );
-  }
-
   Widget _buildSliderTile({
+    required BuildContext context,
     required String title,
     required double value,
     required double min,
@@ -167,6 +176,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildLanguageTile({
+    required BuildContext context,
     required String title,
     required String value,
     required String currentValue,

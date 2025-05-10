@@ -341,13 +341,16 @@ class HabitToTimeBlockService {
 
     // Determinar la hora de finalización (30 minutos por defecto)
     final endDateTime =
-        startDateTime.add(Duration(minutes: _defaultDurationMinutes));
+        startDateTime.add(const Duration(minutes: _defaultDurationMinutes));
+
+    // Usar solo la descripción del hábito, o vacío si no hay.
+    final String cleanDescription =
+        habit.description.isNotEmpty ? habit.description : '';
 
     return TimeBlockModel(
       id: const Uuid().v4(),
       title: '$_habitBlockPrefix${habit.title}',
-      description:
-          '${habit.description}\n\n$_habitGeneratedTag\nID del hábito: ${habit.id}',
+      description: cleanDescription, // Descripción limpia
       startTime: startDateTime,
       endTime: endDateTime,
       category: habit.category,
@@ -358,7 +361,12 @@ class HabitToTimeBlockService {
   }
 
   /// Extrae el ID del hábito de la descripción de un timeblock.
+  /// ESTA FUNCIÓN PODRÍA NECESITAR AJUSTES O SER ELIMINADA SI YA NO SE GUARDA EL ID EN LA DESC.
   String? _extractHabitIdFromDescription(String description) {
+    // Si la descripción ya no contiene el ID del hábito de forma fiable,
+    // esta función podría no ser útil o necesitar otra forma de asociar
+    // el timeblock con el hábito si aún es necesario para otras lógicas.
+    // Por ahora, se mantiene, pero tener en cuenta su dependencia de la estructura anterior.
     final match =
         RegExp(r'ID del hábito: ([a-zA-Z0-9-]+)').firstMatch(description);
     return match?.group(1);

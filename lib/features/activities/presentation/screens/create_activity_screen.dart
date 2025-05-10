@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/widgets/accessible_button.dart';
 import '../../../../core/utils/validators/form_validators.dart';
@@ -117,9 +117,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: context.backgroundColor,
       appBar: CustomAppBar(
-        title:
-            widget.activity != null ? 'Edit Activity' : 'Create New Activity',
+        title: widget.activity != null
+            ? 'Editar Actividad'
+            : 'Crear Nueva Actividad',
         showBackButton: true,
       ),
       body: SingleChildScrollView(
@@ -131,26 +133,31 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             children: [
               Text(
                 widget.activity != null
-                    ? 'Edit your activity details'
-                    : 'Add a new activity or task to your schedule',
-                style: AppStyles.bodyMedium,
+                    ? 'Edita los detalles de tu actividad'
+                    : 'Añade una nueva actividad o tarea a tu agenda',
+                style: AppStyles.bodyMedium.copyWith(
+                  color: context.textColor,
+                ),
               ),
               const SizedBox(height: 24),
               // Title
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'Activity title',
+                  labelText: 'Título',
+                  hintText: 'Título de la actividad',
                   filled: true,
-                  fillColor: AppColors.surface0,
+                  fillColor: context.surfaceColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
                   ),
+                  labelStyle: TextStyle(color: context.textColor),
+                  hintStyle: TextStyle(color: context.subtextColor),
                 ),
+                style: TextStyle(color: context.textColor),
                 validator: (value) =>
-                    FormValidators.validateRequired(value, 'Title'),
+                    FormValidators.validateRequired(value, 'Título'),
               ),
               const SizedBox(height: 16),
               // Date and Time
@@ -165,6 +172,32 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                           firstDate: DateTime.now(),
                           lastDate:
                               DateTime.now().add(const Duration(days: 365)),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme(
+                                  brightness: context.isDarkMode
+                                      ? Brightness.dark
+                                      : Brightness.light,
+                                  primary: context.primaryColor,
+                                  onPrimary: context.isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                  secondary: context.secondaryColor,
+                                  onSecondary: context.isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                  surface: context.surfaceColor,
+                                  onSurface: context.textColor,
+                                  background: context.backgroundColor,
+                                  onBackground: context.textColor,
+                                  error: context.errorColor,
+                                  onError: Colors.white,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
                         );
                         if (picked != null) {
                           setState(() {
@@ -175,15 +208,17 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.surface0,
+                          color: context.surfaceColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today),
+                            Icon(Icons.calendar_today,
+                                color: context.textColor),
                             const SizedBox(width: 8),
                             Text(
                               '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                              style: TextStyle(color: context.textColor),
                             ),
                           ],
                         ),
@@ -197,6 +232,32 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                         final TimeOfDay? picked = await showTimePicker(
                           context: context,
                           initialTime: _selectedTime,
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme(
+                                  brightness: context.isDarkMode
+                                      ? Brightness.dark
+                                      : Brightness.light,
+                                  primary: context.primaryColor,
+                                  onPrimary: context.isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                  secondary: context.secondaryColor,
+                                  onSecondary: context.isDarkMode
+                                      ? Colors.white
+                                      : Colors.black,
+                                  surface: context.surfaceColor,
+                                  onSurface: context.textColor,
+                                  background: context.backgroundColor,
+                                  onBackground: context.textColor,
+                                  error: context.errorColor,
+                                  onError: Colors.white,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
                         );
                         if (picked != null) {
                           setState(() {
@@ -207,14 +268,17 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.surface0,
+                          color: context.surfaceColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time),
+                            Icon(Icons.access_time, color: context.textColor),
                             const SizedBox(width: 8),
-                            Text(_selectedTime.format(context)),
+                            Text(
+                              _selectedTime.format(context),
+                              style: TextStyle(color: context.textColor),
+                            ),
                           ],
                         ),
                       ),
@@ -227,53 +291,77 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedCategory,
-                      items: _categories.map((category) {
-                        return DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedCategory = value!;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Category',
-                        filled: true,
-                        fillColor: AppColors.surface0,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedCategory,
+                        dropdownColor: context.surfaceColor,
+                        items: _categories.map((category) {
+                          return DropdownMenuItem(
+                            value: category,
+                            child: Text(
+                              category,
+                              style: TextStyle(color: context.textColor),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCategory = value!;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Categoría',
+                          filled: true,
+                          fillColor: context.surfaceColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          labelStyle: TextStyle(color: context.textColor),
                         ),
+                        style: TextStyle(color: context.textColor),
                       ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedPriority,
-                      items: _priorities.map((priority) {
-                        return DropdownMenuItem(
-                          value: priority,
-                          child: Text(priority),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedPriority = value!;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Priority',
-                        filled: true,
-                        fillColor: AppColors.surface0,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedPriority,
+                        dropdownColor: context.surfaceColor,
+                        items: _priorities.map((priority) {
+                          return DropdownMenuItem(
+                            value: priority,
+                            child: Text(
+                              priority,
+                              style: TextStyle(color: context.textColor),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedPriority = value!;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Prioridad',
+                          filled: true,
+                          fillColor: context.surfaceColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          labelStyle: TextStyle(color: context.textColor),
                         ),
+                        style: TextStyle(color: context.textColor),
                       ),
                     ),
                   ),
@@ -287,12 +375,15 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                   labelText: 'Description (Optional)',
                   hintText: 'Add details about this activity',
                   filled: true,
-                  fillColor: AppColors.surface0,
+                  fillColor: context.surfaceColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
                   ),
+                  labelStyle: TextStyle(color: context.textColor),
+                  hintStyle: TextStyle(color: context.subtextColor),
                 ),
+                style: TextStyle(color: context.textColor),
                 maxLines: 3,
               ),
               const SizedBox(height: 24),

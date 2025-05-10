@@ -99,10 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Logo
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       'TEMPO',
                       style: TextStyle(
                         color: AppColors.text,
@@ -113,7 +113,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       'SAGE',
                       style: TextStyle(
-                        color: AppColors.mauve,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.mocha.mauve
+                            : AppColors.latte.mauve,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
@@ -142,8 +144,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   Text(
                     _errorMessage!,
-                    style: const TextStyle(
-                      color: AppColors.red,
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.mocha.red
+                          : AppColors.latte.red,
                       fontSize: 14,
                     ),
                   ),
@@ -164,11 +168,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: const Text(
+                          child: Text(
                             'Login',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: AppColors.mauve,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.mocha.mauve
+                                  : AppColors.latte.mauve,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -178,7 +185,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: TextButton(
                           onPressed: () {},
                           style: TextButton.styleFrom(
-                            foregroundColor: AppColors.subtext0,
+                            foregroundColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? AppColors.mocha.subtext0
+                                    : AppColors.latte.subtext0,
                           ),
                           child: const Text('Register'),
                         ),
@@ -196,8 +206,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          labelStyle:
-                              const TextStyle(color: AppColors.subtext0),
+                          labelStyle: TextStyle(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.mocha.subtext0
+                                  : AppColors.latte.subtext0),
                           filled: true,
                           fillColor: AppColors.surface0,
                           border: OutlineInputBorder(
@@ -214,8 +227,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passwordController,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          labelStyle:
-                              const TextStyle(color: AppColors.subtext0),
+                          labelStyle: TextStyle(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.mocha.subtext0
+                                  : AppColors.latte.subtext0),
                           filled: true,
                           fillColor: AppColors.surface0,
                           border: OutlineInputBorder(
@@ -238,17 +254,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 // Voice Commands
-                const Text(
+                Text(
                   'Try voice commands',
                   style: TextStyle(
-                    color: AppColors.subtext1,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.mocha.subtext0
+                        : AppColors.latte.subtext0,
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 8),
                 IconButton(
                   onPressed: _startVoiceCommand,
-                  icon: const Icon(Icons.mic, color: AppColors.mauve),
+                  icon: Icon(Icons.mic,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.mocha.mauve
+                          : AppColors.latte.mauve),
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.surface0,
                     padding: const EdgeInsets.all(16),

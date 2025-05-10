@@ -52,6 +52,7 @@ dependencies:
   injectable: ^2.5.0
   # Added dependencies for improved DI
   get_it: ^7.6.7
+  catppuccin_flutter: ^1.0.0
 
 dev_dependencies:
   flutter_test:

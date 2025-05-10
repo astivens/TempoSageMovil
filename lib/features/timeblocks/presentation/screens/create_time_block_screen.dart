@@ -101,8 +101,10 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.mauve,
+            colorScheme: ColorScheme.dark(
+              primary: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.mocha.mauve
+                  : AppColors.latte.mauve,
               onPrimary: AppColors.text,
               surface: AppColors.surface0,
               onSurface: AppColors.text,
@@ -126,8 +128,10 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.mauve,
+            colorScheme: ColorScheme.dark(
+              primary: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.mocha.mauve
+                  : AppColors.latte.mauve,
               onPrimary: AppColors.text,
               surface: AppColors.surface0,
               onSurface: AppColors.text,
@@ -309,7 +313,7 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.timer, color: AppColors.mauve),
+                    const Icon(Icons.timer, color: AppColors.overlay0),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -324,7 +328,7 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
                           _isFocusTime = value;
                         });
                       },
-                      activeColor: AppColors.mauve,
+                      activeColor: AppColors.mocha.mauve,
                     ),
                   ],
                 ),

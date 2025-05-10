@@ -17,39 +17,43 @@ class AIRecommendations extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface0,
+        color: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           const SizedBox(height: 16),
-          _buildContent(),
+          _buildContent(context),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            const Icon(
+            Icon(
               Icons.auto_awesome,
-              color: AppColors.blue,
+              color: isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue,
               size: 24,
             ),
             const SizedBox(width: 8),
             Text(
               'Sugerencias Inteligentes',
               style: AppStyles.titleMedium.copyWith(
-                color: AppColors.text,
+                color: isDarkMode ? AppColors.mocha.text : AppColors.latte.text,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -58,7 +62,8 @@ class AIRecommendations extends StatelessWidget {
         IconButton(
           icon: Icon(
             Icons.refresh,
-            color: AppColors.text.withValues(alpha: 179),
+            color: (isDarkMode ? AppColors.mocha.text : AppColors.latte.text)
+                .withValues(alpha: 179),
           ),
           onPressed: () {
             controller.loadData();
@@ -69,7 +74,9 @@ class AIRecommendations extends StatelessWidget {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     // Mostrar indicador de carga si está cargando datos de la API
     if (controller.isApiLoading) {
       return const Center(
@@ -87,7 +94,8 @@ class AIRecommendations extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: Text(
             'Error: ${controller.apiError}',
-            style: TextStyle(color: AppColors.red),
+            style: TextStyle(
+                color: isDarkMode ? AppColors.mocha.red : AppColors.latte.red),
           ),
         ),
       );
@@ -110,7 +118,7 @@ class AIRecommendations extends StatelessWidget {
 
     // Si no hay recomendaciones, mostrar el estado vacío
     if (!hasProductivity && !hasSuggestions && !hasPatterns) {
-      return _buildEmptyState();
+      return _buildEmptyState(context);
     }
 
     // Si hay recomendaciones, mostrarlas
@@ -125,8 +133,8 @@ class AIRecommendations extends StatelessWidget {
                 'Tu productividad estimada para hoy es de ${controller.productivityPrediction!.toStringAsFixed(1)}/10.',
             child: AIRecommendationCard(
               icon: Icons.insights,
-              accentColor:
-                  _getProductivityColor(controller.productivityPrediction!),
+              accentColor: _getProductivityColor(
+                  controller.productivityPrediction!, context),
               title: 'Predicción de Productividad',
               description: controller.productivityExplanation ??
                   'Tu productividad estimada para hoy es de ${controller.productivityPrediction!.toStringAsFixed(1)}/10.',
@@ -174,7 +182,8 @@ class AIRecommendations extends StatelessWidget {
               padding: const EdgeInsets.only(top: 12.0),
               child: AIRecommendationCard(
                 icon: Icons.schedule,
-                accentColor: AppColors.mauve,
+                accentColor:
+                    isDarkMode ? AppColors.mocha.mauve : AppColors.latte.mauve,
                 title: 'Horario Óptimo',
                 description:
                     _formatTimeSuggestion(controller.timeSuggestions!.first),
@@ -225,7 +234,10 @@ class AIRecommendations extends StatelessWidget {
               padding: const EdgeInsets.only(top: 12.0),
               child: AIRecommendationCard(
                 icon: Icons.trending_up,
-                accentColor: AppColors.green,
+                accentColor:
+                    Theme.of(parentContext).brightness == Brightness.dark
+                        ? AppColors.mocha.green
+                        : AppColors.latte.green,
                 title: 'Patrones Detectados',
                 description:
                     _formatActivityPattern(controller.activityPatterns!.first),
@@ -305,14 +317,19 @@ class AIRecommendations extends StatelessWidget {
   }
 
   // Estado vacío cuando no hay recomendaciones
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 24.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: isDarkMode ? AppColors.mocha.surface1 : AppColors.latte.surface1,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.blue.withOpacity(0.3), width: 2),
+        border: Border.all(
+            color: (isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue)
+                .withOpacity(0.3),
+            width: 2),
       ),
       child: Center(
         child: Column(
@@ -320,13 +337,14 @@ class AIRecommendations extends StatelessWidget {
             Icon(
               Icons.lightbulb_outline,
               size: 48,
-              color: AppColors.yellow,
+              color:
+                  isDarkMode ? AppColors.mocha.yellow : AppColors.latte.yellow,
             ),
             const SizedBox(height: 16),
             Text(
               'Aún no hay sugerencias inteligentes',
               style: AppStyles.titleSmall.copyWith(
-                color: AppColors.text,
+                color: isDarkMode ? AppColors.mocha.text : AppColors.latte.text,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -337,7 +355,9 @@ class AIRecommendations extends StatelessWidget {
               child: Text(
                 'Conforme utilices más la aplicación, iremos generando recomendaciones personalizadas para ti.',
                 style: AppStyles.bodyMedium.copyWith(
-                  color: AppColors.text.withOpacity(0.7),
+                  color:
+                      (isDarkMode ? AppColors.mocha.text : AppColors.latte.text)
+                          .withOpacity(0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -350,8 +370,10 @@ class AIRecommendations extends StatelessWidget {
               icon: const Icon(Icons.refresh),
               label: const Text('Actualizar recomendaciones'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.blue,
-                foregroundColor: AppColors.text,
+                backgroundColor:
+                    isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue,
+                foregroundColor:
+                    isDarkMode ? AppColors.mocha.text : AppColors.latte.text,
               ),
             ),
           ],
@@ -361,13 +383,15 @@ class AIRecommendations extends StatelessWidget {
   }
 
   // Helper para obtener color según nivel de productividad
-  Color _getProductivityColor(double productivity) {
+  Color _getProductivityColor(double productivity, BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     if (productivity >= 7.5) {
-      return AppColors.green;
+      return isDarkMode ? AppColors.mocha.green : AppColors.latte.green;
     } else if (productivity >= 5) {
-      return AppColors.yellow;
+      return isDarkMode ? AppColors.mocha.yellow : AppColors.latte.yellow;
     } else {
-      return AppColors.red;
+      return isDarkMode ? AppColors.mocha.red : AppColors.latte.red;
     }
   }
 
@@ -478,6 +502,8 @@ class _AIRecommendationCardState extends State<_AIRecommendationCard>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) => Transform.scale(
@@ -501,14 +527,18 @@ class _AIRecommendationCardState extends State<_AIRecommendationCard>
                             Text(
                               widget.title,
                               style: AppStyles.titleMedium.copyWith(
-                                color: AppColors.blue,
+                                color: isDarkMode
+                                    ? AppColors.mocha.blue
+                                    : AppColors.latte.blue,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               widget.description,
                               style: AppStyles.bodyMedium.copyWith(
-                                color: AppColors.subtext1,
+                                color: isDarkMode
+                                    ? AppColors.mocha.subtext1
+                                    : AppColors.latte.subtext1,
                               ),
                             ),
                           ],
@@ -519,7 +549,9 @@ class _AIRecommendationCardState extends State<_AIRecommendationCard>
                         turns: _isExpanded ? 0.5 : 0,
                         child: Icon(
                           Icons.keyboard_arrow_down,
-                          color: AppColors.blue,
+                          color: isDarkMode
+                              ? AppColors.mocha.blue
+                              : AppColors.latte.blue,
                         ),
                       ),
                     ],
@@ -596,13 +628,14 @@ class _GoalAchievementCardState extends State<_GoalAchievementCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final isLoading = widget.controller.isGoalPredictionLoading;
     final error = widget.controller.goalPredictionError;
     final result = widget.controller.goalPredictionResult;
 
     return AIRecommendationCard(
       icon: Icons.flag,
-      accentColor: AppColors.blue,
+      accentColor: isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue,
       title: 'Predicción de Logro de Meta',
       description: _expanded && result != null
           ? _buildResultDescription(result)
@@ -658,8 +691,12 @@ class _GoalAchievementCardState extends State<_GoalAchievementCard> {
                         icon: const Icon(Icons.analytics),
                         label: const Text('Consultar'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.blue,
-                          foregroundColor: AppColors.text,
+                          backgroundColor: isDarkMode
+                              ? AppColors.mocha.blue
+                              : AppColors.latte.blue,
+                          foregroundColor: isDarkMode
+                              ? AppColors.mocha.text
+                              : AppColors.latte.text,
                         ),
                       ),
                     if (error != null)
@@ -667,7 +704,10 @@ class _GoalAchievementCardState extends State<_GoalAchievementCard> {
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
                           'Error: $error',
-                          style: const TextStyle(color: AppColors.red),
+                          style: TextStyle(
+                              color: isDarkMode
+                                  ? AppColors.mocha.red
+                                  : AppColors.latte.red),
                         ),
                       ),
                   ],
@@ -728,13 +768,14 @@ class _EnergyPredictionCardState extends State<_EnergyPredictionCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final isLoading = widget.controller.isEnergyPredictionLoading;
     final error = widget.controller.energyPredictionError;
     final result = widget.controller.energyPredictionResult;
 
     return AIRecommendationCard(
       icon: Icons.bolt,
-      accentColor: AppColors.yellow,
+      accentColor: isDarkMode ? AppColors.mocha.yellow : AppColors.latte.yellow,
       title: 'Predicción de Energía y Burnout',
       description: _expanded && result != null
           ? _buildResultDescription(result)
@@ -757,14 +798,21 @@ class _EnergyPredictionCardState extends State<_EnergyPredictionCard> {
                       ? Text(_buildResultDescription(result))
                       : error != null
                           ? Text('Error: $error',
-                              style: const TextStyle(color: AppColors.red))
+                              style: TextStyle(
+                                  color: isDarkMode
+                                      ? AppColors.mocha.red
+                                      : AppColors.latte.red))
                           : ElevatedButton.icon(
                               onPressed: _consultarPrediccion,
                               icon: const Icon(Icons.analytics),
                               label: const Text('Consultar'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.yellow,
-                                foregroundColor: AppColors.text,
+                                backgroundColor: isDarkMode
+                                    ? AppColors.mocha.yellow
+                                    : AppColors.latte.yellow,
+                                foregroundColor: isDarkMode
+                                    ? AppColors.mocha.text
+                                    : AppColors.latte.text,
                               ),
                             ),
             ),
@@ -836,13 +884,14 @@ class _HabitRecommendationCardState extends State<_HabitRecommendationCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final isLoading = widget.controller.isHabitRecommendationLoading;
     final error = widget.controller.habitRecommendationError;
     final result = widget.controller.habitRecommendationResult;
 
     return AIRecommendationCard(
       icon: Icons.auto_fix_high,
-      accentColor: AppColors.mauve,
+      accentColor: isDarkMode ? AppColors.mocha.mauve : AppColors.latte.mauve,
       title: 'Recomendaciones de Hábitos',
       description: _expanded && result != null
           ? _buildResultDescription(result)
@@ -884,8 +933,12 @@ class _HabitRecommendationCardState extends State<_HabitRecommendationCard> {
                         icon: const Icon(Icons.analytics),
                         label: const Text('Consultar'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.mauve,
-                          foregroundColor: AppColors.text,
+                          backgroundColor: isDarkMode
+                              ? AppColors.mocha.mauve
+                              : AppColors.latte.mauve,
+                          foregroundColor: isDarkMode
+                              ? AppColors.mocha.text
+                              : AppColors.latte.text,
                         ),
                       ),
                     if (error != null)
@@ -893,7 +946,10 @@ class _HabitRecommendationCardState extends State<_HabitRecommendationCard> {
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
                           'Error: $error',
-                          style: const TextStyle(color: AppColors.red),
+                          style: TextStyle(
+                              color: isDarkMode
+                                  ? AppColors.mocha.red
+                                  : AppColors.latte.red),
                         ),
                       ),
                   ],
@@ -923,7 +979,6 @@ class _HabitRecommendationCardState extends State<_HabitRecommendationCard> {
     if (habits == null || habits.isEmpty) {
       return 'No se encontraron recomendaciones de hábitos.';
     }
-    return 'Hábitos recomendados:\n- ' +
-        habits.map((h) => h.toString()).join('\n- ');
+    return 'Hábitos recomendados:\n- ${habits.map((h) => h.toString()).join('\n- ')}';
   }
 }

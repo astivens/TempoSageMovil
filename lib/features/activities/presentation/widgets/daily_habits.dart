@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:temposage/core/constants/app_colors.dart';
 import 'package:temposage/core/constants/app_styles.dart';
 import 'package:temposage/core/services/service_locator.dart';
+import 'package:temposage/core/theme/theme_extensions.dart';
 import 'package:temposage/core/utils/date_time_helper.dart';
 import 'package:temposage/features/habits/data/models/habit_model.dart';
 import 'package:temposage/features/habits/domain/entities/habit.dart';
@@ -89,10 +90,10 @@ class _DailyHabitsState extends State<DailyHabits> {
     }
 
     if (_habits.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No hay hábitos para hoy',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: context.subtextColor),
         ),
       );
     }
@@ -117,30 +118,34 @@ class _DailyHabitsState extends State<DailyHabits> {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
                 color: habit.isCompleted
-                    ? AppColors.green.withValues(alpha: 128)
-                    : AppColors.surface1,
+                    ? context.isDarkMode
+                        ? AppColors.mocha.green.withOpacity(0.5)
+                        : AppColors.latte.green.withOpacity(0.5)
+                    : context.surfaceColor,
                 width: 1,
               ),
             ),
-            tileColor: AppColors.surface0,
+            tileColor: context.surfaceColor,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: Checkbox(
               value: habit.isCompleted,
               onChanged: (bool? value) => _toggleHabit(habit),
-              fillColor: WidgetStateProperty.resolveWith<Color>(
-                (Set<WidgetState> states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return AppColors.green;
+              fillColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return context.isDarkMode
+                        ? AppColors.mocha.green
+                        : AppColors.latte.green;
                   }
-                  return AppColors.overlay0;
+                  return context.subtextColor;
                 },
               ),
             ),
             title: Text(
               habit.title,
               style: AppStyles.bodyLarge.copyWith(
-                color: Colors.white,
+                color: context.textColor,
                 decoration: habit.isCompleted
                     ? TextDecoration.lineThrough
                     : TextDecoration.none,

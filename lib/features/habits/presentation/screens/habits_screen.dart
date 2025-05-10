@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:temposage/core/constants/app_colors.dart';
-import 'package:temposage/core/constants/app_styles.dart';
 import 'package:temposage/core/services/service_locator.dart';
 import 'package:temposage/features/habits/data/models/habit_model.dart';
 import 'package:temposage/features/habits/domain/entities/habit.dart';
@@ -120,7 +119,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error al eliminar: $e'),
-              backgroundColor: AppColors.red,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? AppColors.mocha.red
+                  : AppColors.latte.red,
             ),
           );
         }
@@ -130,8 +131,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.base,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,27 +146,28 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 children: [
                   Text(
                     'Hábitos',
-                    style: AppStyles.titleLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: theme.textTheme.headlineLarge,
                   ),
                   IconButton(
                     onPressed: _showAddHabitDialog,
-                    icon: const Icon(Icons.add, color: Colors.white),
+                    icon:
+                        Icon(Icons.add, color: theme.colorScheme.onBackground),
                   ),
                 ],
               ),
             ),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(
+                          color: theme.colorScheme.primary))
                   : _habits.isEmpty
                       ? Center(
                           child: Text(
                             'No hay hábitos',
-                            style: AppStyles.bodyLarge.copyWith(
-                              color: AppColors.overlay0,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onBackground
+                                  .withOpacity(0.6),
                             ),
                           ),
                         )

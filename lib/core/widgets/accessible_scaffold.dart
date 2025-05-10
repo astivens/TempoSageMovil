@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/accessibility_styles.dart';
-import '../constants/app_colors.dart';
+import '../theme/theme_extensions.dart';
 
 /// Scaffold adaptado con mejoras de accesibilidad para la aplicación.
 ///
@@ -70,8 +70,7 @@ class AccessibleScaffold extends StatelessWidget {
     final bodyWidget = _buildBody(context);
 
     return Scaffold(
-      backgroundColor:
-          backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: backgroundColor ?? context.backgroundColor,
       appBar: showAppBar ? _buildAppBar(context) : null,
       body: bodyWidget,
       floatingActionButton: floatingActionButton,
@@ -87,16 +86,23 @@ class AccessibleScaffold extends StatelessWidget {
       title: title != null
           ? Text(
               title!,
-              style: AccessibilityStyles.accessibleTitleLarge,
+              style: AccessibilityStyles.accessibleTitleLarge.copyWith(
+                color: context.textColor,
+              ),
             )
           : null,
       actions: actions,
       elevation: 0,
       centerTitle: true,
-      backgroundColor: AppColors.base,
+      backgroundColor: context.surfaceColor,
+      iconTheme: IconThemeData(color: context.textColor),
+      titleTextStyle: TextStyle(color: context.textColor),
       leading: showBackButton
           ? IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: Icon(
+                Icons.arrow_back,
+                color: context.textColor,
+              ),
               onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
             )
           : null,

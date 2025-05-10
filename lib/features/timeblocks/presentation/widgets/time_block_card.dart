@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+// import '../../../../core/constants/app_colors.dart'; // Eliminado
 import '../../../../core/constants/app_styles.dart';
 import '../../data/models/time_block_model.dart';
 
@@ -19,15 +19,16 @@ class TimeBlockCard extends StatelessWidget {
     final Color blockColor = Color(
       int.parse(timeBlock.color.replaceAll('#', '0xFF')),
     );
+    final theme = Theme.of(context);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: AppColors.mantle,
+      color: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: blockColor.withValues(alpha: 128),
-          width: 2,
+          color: theme.colorScheme.outline.withOpacity(0.5),
+          width: 1,
         ),
       ),
       child: InkWell(
@@ -57,7 +58,7 @@ class TimeBlockCard extends StatelessWidget {
                           child: Text(
                             timeBlock.title,
                             style: AppStyles.titleSmall.copyWith(
-                              color: Colors.white,
+                              color: theme.colorScheme.onSurface,
                               fontWeight: FontWeight.bold,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -68,8 +69,8 @@ class TimeBlockCard extends StatelessWidget {
                   ),
                   Text(
                     '${_formatTime(timeBlock.startTime)} - ${_formatTime(timeBlock.endTime)}',
-                    style: AppStyles.bodySmall.copyWith(
-                      color: AppColors.subtext0,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -78,8 +79,8 @@ class TimeBlockCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   timeBlock.description,
-                  style: AppStyles.bodySmall.copyWith(
-                    color: AppColors.subtext0,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -95,13 +96,13 @@ class TimeBlockCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surface0,
+                      color: theme.colorScheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
                       timeBlock.category,
-                      style: AppStyles.bodySmall.copyWith(
-                        color: AppColors.subtext0,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -112,22 +113,22 @@ class TimeBlockCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.surface0,
+                        color: theme.colorScheme.surfaceVariant,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.timer,
                             size: 14,
-                            color: AppColors.mauve,
+                            color: theme.colorScheme.primary,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             'Tiempo de enfoque',
-                            style: AppStyles.bodySmall.copyWith(
-                              color: AppColors.subtext0,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],

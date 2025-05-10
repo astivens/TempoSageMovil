@@ -29,7 +29,7 @@ class SettingsModel {
   final String language;
 
   const SettingsModel({
-    this.darkMode = true,
+    this.darkMode = false,
     this.notificationsEnabled = true,
     this.notificationSound = 0,
     this.vibrationEnabled = true,

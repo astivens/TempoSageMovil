@@ -265,7 +265,9 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                       }
                     });
                   },
-                  selectedColor: AppColors.blue.withValues(alpha: 128),
+                  selectedColor: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.mocha.blue.withValues(alpha: 128)
+                      : AppColors.latte.blue.withValues(alpha: 128),
                   checkmarkColor: AppColors.text,
                 );
               }).toList(),
@@ -282,7 +284,10 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 ElevatedButton(
                   onPressed: _isLoading ? null : _saveChanges,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue,
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.mocha.blue
+                            : AppColors.latte.blue,
                     foregroundColor: AppColors.text,
                   ),
                   child: _isLoading

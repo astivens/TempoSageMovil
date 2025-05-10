@@ -3,12 +3,12 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'core/constants/constants.dart';
 import 'core/services/local_storage.dart';
 import 'core/services/navigation_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/service_locator.dart';
 import 'core/utils/logger.dart';
+import 'core/theme/theme_manager.dart';
 import 'features/auth/data/models/user_model.dart';
 import 'features/activities/data/models/activity_model.dart';
 import 'features/timeblocks/data/models/time_block_model.dart';
@@ -56,11 +56,15 @@ Future<void> _initializeApp() async {
     final authService = AuthService();
     final currentUser = await authService.getCurrentUser();
 
+    // Obtener las configuraciones iniciales
+    final settings = settingsService.settings;
+
     // Iniciar la aplicación
     runApp(
       MyApp(
         isLoggedIn: currentUser != null,
         settingsService: settingsService,
+        initialSettings: settings,
       ),
     );
   } catch (e, stackTrace) {
@@ -100,20 +104,35 @@ Future<void> _initializeStorage() async {
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final SettingsService settingsService;
+  final SettingsModel initialSettings;
 
   const MyApp({
     super.key,
     required this.isLoggedIn,
     required this.settingsService,
+    required this.initialSettings,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Crear una instancia de ThemeManager con las configuraciones iniciales
+    final themeManager = ThemeManager(
+      isDarkMode: initialSettings.darkMode,
+      isHighContrast: initialSettings.highContrastMode,
+      textScaleFactor: initialSettings.fontSizeScale.toDouble(),
+    );
+
     return MultiProvider(
       providers: [
+        // Proveedor de configuraciones
         ChangeNotifierProvider(
           create: (_) => SettingsProvider(settingsService),
         ),
+        // Proveedor de temas
+        ChangeNotifierProvider(
+          create: (_) => themeManager,
+        ),
+        // Otros proveedores
         ChangeNotifierProvider(
           create: (_) => DashboardController(
             activityRepository: ServiceLocator.instance.activityRepository,
@@ -121,18 +140,19 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settingsProvider, _) {
+      child: Consumer2<SettingsProvider, ThemeManager>(
+        builder: (context, settingsProvider, themeManager, _) {
+          // Actualizar el ThemeManager cuando cambien las configuraciones
+          themeManager.updateFromSettings(settingsProvider);
+
           return AccessibleApp(
-            highContrast: settingsProvider.settings.highContrastMode,
-            textScale: settingsProvider.settings.fontSizeScale.toDouble(),
+            highContrast: themeManager.isHighContrast,
+            textScale: themeManager.textScaleFactor,
             child: MaterialApp(
               title: 'TempoSage',
-              theme: AppStyles.lightTheme,
-              darkTheme: AppStyles.darkTheme,
-              themeMode: settingsProvider.settings.darkMode
-                  ? ThemeMode.dark
-                  : ThemeMode.light,
+              theme: themeManager.lightTheme,
+              darkTheme: themeManager.darkTheme,
+              themeMode: themeManager.themeMode,
               navigatorKey: NavigationService.navigatorKey,
               initialRoute: isLoggedIn ? '/home' : '/login',
               localizationsDelegates: const [
@@ -153,8 +173,7 @@ class MyApp extends StatelessWidget {
               builder: (context, child) {
                 return MediaQuery(
                   data: MediaQuery.of(context).copyWith(
-                    textScaler: TextScaler.linear(
-                        settingsProvider.settings.fontSizeScale.toDouble()),
+                    textScaler: TextScaler.linear(themeManager.textScaleFactor),
                   ),
                   child: child!,
                 );

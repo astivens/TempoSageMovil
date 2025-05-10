@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/services/service_locator.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../activities/data/models/activity_model.dart';
 import '../../../activities/data/repositories/activity_repository.dart';
 import '../../../activities/presentation/screens/create_activity_screen.dart';
@@ -110,26 +111,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Color _getPriorityColor(String priority) {
+    final isDarkMode = context.isDarkMode;
+
     switch (priority.toLowerCase()) {
       case 'alta':
-        return AppColors.red;
+        return isDarkMode ? AppColors.mocha.red : AppColors.latte.red;
       case 'media':
-        return AppColors.yellow;
+        return isDarkMode ? AppColors.mocha.yellow : AppColors.latte.yellow;
       case 'baja':
-        return AppColors.green;
+        return isDarkMode ? AppColors.mocha.green : AppColors.latte.green;
       default:
-        return AppColors.overlay0;
+        return isDarkMode ? AppColors.mocha.overlay0 : AppColors.latte.overlay0;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = context.isDarkMode;
     final primaryColor = Theme.of(context).colorScheme.primary;
     final secondaryColor = Theme.of(context).colorScheme.secondary;
     final surfaceColor = Theme.of(context).cardColor;
-    final textColor =
-        Theme.of(context).textTheme.bodyLarge?.color ?? AppColors.text;
+    final textColor = context.textColor;
 
     // Obtener dimensiones de la pantalla
     final screenWidth = MediaQuery.of(context).size.width;
@@ -237,11 +239,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   outsideDaysVisible: true, // Mostrar días fuera del mes actual
                   // Decoración de día seleccionado
                   selectedDecoration: BoxDecoration(
-                    color: secondaryColor,
+                    color: primaryColor.withOpacity(0.8),
                     shape: BoxShape.circle,
                   ),
                   selectedTextStyle: TextStyle(
-                    color: isDarkMode ? Colors.black : Colors.white,
+                    color: isDarkMode ? Colors.white : Colors.black,
                     fontWeight: FontWeight.bold,
                   ),
                   // Decoración del día actual

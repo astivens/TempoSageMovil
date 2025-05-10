@@ -72,7 +72,9 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.base,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.mocha.base
+          : AppColors.latte.base,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,7 +84,9 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               child: Text(
                 'Actividades',
                 style: AppStyles.titleLarge.copyWith(
-                  color: Colors.white,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.mocha.text
+                      : AppColors.latte.text,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -96,7 +100,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                           child: Text(
                             'No hay actividades',
                             style: AppStyles.bodyLarge.copyWith(
-                              color: AppColors.overlay0,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? AppColors.mocha.overlay0
+                                  : AppColors.latte.overlay0,
                             ),
                           ),
                         )

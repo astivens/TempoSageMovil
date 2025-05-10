@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_styles.dart';
 import '../constants/accessibility_styles.dart';
+import '../theme/theme_extensions.dart';
 
 /// AppBar personalizada con soporte mejorado para accesibilidad.
 ///
@@ -37,6 +37,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double? leadingWidth;
   final IconData backIcon;
   final bool automaticallyImplyLeading;
+  final double height;
+  final Widget? leading;
 
   const CustomAppBar({
     super.key,
@@ -49,10 +51,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.elevation = 0,
     this.titleStyle,
     this.subtitleStyle,
-    this.centerTitle = false,
+    this.centerTitle = true,
     this.leadingWidth,
     this.backIcon = Icons.arrow_back,
     this.automaticallyImplyLeading = true,
+    this.height = kToolbarHeight,
+    this.leading,
   });
 
   /// Crea una AppBar para pantallas principales sin botón de regreso
@@ -68,7 +72,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       subtitle: subtitle,
       showBackButton: false,
       actions: actions,
-      backgroundColor: AppColors.base,
       centerTitle: true,
       titleStyle: AccessibilityStyles.accessibleTitleLarge,
     );
@@ -89,7 +92,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       showBackButton: true,
       onBackPressed: onBackPressed,
       actions: actions,
-      backgroundColor: AppColors.base,
       titleStyle: AppStyles.headlineSmall,
     );
   }
@@ -97,29 +99,37 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: backgroundColor ?? AppColors.base,
+      backgroundColor: backgroundColor ?? context.backgroundColor,
       elevation: elevation,
-      automaticallyImplyLeading: automaticallyImplyLeading,
       centerTitle: centerTitle,
-      leadingWidth: leadingWidth,
-      leading: showBackButton
+      leading: showBackButton && leading == null
           ? IconButton(
-              icon: Icon(backIcon),
-              onPressed: onBackPressed ?? () => Navigator.pop(context),
+              icon: Icon(
+                Icons.arrow_back_ios,
+                color: context.textColor,
+              ),
+              onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
             )
-          : null,
-      title: _buildTitle(),
+          : leading,
+      title: _buildTitle(context),
       actions: actions,
     );
   }
 
   /// Construye el widget de título y subtítulo
-  Widget _buildTitle() {
+  Widget _buildTitle(BuildContext context) {
+    final textColor = context.textColor;
+    final subtextColor = context.subtextColor;
+
     // Si no hay subtítulo, retornar solo el título
     if (subtitle == null) {
       return Text(
         title,
-        style: titleStyle ?? AppStyles.headlineSmall,
+        style: titleStyle ??
+            AppStyles.titleMedium.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+            ),
       );
     }
 
@@ -129,13 +139,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       children: [
         Text(
           title,
-          style: titleStyle ?? AppStyles.headlineSmall,
+          style: titleStyle ??
+              AppStyles.titleMedium.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         Text(
           subtitle!,
           style: subtitleStyle ??
               AppStyles.bodySmall.copyWith(
-                color: AppColors.overlay0,
+                color: subtextColor,
               ),
         ),
       ],
@@ -143,5 +157,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(height);
 }

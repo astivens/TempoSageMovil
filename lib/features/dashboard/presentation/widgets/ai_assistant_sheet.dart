@@ -101,6 +101,14 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
     });
   }
 
+  void _toggleListening() async {
+    if (_isListening) {
+      await _voiceService.stopListening();
+    } else {
+      await _voiceService.startListening();
+    }
+  }
+
   void _updateSoundLevels() {
     if (!_isListening) return;
 
@@ -118,11 +126,14 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: AppColors.surface0,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -132,7 +143,9 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.surface2,
+              color: isDarkMode
+                  ? AppColors.mocha.surface2
+                  : AppColors.latte.surface2,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -142,8 +155,8 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
           if (_errorMessage != null)
             Text(
               _errorMessage!,
-              style: const TextStyle(
-                color: AppColors.red,
+              style: TextStyle(
+                color: isDarkMode ? AppColors.mocha.red : AppColors.latte.red,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
@@ -151,8 +164,8 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
           else
             Text(
               _isListening ? _partialText : _lastCommand,
-              style: const TextStyle(
-                color: AppColors.text,
+              style: TextStyle(
+                color: theme.colorScheme.onBackground,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
@@ -163,13 +176,7 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
             children: [
               _buildMicButton(),
               const SizedBox(width: 16),
-              IconButton(
-                icon: Icon(
-                  Icons.help_outline,
-                  color: _showHelp ? AppColors.blue : AppColors.text,
-                ),
-                onPressed: () => setState(() => _showHelp = !_showHelp),
-              ),
+              _buildHelpButton(),
             ],
           ),
           if (_showHelp) ...[
@@ -177,13 +184,13 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surface1,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 _voiceService.getHelpText(),
-                style: const TextStyle(
-                  color: AppColors.text,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
                   fontSize: 14,
                 ),
               ),
@@ -196,59 +203,57 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
   }
 
   Widget _buildVoiceVisualization() {
-    return SizedBox(
-      height: 100,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: List.generate(
-          30,
-          (index) => AnimatedContainer(
-            duration: const Duration(milliseconds: 50),
-            width: 4,
-            height: 20 + (_soundLevels[index] * 80),
-            margin: const EdgeInsets.symmetric(horizontal: 1),
+    final theme = Theme.of(context);
+    List<int> heights = [10, 20, 15, 30, 25, 15, 10, 20, 25];
+
+    if (_isListening && _soundLevels.isEmpty) {
+      // Generar alturas aleatorias para la visualización cuando está escuchando
+      heights =
+          List.generate(9, (_) => 5 + (Random().nextDouble() * 25).toInt());
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: heights.map((height) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: Container(
+            width: 3,
+            height: height.toDouble(),
             decoration: BoxDecoration(
-              color: AppColors.blue.withValues(alpha: 77),
-              borderRadius: BorderRadius.circular(2),
+              color: theme.colorScheme.primary.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(5),
             ),
           ),
-        ),
-      ),
+        );
+      }).toList(),
     );
   }
 
   Widget _buildMicButton() {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return GestureDetector(
-      onTapDown: (_) async {
-        if (!_isListening) {
-          await _voiceService.startListening();
-        }
-      },
-      onTapUp: (_) async {
-        if (_isListening) {
-          await _voiceService.stopListening();
-        }
-      },
-      onTapCancel: () async {
-        if (_isListening) {
-          await _voiceService.stopListening();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      onTap: _toggleListening,
+      child: Container(
         width: 72,
         height: 72,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: _isListening
-              ? AppColors.surface1
-              : AppColors.surface0.withValues(alpha: 26),
+              ? (isDarkMode
+                  ? AppColors.mocha.surface1
+                  : AppColors.latte.surface1)
+              : (isDarkMode
+                      ? AppColors.mocha.surface0
+                      : AppColors.latte.surface0)
+                  .withOpacity(0.26),
           boxShadow: [
             BoxShadow(
               color: _isListening
-                  ? AppColors.blue.withValues(alpha: 77)
-                  : Colors.black.withValues(alpha: 26),
+                  ? theme.colorScheme.primary.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.26),
               blurRadius: _isListening ? 16 : 8,
               spreadRadius: _isListening ? 4 : 0,
             ),
@@ -256,10 +261,27 @@ class _AIAssistantSheetState extends State<AIAssistantSheet>
         ),
         child: Icon(
           _isListening ? Icons.mic : Icons.mic_none,
-          color: _isListening ? AppColors.text : AppColors.text,
+          color: theme.colorScheme.onBackground,
           size: 32,
         ),
       ),
+    );
+  }
+
+  Widget _buildHelpButton() {
+    final theme = Theme.of(context);
+    return IconButton(
+      icon: Icon(
+        Icons.help_outline,
+        color: _showHelp
+            ? theme.colorScheme.primary
+            : theme.colorScheme.onBackground,
+      ),
+      onPressed: () {
+        setState(() {
+          _showHelp = !_showHelp;
+        });
+      },
     );
   }
 }

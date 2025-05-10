@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../data/models/activity_model.dart';
 import '../../../../core/services/service_locator.dart';
 
@@ -103,11 +104,19 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.mauve,
-              onPrimary: AppColors.text,
-              surface: AppColors.surface0,
-              onSurface: AppColors.text,
+            colorScheme: ColorScheme(
+              brightness:
+                  context.isDarkMode ? Brightness.dark : Brightness.light,
+              primary: context.primaryColor,
+              onPrimary: context.isDarkMode ? Colors.white : Colors.black,
+              secondary: context.secondaryColor,
+              onSecondary: context.isDarkMode ? Colors.white : Colors.black,
+              surface: context.surfaceColor,
+              onSurface: context.textColor,
+              background: context.backgroundColor,
+              onBackground: context.textColor,
+              error: context.errorColor,
+              onError: Colors.white,
             ),
           ),
           child: child!,
@@ -128,11 +137,19 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.mauve,
-              onPrimary: AppColors.text,
-              surface: AppColors.surface0,
-              onSurface: AppColors.text,
+            colorScheme: ColorScheme(
+              brightness:
+                  context.isDarkMode ? Brightness.dark : Brightness.light,
+              primary: context.primaryColor,
+              onPrimary: context.isDarkMode ? Colors.white : Colors.black,
+              secondary: context.secondaryColor,
+              onSecondary: context.isDarkMode ? Colors.white : Colors.black,
+              surface: context.surfaceColor,
+              onSurface: context.textColor,
+              background: context.backgroundColor,
+              onBackground: context.textColor,
+              error: context.errorColor,
+              onError: Colors.white,
             ),
           ),
           child: child!,
@@ -173,12 +190,14 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Edit Activity',
-                    style: AppStyles.titleLarge,
+                  Text(
+                    'Editar Actividad',
+                    style: AppStyles.titleLarge.copyWith(
+                      color: context.textColor,
+                    ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: context.textColor),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -187,18 +206,21 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'Activity title',
+                  labelText: 'Título',
+                  hintText: 'Título de la actividad',
                   filled: true,
-                  fillColor: AppColors.surface0,
+                  fillColor: context.surfaceColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
                   ),
+                  labelStyle: TextStyle(color: context.textColor),
+                  hintStyle: TextStyle(color: context.subtextColor),
                 ),
+                style: TextStyle(color: context.textColor),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
+                    return 'Por favor ingresa un título';
                   }
                   return null;
                 },
@@ -209,17 +231,16 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.surface0,
+                    color: context.surfaceColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today,
-                          color: AppColors.overlay0),
+                      Icon(Icons.calendar_today, color: context.textColor),
                       const SizedBox(width: 8),
                       Text(
                         '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                        style: AppStyles.bodyMedium,
+                        style: TextStyle(color: context.textColor),
                       ),
                     ],
                   ),
@@ -234,17 +255,16 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.surface0,
+                          color: context.surfaceColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time,
-                                color: AppColors.overlay0),
+                            Icon(Icons.access_time, color: context.textColor),
                             const SizedBox(width: 8),
                             Text(
-                              'Start: ${_startTime.format(context)}',
-                              style: AppStyles.bodyMedium,
+                              'Inicio: ${_startTime.format(context)}',
+                              style: TextStyle(color: context.textColor),
                             ),
                           ],
                         ),
@@ -258,17 +278,16 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.surface0,
+                          color: context.surfaceColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time,
-                                color: AppColors.overlay0),
+                            Icon(Icons.access_time, color: context.textColor),
                             const SizedBox(width: 8),
                             Text(
-                              'End: ${_endTime.format(context)}',
-                              style: AppStyles.bodyMedium,
+                              'Fin: ${_endTime.format(context)}',
+                              style: TextStyle(color: context.textColor),
                             ),
                           ],
                         ),
@@ -276,6 +295,24 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Descripción',
+                  hintText: 'Descripción opcional',
+                  filled: true,
+                  fillColor: context.surfaceColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  labelStyle: TextStyle(color: context.textColor),
+                  hintStyle: TextStyle(color: context.subtextColor),
+                ),
+                style: TextStyle(color: context.textColor),
               ),
               const SizedBox(height: 16),
               Container(
@@ -335,13 +372,17 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text('Completed'),
+                title: Text(
+                  'Completada',
+                  style: TextStyle(color: context.textColor),
+                ),
                 value: _isCompleted,
                 onChanged: (value) {
                   setState(() {
                     _isCompleted = value;
                   });
                 },
+                activeColor: context.primaryColor,
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -349,14 +390,14 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 child: ElevatedButton(
                   onPressed: _updateActivity,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.mauve,
+                    backgroundColor: context.primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    'Save Changes',
+                  child: Text(
+                    'Guardar Cambios',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,

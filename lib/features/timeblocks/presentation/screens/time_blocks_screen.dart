@@ -270,88 +270,96 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.base,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Bloques de Tiempo',
+                style: theme.textTheme.headlineLarge,
+              ),
+            ),
+            _buildTabs(theme),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : TimeBlockTimeline(
-                      timeBlocks: _timeBlocks,
-                      onTimeBlockTap: _handleTimeBlockTap,
-                      onTimeBlockDelete: _handleTimeBlockDelete,
-                    ),
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
+                    )
+                  : _timeBlocks.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No hay bloques de tiempo para ${_activeSection == 'today' ? 'hoy' : _activeSection == 'tomorrow' ? 'mañana' : 'los próximos días'}',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onBackground
+                                  .withOpacity(0.6),
+                            ),
+                          ),
+                        )
+                      : TimeBlockTimeline(
+                          timeBlocks: _timeBlocks,
+                          onTimeBlockTap: _handleTimeBlockTap,
+                          onTimeBlockDelete: _handleTimeBlockDelete,
+                        ),
             ),
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pushNamed(context, '/create_time_block'),
+        backgroundColor: theme.colorScheme.primary,
+        child: Icon(
+          Icons.add,
+          color: theme.colorScheme.onPrimary,
         ),
       ),
     );
   }
 
-  /// Construye la sección de encabezado con título y pestañas
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Time Blocks',
-            style: AppStyles.titleLarge.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildTabSelector(),
-        ],
-      ),
-    );
-  }
-
-  /// Construye el selector de pestañas (hoy, mañana, próximos días)
-  Widget _buildTabSelector() {
+  Widget _buildTabs(ThemeData theme) {
     return Container(
+      height: 48,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface0,
-        borderRadius: BorderRadius.circular(20),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          _buildTabButton('today', 'Today'),
-          _buildTabButton('tomorrow', 'Tomorrow'),
-          _buildTabButton('upcoming', 'Upcoming'),
+          _buildTabButton('today', 'Hoy', theme),
+          _buildTabButton('tomorrow', 'Mañana', theme),
+          _buildTabButton('upcoming', 'Próximos', theme),
         ],
       ),
     );
   }
 
-  /// Construye un botón de pestaña individual
-  Widget _buildTabButton(String section, String label) {
+  Widget _buildTabButton(String section, String label, ThemeData theme) {
     final isActive = _activeSection == section;
 
     return Expanded(
-      child: InkWell(
+      child: GestureDetector(
         onTap: () => _setActiveSection(section),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 16,
-          ),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.mauve : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            color: isActive ? theme.colorScheme.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
           ),
+          alignment: Alignment.center,
           child: Text(
             label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isActive ? Colors.white : AppColors.overlay0,
-              fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isActive
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurface,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),
         ),

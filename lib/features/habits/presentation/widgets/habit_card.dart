@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_styles.dart';
 import '../../data/models/habit_model.dart';
 
 class HabitCard extends StatelessWidget {
@@ -17,9 +15,11 @@ class HabitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AppColors.surface1,
+      elevation: 2,
       child: ListTile(
         leading: Checkbox(
           value: habit.isCompleted,
@@ -27,19 +27,18 @@ class HabitCard extends StatelessWidget {
         ),
         title: Text(
           habit.title,
-          style: AppStyles.titleSmall.copyWith(
-            color: AppColors.text,
+          style: theme.textTheme.titleSmall?.copyWith(
             decoration: habit.isCompleted ? TextDecoration.lineThrough : null,
           ),
         ),
         subtitle: Text(
           habit.description,
-          style: AppStyles.bodySmall.copyWith(
-            color: AppColors.text.withValues(alpha: 179),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
           ),
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.delete),
+          icon: Icon(Icons.delete, color: theme.colorScheme.error),
           onPressed: onDelete,
         ),
       ),

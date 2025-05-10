@@ -22,6 +22,7 @@ void main() {
     await tester.pumpWidget(MyApp(
       isLoggedIn: false,
       settingsService: settingsService,
+      initialSettings: settingsService.settings,
     ));
 
     // Verify that our counter starts at 0.

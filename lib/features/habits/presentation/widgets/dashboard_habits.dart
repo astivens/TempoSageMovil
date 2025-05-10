@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../data/models/habit_model.dart';
 import 'habit_card.dart';
 
@@ -33,7 +33,7 @@ class DashboardHabits extends StatelessWidget {
               Text(
                 'Hábitos de Hoy',
                 style: AppStyles.titleMedium.copyWith(
-                  color: AppColors.text,
+                  color: context.textColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -41,11 +41,14 @@ class DashboardHabits extends StatelessWidget {
                 children: [
                   TextButton(
                     onPressed: onViewAll,
-                    child: const Text('Ver Todos'),
+                    child: Text(
+                      'Ver Todos',
+                      style: TextStyle(color: context.primaryColor),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.add),
+                    icon: Icon(Icons.add, color: context.primaryColor),
                     onPressed: onAddNew,
                   ),
                 ],
@@ -54,28 +57,34 @@ class DashboardHabits extends StatelessWidget {
           ),
         ),
         if (habits.isEmpty)
-          const Center(
+          Center(
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Text(
                 'No hay hábitos para hoy',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: context.subtextColor,
+                ),
               ),
             ),
           )
         else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: habits.length,
-            itemBuilder: (context, index) {
-              final habit = habits[index];
-              return HabitCard(
-                habit: habit,
-                onComplete: () => onComplete(habit),
-                onDelete: () => onDelete(habit),
-              );
-            },
+          Container(
+            color: context.backgroundColor,
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: habits.length,
+              itemBuilder: (context, index) {
+                final habit = habits[index];
+                return HabitCard(
+                  habit: habit,
+                  onComplete: () => onComplete(habit),
+                  onDelete: () => onDelete(habit),
+                );
+              },
+            ),
           ),
       ],
     );
