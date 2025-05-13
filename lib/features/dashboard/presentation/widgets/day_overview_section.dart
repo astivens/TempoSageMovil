@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../activities/data/models/activity_model.dart';
 import '../../../habits/data/models/habit_model.dart';
@@ -24,12 +25,13 @@ class DayOverviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Resumen del día',
+          l10n.dashboardOverview,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: context.textColor,
@@ -38,8 +40,8 @@ class DayOverviewSection extends StatelessWidget {
         const SizedBox(height: 16),
         _buildPeriodSection(
           context: context,
-          title: 'Mañana',
-          timeRange: '5:00 AM - 11:59 AM',
+          title: l10n.dashboardMorning,
+          timeRange: l10n.dashboardTimeRangeMorning,
           activities: morningActivities,
           habits: morningHabits,
           color: theme.colorScheme.tertiary,
@@ -47,8 +49,8 @@ class DayOverviewSection extends StatelessWidget {
         const SizedBox(height: 12),
         _buildPeriodSection(
           context: context,
-          title: 'Tarde',
-          timeRange: '12:00 PM - 5:59 PM',
+          title: l10n.dashboardAfternoon,
+          timeRange: l10n.dashboardTimeRangeAfternoon,
           activities: afternoonActivities,
           habits: afternoonHabits,
           color: theme.colorScheme.secondary,
@@ -56,8 +58,8 @@ class DayOverviewSection extends StatelessWidget {
         const SizedBox(height: 12),
         _buildPeriodSection(
           context: context,
-          title: 'Noche',
-          timeRange: '6:00 PM - 4:59 AM',
+          title: l10n.dashboardEvening,
+          timeRange: l10n.dashboardTimeRangeEvening,
           activities: eveningActivities,
           habits: eveningHabits,
           color: theme.colorScheme.primary,
@@ -75,6 +77,7 @@ class DayOverviewSection extends StatelessWidget {
     required Color color,
   }) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final totalItems = activities.length + habits.length;
     final completedItems = activities.where((a) => a.isCompleted).length +
         habits.where((h) => h.isCompleted).length;
@@ -121,7 +124,7 @@ class DayOverviewSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '$completedItems/$totalItems completados',
+            '$completedItems/$totalItems ${l10n.dashboardCompleted}',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onBackground.withOpacity(0.7),
             ),

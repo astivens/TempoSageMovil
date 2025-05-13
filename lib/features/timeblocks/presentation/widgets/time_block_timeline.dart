@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/widgets/animated_list_item.dart';
 import '../../../../core/widgets/hover_scale.dart';
 import '../../../../core/animations/app_animations.dart';
@@ -136,6 +137,8 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
 
   Widget _buildBlockContent(
       TimeBlockModel timeBlock, bool isCurrent, bool isPast, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
+
     return GestureDetector(
       onTap: () => widget.onTimeBlockTap(timeBlock),
       child: AnimatedContainer(
@@ -200,7 +203,7 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'En curso',
+                            l10n.timeBlockInProgress,
                             style: TextStyle(
                               color: theme.colorScheme.primary,
                               fontSize: 12,

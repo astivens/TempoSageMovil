@@ -1,12 +1,15 @@
 import '../../features/activities/data/repositories/activity_repository.dart';
 import '../../features/activities/domain/services/activity_to_timeblock_service.dart';
+import '../../features/activities/domain/services/activity_notification_service.dart';
 import '../../features/timeblocks/data/repositories/time_block_repository.dart';
 import '../../features/habits/domain/repositories/habit_repository.dart';
 import '../../features/habits/data/repositories/habit_repository_impl.dart';
 import '../../features/habits/domain/services/habit_to_timeblock_service.dart';
+import '../../features/habits/domain/services/habit_notification_service.dart';
 import '../../features/habits/domain/usecases/get_habits_use_case.dart';
 import '../utils/logger.dart';
 import 'tempo_sage_api_service.dart';
+import 'notification_service.dart';
 
 /// Localizador de servicios e implementación de inyección de dependencias.
 ///
@@ -32,6 +35,9 @@ class ServiceLocator {
   ActivityToTimeBlockService? _activityToTimeBlockService;
   HabitToTimeBlockService? _habitToTimeBlockService;
   TempoSageApiService? _tempoSageApiService;
+  NotificationService? _notificationService;
+  ActivityNotificationService? _activityNotificationService;
+  HabitNotificationService? _habitNotificationService;
 
   // Casos de uso - inicialización perezosa
   GetHabitsUseCase? _getHabitsUseCase;
@@ -120,6 +126,33 @@ class ServiceLocator {
     return _tempoSageApiService!;
   }
 
+  /// Obtiene el servicio de notificaciones.
+  /// Se crea bajo demanda (lazy initialization).
+  NotificationService get notificationService {
+    _notificationService ??= NotificationService();
+    return _notificationService!;
+  }
+
+  /// Obtiene el servicio de notificaciones de actividades.
+  /// Se crea bajo demanda (lazy initialization).
+  ActivityNotificationService get activityNotificationService {
+    _activityNotificationService ??= ActivityNotificationService(
+      notificationService,
+      activityRepository,
+    );
+    return _activityNotificationService!;
+  }
+
+  /// Obtiene el servicio de notificaciones de hábitos.
+  /// Se crea bajo demanda (lazy initialization).
+  HabitNotificationService get habitNotificationService {
+    _habitNotificationService ??= HabitNotificationService(
+      notificationService,
+      habitRepository,
+    );
+    return _habitNotificationService!;
+  }
+
   /// Reinicia todos los servicios y limpia cachés.
   /// Útil para pruebas o cuando se requiere un estado limpio.
   void resetServices() {
@@ -127,6 +160,9 @@ class ServiceLocator {
     _habitToTimeBlockService = null;
     _getHabitsUseCase = null;
     _tempoSageApiService = null;
+    _notificationService = null;
+    _activityNotificationService = null;
+    _habitNotificationService = null;
     _logger.i('Servicios reiniciados', tag: 'ServiceLocator');
   }
 }

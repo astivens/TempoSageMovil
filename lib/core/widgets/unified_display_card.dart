@@ -41,7 +41,7 @@ class UnifiedDisplayCard extends StatelessWidget {
     final theme = Theme.of(context);
     // final bool isDarkMode = theme.brightness == Brightness.dark; // Ya no se necesita si usamos theme.colorScheme
 
-    final String displayTitle = prefix != null ? '\$prefix\$title' : title;
+    final String displayTitle = prefix != null ? '$prefix$title' : title;
 
     return Slidable(
       key: key ?? ValueKey(title + (timeRange ?? '')), // Usar una clave única
@@ -75,8 +75,10 @@ class UnifiedDisplayCard extends StatelessWidget {
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
         color: theme.colorScheme.surface,
+        elevation: 2, // Reducido para un aspecto más suave
+        shadowColor: theme.colorScheme.shadow.withOpacity(0.4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16), // Más redondeado
           side: BorderSide(
             color: theme.colorScheme.outline.withOpacity(0.5),
             width: 1,
@@ -84,7 +86,7 @@ class UnifiedDisplayCard extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16), // Debe coincidir con Card
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -226,7 +228,7 @@ class UnifiedDisplayCard extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -240,10 +242,11 @@ class UnifiedDisplayCard extends StatelessWidget {
             const SizedBox(width: 4),
           ],
           Text(
-            label,
+            label.toUpperCase(),
             style: TextStyle(
               color: textColor,
-              fontSize: 12, // Tamaño consistente para chips
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

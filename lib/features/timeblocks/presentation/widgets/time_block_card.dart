@@ -77,68 +77,81 @@ class TimeBlockCard extends StatelessWidget {
               ),
               if (timeBlock.description.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(
-                  timeBlock.description,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant,
+                Padding(
+                  padding: const EdgeInsets.only(left: 20),
+                  child: Text(
+                    timeBlock.description,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      timeBlock.category,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant,
+              Padding(
+                padding: const EdgeInsets.only(left: 20),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    _buildChip(
+                        context,
+                        timeBlock.category,
+                        theme.colorScheme.secondaryContainer,
+                        theme.colorScheme.onSecondaryContainer),
+                    if (timeBlock.isFocusTime)
+                      _buildChip(
+                        context,
+                        'Tiempo de enfoque',
+                        theme.colorScheme.tertiaryContainer,
+                        theme.colorScheme.onTertiaryContainer,
+                        icon: Icons.timer_outlined,
+                        iconColor: theme.colorScheme.onTertiaryContainer,
                       ),
-                    ),
-                  ),
-                  if (timeBlock.isFocusTime)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.timer,
-                            size: 14,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Tiempo de enfoque',
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildChip(BuildContext context, String label, Color backgroundColor,
+      Color textColor,
+      {IconData? icon, Color? iconColor}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              size: 14,
+              color: iconColor ?? textColor,
+            ),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

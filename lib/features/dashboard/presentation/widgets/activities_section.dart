@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/unified_display_card.dart';
@@ -36,6 +37,8 @@ class ActivitiesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (controller.isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -77,7 +80,7 @@ class ActivitiesSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Text(
-            'Actividades y hábitos',
+            l10n.dashboardActivitiesAndHabits,
             style: AppStyles.titleMedium.copyWith(
               color: context.textColor,
               fontWeight: FontWeight.bold,
@@ -89,7 +92,7 @@ class ActivitiesSection extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(32.0),
                   child: Text(
-                    'No hay elementos para hoy.',
+                    l10n.dashboardNoItems,
                     style: TextStyle(
                       color: context.subtextColor,
                       fontSize: 16,

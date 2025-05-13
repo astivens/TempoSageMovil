@@ -1,21 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_styles.dart';
-import '../../../../core/theme/theme_extensions.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../../../core/utils/date_time_utils.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
-import '../../../../core/widgets/accessible_button.dart';
-import '../../../../core/utils/validators/form_validators.dart';
-import '../../../../core/services/service_locator.dart';
 import '../../data/models/activity_model.dart';
+import '../../../../core/services/service_locator.dart';
 
 class CreateActivityScreen extends StatefulWidget {
   final ActivityModel? activity;
-  final Map<String, dynamic>? arguments;
 
-  const CreateActivityScreen({
-    super.key,
-    this.activity,
-    this.arguments,
-  });
+  const CreateActivityScreen({super.key, this.activity});
 
   @override
   State<CreateActivityScreen> createState() => _CreateActivityScreenState();
@@ -25,33 +18,44 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _repository = ServiceLocator.instance.activityRepository;
-
   DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = TimeOfDay.now();
-  String _selectedCategory = 'Trabajo';
-  String _selectedPriority = 'Media';
+  TimeOfDay _startTime = TimeOfDay.now();
+  TimeOfDay _endTime = TimeOfDay.now().replacing(
+    hour: TimeOfDay.now().hour + 1 > 23 ? 23 : TimeOfDay.now().hour + 1,
+  );
+  String _category = 'Trabajo';
+  String _priority = 'Media';
+  bool _isCompleted = false;
+  bool _isSubmitting = false;
+  bool _sendReminder = false;
+  int _reminderMinutesBefore = 15;
 
-  final List<String> _categories = ['Trabajo', 'Personal', 'Estudio', 'Otro'];
+  final List<String> _categories = [
+    'Trabajo',
+    'Estudio',
+    'Ejercicio',
+    'Ocio',
+    'Otro'
+  ];
+
   final List<String> _priorities = ['Alta', 'Media', 'Baja'];
+
+  final List<int> _reminderOptions = [5, 10, 15, 30, 60, 120];
 
   @override
   void initState() {
     super.initState();
-    _initializeForm();
-  }
-
-  void _initializeForm() {
     if (widget.activity != null) {
       _titleController.text = widget.activity!.title;
       _descriptionController.text = widget.activity!.description;
       _selectedDate = widget.activity!.startTime;
-      _selectedTime = TimeOfDay.fromDateTime(widget.activity!.startTime);
-      _selectedCategory = widget.activity!.category;
-      _selectedPriority = widget.activity!.priority;
-    } else if (widget.arguments != null) {
-      _titleController.text = widget.arguments!['title'] ?? '';
-      _selectedCategory = widget.arguments!['category'] ?? 'Trabajo';
+      _startTime = TimeOfDay.fromDateTime(widget.activity!.startTime);
+      _endTime = TimeOfDay.fromDateTime(widget.activity!.endTime);
+      _category = widget.activity!.category;
+      _priority = widget.activity!.priority;
+      _isCompleted = widget.activity!.isCompleted;
+      _sendReminder = widget.activity!.sendReminder;
+      _reminderMinutesBefore = widget.activity!.reminderMinutesBefore;
     }
   }
 
@@ -63,339 +67,624 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   }
 
   Future<void> _saveActivity() async {
-    if (_formKey.currentState?.validate() ?? false) {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isSubmitting = true);
+
       try {
-        final DateTime startTime = DateTime(
+        final activityRepository = ServiceLocator.instance.activityRepository;
+        final startDateTime = DateTime(
           _selectedDate.year,
           _selectedDate.month,
           _selectedDate.day,
-          _selectedTime.hour,
-          _selectedTime.minute,
+          _startTime.hour,
+          _startTime.minute,
+        );
+        final endDateTime = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _endTime.hour,
+          _endTime.minute,
         );
 
-        final DateTime endTime = startTime.add(const Duration(hours: 1));
+        // Si el tiempo de fin es antes que el tiempo de inicio, ajustarlo al día siguiente
+        final adjustedEndDateTime = endDateTime.isBefore(startDateTime)
+            ? endDateTime.add(const Duration(days: 1))
+            : endDateTime;
 
-        final activity = widget.activity?.copyWith(
-              title: _titleController.text,
-              description: _descriptionController.text,
-              startTime: startTime,
-              endTime: endTime,
-              category: _selectedCategory,
-              priority: _selectedPriority,
-            ) ??
-            ActivityModel.create(
-              title: _titleController.text,
-              description: _descriptionController.text,
-              startTime: startTime,
-              endTime: endTime,
-              category: _selectedCategory,
-              priority: _selectedPriority,
-            );
+        final activity = ActivityModel(
+          id: widget.activity?.id ??
+              DateTime.now().millisecondsSinceEpoch.toString(),
+          title: _titleController.text,
+          description: _descriptionController.text,
+          startTime: startDateTime,
+          endTime: adjustedEndDateTime,
+          category: _category,
+          priority: _priority,
+          isCompleted: _isCompleted,
+          sendReminder: _sendReminder,
+          reminderMinutesBefore: _reminderMinutesBefore,
+        );
 
         if (widget.activity != null) {
-          await _repository.updateActivity(activity);
+          await activityRepository.updateActivity(activity);
         } else {
-          await _repository.addActivity(activity);
+          await activityRepository.addActivity(activity);
         }
 
         if (mounted) {
           Navigator.pop(context, true);
         }
       } catch (e) {
-        debugPrint('Error guardando actividad: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al guardar la actividad'),
-            ),
+            SnackBar(content: Text('Error: $e')),
           );
+          setState(() => _isSubmitting = false);
         }
       }
     }
   }
 
+  Future<void> _selectDate() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (pickedDate != null && pickedDate != _selectedDate) {
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    }
+  }
+
+  Future<void> _selectStartTime() async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _startTime,
+    );
+    if (pickedTime != null && pickedTime != _startTime) {
+      setState(() {
+        _startTime = pickedTime;
+        // Si la hora de inicio es después de la hora de fin, actualizar la hora de fin
+        if (_compareTimeOfDay(_startTime, _endTime) >= 0) {
+          _endTime = TimeOfDay(
+            hour: (_startTime.hour + 1) % 24,
+            minute: _startTime.minute,
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _selectEndTime() async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _endTime,
+    );
+    if (pickedTime != null && pickedTime != _endTime) {
+      setState(() {
+        _endTime = pickedTime;
+      });
+    }
+  }
+
+  int _compareTimeOfDay(TimeOfDay time1, TimeOfDay time2) {
+    final minutes1 = time1.hour * 60 + time1.minute;
+    final minutes2 = time2.hour * 60 + time2.minute;
+    return minutes1 - minutes2;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.backgroundColor,
-      appBar: CustomAppBar(
-        title: widget.activity != null
-            ? 'Editar Actividad'
-            : 'Crear Nueva Actividad',
-        showBackButton: true,
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isEditing = widget.activity != null;
+
+    // Definir colores para mejorar el contraste y visibilidad
+    final borderColor = theme.colorScheme.primary.withOpacity(0.7);
+    final fillColor = theme.colorScheme.surface.withOpacity(0.3);
+    final textColor = theme.colorScheme.onSurface;
+
+    // Estilo de entrada común para todos los campos de texto con mejor contraste
+    final inputDecoration = InputDecoration(
+      border: OutlineInputBorder(
+        borderSide: BorderSide(color: borderColor, width: 1.5),
+        borderRadius: BorderRadius.circular(8),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: borderColor, width: 1.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2.0),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      fillColor: fillColor,
+      filled: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      labelStyle: TextStyle(
+        color: textColor.withOpacity(0.8),
+        fontWeight: FontWeight.w500,
+      ),
+      hintStyle: TextStyle(
+        color: textColor.withOpacity(0.6),
+      ),
+    );
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: CustomAppBar(
+        title: isEditing ? l10n.editActivity : l10n.createActivity,
+        showBackButton: true,
+        titleStyle: TextStyle(
+          color: theme.colorScheme.onBackground,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                widget.activity != null
-                    ? 'Edita los detalles de tu actividad'
-                    : 'Añade una nueva actividad o tarea a tu agenda',
-                style: AppStyles.bodyMedium.copyWith(
-                  color: context.textColor,
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Title
+              // Título
               TextFormField(
                 controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: 'Título',
-                  hintText: 'Título de la actividad',
-                  filled: true,
-                  fillColor: context.surfaceColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
-                  labelStyle: TextStyle(color: context.textColor),
-                  hintStyle: TextStyle(color: context.subtextColor),
+                decoration: inputDecoration.copyWith(
+                  labelText: l10n.activityTitle,
+                  hintText: l10n.activityTitleHint,
+                  prefixIcon: Icon(Icons.title,
+                      color: theme.colorScheme.primary.withOpacity(0.7)),
                 ),
-                style: TextStyle(color: context.textColor),
-                validator: (value) =>
-                    FormValidators.validateRequired(value, 'Título'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return l10n.activityTitle;
+                  }
+                  return null;
+                },
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 16),
-              // Date and Time
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedDate,
-                          firstDate: DateTime.now(),
-                          lastDate:
-                              DateTime.now().add(const Duration(days: 365)),
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme(
-                                  brightness: context.isDarkMode
-                                      ? Brightness.dark
-                                      : Brightness.light,
-                                  primary: context.primaryColor,
-                                  onPrimary: context.isDarkMode
-                                      ? Colors.white
-                                      : Colors.black,
-                                  secondary: context.secondaryColor,
-                                  onSecondary: context.isDarkMode
-                                      ? Colors.white
-                                      : Colors.black,
-                                  surface: context.surfaceColor,
-                                  onSurface: context.textColor,
-                                  background: context.backgroundColor,
-                                  onBackground: context.textColor,
-                                  error: context.errorColor,
-                                  onError: Colors.white,
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _selectedDate = picked;
-                          });
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: context.surfaceColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.calendar_today,
-                                color: context.textColor),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                              style: TextStyle(color: context.textColor),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () async {
-                        final TimeOfDay? picked = await showTimePicker(
-                          context: context,
-                          initialTime: _selectedTime,
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme(
-                                  brightness: context.isDarkMode
-                                      ? Brightness.dark
-                                      : Brightness.light,
-                                  primary: context.primaryColor,
-                                  onPrimary: context.isDarkMode
-                                      ? Colors.white
-                                      : Colors.black,
-                                  secondary: context.secondaryColor,
-                                  onSecondary: context.isDarkMode
-                                      ? Colors.white
-                                      : Colors.black,
-                                  surface: context.surfaceColor,
-                                  onSurface: context.textColor,
-                                  background: context.backgroundColor,
-                                  onBackground: context.textColor,
-                                  error: context.errorColor,
-                                  onError: Colors.white,
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _selectedTime = picked;
-                          });
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: context.surfaceColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.access_time, color: context.textColor),
-                            const SizedBox(width: 8),
-                            Text(
-                              _selectedTime.format(context),
-                              style: TextStyle(color: context.textColor),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Category and Priority
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedCategory,
-                        dropdownColor: context.surfaceColor,
-                        items: _categories.map((category) {
-                          return DropdownMenuItem(
-                            value: category,
-                            child: Text(
-                              category,
-                              style: TextStyle(color: context.textColor),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedCategory = value!;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Categoría',
-                          filled: true,
-                          fillColor: context.surfaceColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          labelStyle: TextStyle(color: context.textColor),
-                        ),
-                        style: TextStyle(color: context.textColor),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedPriority,
-                        dropdownColor: context.surfaceColor,
-                        items: _priorities.map((priority) {
-                          return DropdownMenuItem(
-                            value: priority,
-                            child: Text(
-                              priority,
-                              style: TextStyle(color: context.textColor),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedPriority = value!;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Prioridad',
-                          filled: true,
-                          fillColor: context.surfaceColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          labelStyle: TextStyle(color: context.textColor),
-                        ),
-                        style: TextStyle(color: context.textColor),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Description
+
+              // Descripción
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Description (Optional)',
-                  hintText: 'Add details about this activity',
-                  filled: true,
-                  fillColor: context.surfaceColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
-                  labelStyle: TextStyle(color: context.textColor),
-                  hintStyle: TextStyle(color: context.subtextColor),
+                decoration: inputDecoration.copyWith(
+                  labelText: l10n.activityDescription,
+                  hintText: l10n.activityDescriptionHint,
+                  prefixIcon: Icon(Icons.description,
+                      color: theme.colorScheme.primary.withOpacity(0.7)),
+                  alignLabelWithHint: true,
                 ),
-                style: TextStyle(color: context.textColor),
                 maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                child: AccessibleButton.primary(
-                  text: widget.activity != null
-                      ? 'Save Changes'
-                      : 'Create Activity',
-                  onPressed: _saveActivity,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 16,
                 ),
+              ),
+              const SizedBox(height: 16),
+
+              // Fecha
+              GestureDetector(
+                onTap: _selectDate,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: borderColor, width: 1.0),
+                    borderRadius: BorderRadius.circular(8),
+                    color: fillColor,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.activityDate,
+                            style: TextStyle(
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.8),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateTimeUtils.formatDate(_selectedDate),
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Icon(Icons.arrow_drop_down,
+                          color: theme.colorScheme.onSurface)
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Hora de inicio y fin
+              Row(
+                children: [
+                  // Hora de inicio
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _selectStartTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: borderColor, width: 1.0),
+                          borderRadius: BorderRadius.circular(8),
+                          color: fillColor,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.access_time,
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.6)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  l10n.activityStartTime,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.8),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _startTime.format(context),
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Hora de fin
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _selectEndTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: borderColor, width: 1.0),
+                          borderRadius: BorderRadius.circular(8),
+                          color: fillColor,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.access_time,
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.6)),
+                                const SizedBox(width: 8),
+                                Text(
+                                  l10n.activityEndTime,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.8),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _endTime.format(context),
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Fila para Categoría y Prioridad
+              Row(
+                children: [
+                  // Categoría
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: borderColor, width: 1.0),
+                        borderRadius: BorderRadius.circular(8),
+                        color: fillColor,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.category,
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.6)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _category,
+                                isExpanded: true,
+                                dropdownColor: theme.cardColor,
+                                style: TextStyle(
+                                    color: theme.colorScheme.onSurface,
+                                    fontSize: 16),
+                                hint: Text(
+                                  l10n.activityCategory,
+                                  style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.8)),
+                                ),
+                                icon: Icon(Icons.arrow_drop_down,
+                                    color: theme.colorScheme.onSurface),
+                                items: _categories.map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: TextStyle(
+                                          color: theme.colorScheme.onSurface),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _category = newValue;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Prioridad
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: borderColor, width: 1.0),
+                        borderRadius: BorderRadius.circular(8),
+                        color: fillColor,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.priority_high,
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.6)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _priority,
+                                isExpanded: true,
+                                dropdownColor: theme.cardColor,
+                                style: TextStyle(
+                                    color: theme.colorScheme.onSurface,
+                                    fontSize: 16),
+                                hint: Text(
+                                  l10n.activityPriority,
+                                  style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.8)),
+                                ),
+                                icon: Icon(Icons.arrow_drop_down,
+                                    color: theme.colorScheme.onSurface),
+                                items: _priorities.map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: TextStyle(
+                                          color: theme.colorScheme.onSurface),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _priority = newValue;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Completado (solo visible al editar)
+              if (isEditing) ...[
+                SwitchListTile(
+                  title: Text(
+                    l10n.activityCompleted,
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                  ),
+                  value: _isCompleted,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _isCompleted = value;
+                    });
+                  },
+                  activeColor: theme.colorScheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: borderColor, width: 1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  tileColor: fillColor,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Recordatorio
+              SwitchListTile(
+                title: Text(
+                  'Recordatorio',
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+                value: _sendReminder,
+                onChanged: (bool value) {
+                  setState(() {
+                    _sendReminder = value;
+                  });
+                },
+                activeColor: theme.colorScheme.primary,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: borderColor, width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                tileColor: fillColor,
+              ),
+
+              // Minutos antes (solo visible si recordatorio está activado)
+              if (_sendReminder) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: borderColor, width: 1.0),
+                    borderRadius: BorderRadius.circular(8),
+                    color: fillColor,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Recordar',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<int>(
+                        value: _reminderMinutesBefore,
+                        decoration: InputDecoration(
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          isDense: true,
+                        ),
+                        items: _reminderOptions.map((minutes) {
+                          return DropdownMenuItem<int>(
+                            value: minutes,
+                            child: Text('$minutes minutos antes'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _reminderMinutesBefore = value;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
+
+              // Botones
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: BorderSide(color: theme.colorScheme.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.cancel,
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _saveActivity,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: _isSubmitting
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.onPrimary,
+                                ),
+                              ),
+                            )
+                          : Text(isEditing
+                              ? l10n.activitySaveChanges
+                              : l10n.activityCreate),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

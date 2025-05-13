@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:temposage/core/constants/app_colors.dart';
 import 'package:temposage/core/services/service_locator.dart';
 import 'package:temposage/features/habits/data/models/habit_model.dart';
 import 'package:temposage/features/habits/domain/entities/habit.dart';
 import 'package:temposage/features/habits/presentation/widgets/habit_card.dart';
+import 'package:temposage/core/widgets/custom_app_bar.dart';
 
 class HabitsScreen extends StatefulWidget {
   const HabitsScreen({super.key});
@@ -132,69 +134,59 @@ class _HabitsScreenState extends State<HabitsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Hábitos',
-                    style: theme.textTheme.headlineLarge,
-                  ),
-                  IconButton(
-                    onPressed: _showAddHabitDialog,
-                    icon:
-                        Icon(Icons.add, color: theme.colorScheme.onBackground),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                          color: theme.colorScheme.primary))
-                  : _habits.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No hay hábitos',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onBackground
-                                  .withOpacity(0.6),
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _habits.length,
-                          itemBuilder: (context, index) {
-                            final habit = _habits[index];
-                            return HabitCard(
-                              habit: habit,
-                              onComplete: () async {
-                                final habitEntity = _mapModelToEntity(habit);
-                                final updatedEntity =
-                                    habitEntity.copyWith(isDone: true);
-                                await _repository.updateHabit(updatedEntity);
-                                if (mounted) {
-                                  _loadHabits();
-                                }
-                              },
-                              onDelete: () => _deleteHabit(habit),
-                            );
-                          },
-                        ),
-            ),
-          ],
+      appBar: CustomAppBar(
+        title: l10n.habits,
+        showBackButton: false,
+        titleStyle: TextStyle(
+          color: theme.colorScheme.onBackground,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
         ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add, color: theme.colorScheme.onBackground),
+            onPressed: _showAddHabitDialog,
+          ),
+        ],
       ),
+      body: _isLoading
+          ? Center(
+              child:
+                  CircularProgressIndicator(color: theme.colorScheme.primary))
+          : _habits.isEmpty
+              ? Center(
+                  child: Text(
+                    l10n.noHabits,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onBackground.withOpacity(0.6),
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _habits.length,
+                  itemBuilder: (context, index) {
+                    final habit = _habits[index];
+                    return HabitCard(
+                      habit: habit,
+                      onComplete: () async {
+                        final habitEntity = _mapModelToEntity(habit);
+                        final updatedEntity =
+                            habitEntity.copyWith(isDone: true);
+                        await _repository.updateHabit(updatedEntity);
+                        if (mounted) {
+                          _loadHabits();
+                        }
+                      },
+                      onDelete: () => _deleteHabit(habit),
+                    );
+                  },
+                ),
     );
   }
 }

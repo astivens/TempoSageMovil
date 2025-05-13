@@ -13,13 +13,15 @@ extension ThemeExtension on BuildContext {
 
   /// Acceso a otros colores específicos del tema
 
-  /// Color de texto principal según tema
-  Color get textColor =>
-      isDarkMode ? AppColors.mocha.text : AppColors.latte.text;
+  /// Color de texto principal según tema con alto contraste
+  Color get textColor => isDarkMode
+      ? Colors.white // Usando blanco puro para modo oscuro para mejor contraste
+      : Colors.black; // Usando negro puro para modo claro para mejor contraste
 
-  /// Color de subtexto según tema
-  Color get subtextColor =>
-      isDarkMode ? AppColors.mocha.subtext0 : AppColors.latte.subtext0;
+  /// Color de subtexto según tema con mejor contraste
+  Color get subtextColor => isDarkMode
+      ? Colors.white.withOpacity(0.8) // Subtexto más visible en modo oscuro
+      : Colors.black.withOpacity(0.8); // Subtexto más visible en modo claro
 
   /// Color de fondo según tema
   Color get backgroundColor =>

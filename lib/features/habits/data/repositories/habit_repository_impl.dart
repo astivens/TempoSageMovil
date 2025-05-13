@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/local_storage.dart';
+import '../../../../core/services/service_locator.dart';
 import '../models/habit_model.dart';
 import '../../domain/entities/habit.dart';
 import '../../domain/repositories/habit_repository.dart';
@@ -119,6 +120,12 @@ class HabitRepositoryImpl implements HabitRepository {
       await LocalStorage.saveData<HabitModel>(
           _boxName, habitModel.id, habitModel);
       debugPrint('Hábito guardado correctamente: ${habit.name}');
+
+      // Programar notificaciones para este hábito si es necesario
+      if (habit.reminder == 'Si') {
+        await ServiceLocator.instance.habitNotificationService
+            .scheduleHabitNotification(habit);
+      }
     } catch (e) {
       throw HabitRepositoryException('Error al crear hábito: $e');
     }
@@ -134,6 +141,10 @@ class HabitRepositoryImpl implements HabitRepository {
       final habitModel = _mapEntityToModel(habit);
       await LocalStorage.saveData<HabitModel>(
           _boxName, habitModel.id, habitModel);
+
+      // Actualizar notificaciones para este hábito
+      await ServiceLocator.instance.habitNotificationService
+          .updateHabitNotifications(habit);
     } catch (e) {
       throw HabitRepositoryException('Error al actualizar hábito: $e');
     }
@@ -147,6 +158,10 @@ class HabitRepositoryImpl implements HabitRepository {
       }
 
       await LocalStorage.deleteData(_boxName, id);
+
+      // Cancelar notificaciones para este hábito
+      await ServiceLocator.instance.habitNotificationService
+          .cancelHabitNotifications(id);
     } catch (e) {
       throw HabitRepositoryException('Error al eliminar hábito: $e');
     }

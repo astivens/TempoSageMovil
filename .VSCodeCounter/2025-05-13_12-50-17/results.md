@@ -1,0 +1,168 @@
+# Summary
+
+Date : 2025-05-13 12:50:17
+
+Directory /home/anuar/Documentos/Proyectos/TempoSage/Tempo_Sage_Movil/temposage
+
+Total : 193 files,  19434 codes, 1337 comments, 2361 blanks, all 23132 lines
+
+Summary / [Details](details.md) / [Diff Summary](diff.md) / [Diff Details](diff-details.md)
+
+## Languages
+| language | files | code | comment | blank | total |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| Dart | 129 | 16,487 | 1,076 | 1,870 | 19,433 |
+| Markdown | 5 | 744 | 0 | 137 | 881 |
+| C++ | 16 | 540 | 131 | 189 | 860 |
+| XML | 12 | 479 | 53 | 13 | 545 |
+| CMake | 8 | 461 | 0 | 92 | 553 |
+| YAML | 10 | 387 | 55 | 30 | 472 |
+| JSON | 4 | 248 | 0 | 2 | 250 |
+| Swift | 6 | 61 | 7 | 21 | 89 |
+| HTML | 1 | 19 | 15 | 5 | 39 |
+| Java Properties | 2 | 8 | 0 | 2 | 10 |
+
+## Directories
+| path | files | code | comment | blank | total |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| . | 193 | 19,434 | 1,337 | 2,361 | 23,132 |
+| . (Files) | 9 | 1,060 | 53 | 158 | 1,271 |
+| .continue | 5 | 68 | 2 | 7 | 77 |
+| .continue (Files) | 1 | 29 | 2 | 3 | 34 |
+| .continue/models | 3 | 34 | 0 | 3 | 37 |
+| .continue/rules | 1 | 5 | 0 | 1 | 6 |
+| android | 11 | 83 | 51 | 12 | 146 |
+| android (Files) | 1 | 3 | 0 | 1 | 4 |
+| android/app | 9 | 75 | 51 | 10 | 136 |
+| android/app/src | 9 | 75 | 51 | 10 | 136 |
+| android/app/src/debug | 1 | 3 | 4 | 1 | 8 |
+| android/app/src/main | 7 | 69 | 43 | 8 | 120 |
+| android/app/src/main (Files) | 1 | 34 | 11 | 1 | 46 |
+| android/app/src/main/res | 6 | 35 | 32 | 7 | 74 |
+| android/app/src/main/res/drawable | 1 | 4 | 7 | 2 | 13 |
+| android/app/src/main/res/drawable-v21 | 1 | 4 | 7 | 2 | 13 |
+| android/app/src/main/res/mipmap-anydpi-v26 | 1 | 5 | 0 | 1 | 6 |
+| android/app/src/main/res/values | 2 | 13 | 9 | 1 | 23 |
+| android/app/src/main/res/values-night | 1 | 9 | 9 | 1 | 19 |
+| android/app/src/profile | 1 | 3 | 4 | 1 | 8 |
+| android/gradle | 1 | 5 | 0 | 1 | 6 |
+| android/gradle/wrapper | 1 | 5 | 0 | 1 | 6 |
+| ios | 8 | 229 | 4 | 13 | 246 |
+| ios/Runner | 7 | 222 | 2 | 9 | 233 |
+| ios/Runner (Files) | 2 | 13 | 0 | 3 | 16 |
+| ios/Runner/Assets.xcassets | 3 | 148 | 0 | 4 | 152 |
+| ios/Runner/Assets.xcassets/AppIcon.appiconset | 1 | 122 | 0 | 1 | 123 |
+| ios/Runner/Assets.xcassets/LaunchImage.imageset | 2 | 26 | 0 | 3 | 29 |
+| ios/Runner/Base.lproj | 2 | 61 | 2 | 2 | 65 |
+| ios/RunnerTests | 1 | 7 | 2 | 4 | 13 |
+| lib | 117 | 15,056 | 906 | 1,605 | 17,567 |
+| lib (Files) | 1 | 182 | 20 | 22 | 224 |
+| lib/core | 45 | 4,260 | 482 | 548 | 5,290 |
+| lib/core/animations | 1 | 185 | 13 | 20 | 218 |
+| lib/core/config | 1 | 6 | 0 | 1 | 7 |
+| lib/core/constants | 7 | 801 | 36 | 56 | 893 |
+| lib/core/database | 1 | 9 | 2 | 4 | 15 |
+| lib/core/di | 1 | 48 | 20 | 16 | 84 |
+| lib/core/errors | 1 | 49 | 4 | 7 | 60 |
+| lib/core/l10n | 1 | 18 | 0 | 4 | 22 |
+| lib/core/navigation | 1 | 31 | 0 | 3 | 34 |
+| lib/core/services | 8 | 871 | 68 | 129 | 1,068 |
+| lib/core/theme | 2 | 100 | 35 | 31 | 166 |
+| lib/core/utils | 7 | 466 | 70 | 84 | 620 |
+| lib/core/utils (Files) | 5 | 404 | 70 | 74 | 548 |
+| lib/core/utils/helpers | 1 | 25 | 0 | 6 | 31 |
+| lib/core/utils/validators | 1 | 37 | 0 | 4 | 41 |
+| lib/core/widgets | 14 | 1,676 | 234 | 193 | 2,103 |
+| lib/features | 71 | 10,614 | 404 | 1,035 | 12,053 |
+| lib/features/activities | 16 | 2,508 | 55 | 177 | 2,740 |
+| lib/features/activities/data | 2 | 240 | 19 | 36 | 295 |
+| lib/features/activities/data/models | 1 | 70 | 0 | 13 | 83 |
+| lib/features/activities/data/repositories | 1 | 170 | 19 | 23 | 212 |
+| lib/features/activities/domain | 5 | 207 | 12 | 34 | 253 |
+| lib/features/activities/domain/entities | 1 | 16 | 0 | 2 | 18 |
+| lib/features/activities/domain/services | 1 | 74 | 1 | 14 | 89 |
+| lib/features/activities/domain/usecases | 3 | 117 | 11 | 18 | 146 |
+| lib/features/activities/presentation | 9 | 2,061 | 24 | 107 | 2,192 |
+| lib/features/activities/presentation/screens | 4 | 1,524 | 18 | 70 | 1,612 |
+| lib/features/activities/presentation/widgets | 5 | 537 | 6 | 37 | 580 |
+| lib/features/auth | 3 | 357 | 8 | 33 | 398 |
+| lib/features/auth/data | 2 | 86 | 2 | 21 | 109 |
+| lib/features/auth/data/models | 1 | 31 | 0 | 8 | 39 |
+| lib/features/auth/data/services | 1 | 55 | 2 | 13 | 70 |
+| lib/features/auth/presentation | 1 | 271 | 6 | 12 | 289 |
+| lib/features/auth/presentation/screens | 1 | 271 | 6 | 12 | 289 |
+| lib/features/calendar | 1 | 261 | 11 | 18 | 290 |
+| lib/features/calendar/presentation | 1 | 261 | 11 | 18 | 290 |
+| lib/features/calendar/presentation/screens | 1 | 261 | 11 | 18 | 290 |
+| lib/features/dashboard | 14 | 3,131 | 94 | 315 | 3,540 |
+| lib/features/dashboard/controllers | 1 | 525 | 52 | 83 | 660 |
+| lib/features/dashboard/domain | 1 | 176 | 1 | 25 | 202 |
+| lib/features/dashboard/presentation | 12 | 2,430 | 41 | 207 | 2,678 |
+| lib/features/dashboard/presentation/screens | 1 | 210 | 9 | 26 | 245 |
+| lib/features/dashboard/presentation/services | 1 | 176 | 1 | 25 | 202 |
+| lib/features/dashboard/presentation/widgets | 10 | 2,044 | 31 | 156 | 2,231 |
+| lib/features/habits | 14 | 1,655 | 96 | 219 | 1,970 |
+| lib/features/habits/cubit | 2 | 133 | 0 | 18 | 151 |
+| lib/features/habits/data | 4 | 414 | 1 | 66 | 481 |
+| lib/features/habits/data/models | 2 | 120 | 0 | 24 | 144 |
+| lib/features/habits/data/repositories | 2 | 294 | 1 | 42 | 337 |
+| lib/features/habits/domain | 4 | 382 | 86 | 82 | 550 |
+| lib/features/habits/domain/entities | 1 | 18 | 0 | 4 | 22 |
+| lib/features/habits/domain/repositories | 1 | 10 | 0 | 2 | 12 |
+| lib/features/habits/domain/services | 1 | 290 | 77 | 67 | 434 |
+| lib/features/habits/domain/usecases | 1 | 64 | 9 | 9 | 82 |
+| lib/features/habits/presentation | 4 | 726 | 9 | 53 | 788 |
+| lib/features/habits/presentation/screens | 1 | 309 | 3 | 26 | 338 |
+| lib/features/habits/presentation/widgets | 3 | 417 | 6 | 27 | 450 |
+| lib/features/home | 1 | 74 | 5 | 9 | 88 |
+| lib/features/home/presentation | 1 | 74 | 5 | 9 | 88 |
+| lib/features/home/presentation/screens | 1 | 74 | 5 | 9 | 88 |
+| lib/features/settings | 6 | 673 | 14 | 62 | 749 |
+| lib/features/settings/data | 2 | 93 | 0 | 23 | 116 |
+| lib/features/settings/data/models | 1 | 52 | 0 | 12 | 64 |
+| lib/features/settings/data/services | 1 | 41 | 0 | 11 | 52 |
+| lib/features/settings/presentation | 4 | 580 | 14 | 39 | 633 |
+| lib/features/settings/presentation/providers | 1 | 45 | 0 | 11 | 56 |
+| lib/features/settings/presentation/screens | 2 | 438 | 10 | 19 | 467 |
+| lib/features/settings/presentation/widgets | 1 | 97 | 4 | 9 | 110 |
+| lib/features/tasks | 9 | 382 | 0 | 57 | 439 |
+| lib/features/tasks/cubit | 1 | 27 | 0 | 8 | 35 |
+| lib/features/tasks/data | 6 | 127 | 0 | 27 | 154 |
+| lib/features/tasks/data/models | 2 | 34 | 0 | 8 | 42 |
+| lib/features/tasks/data/repositories | 4 | 93 | 0 | 19 | 112 |
+| lib/features/tasks/presentation | 2 | 228 | 0 | 22 | 250 |
+| lib/features/tasks/presentation/screens | 1 | 129 | 0 | 10 | 139 |
+| lib/features/tasks/presentation/widgets | 1 | 99 | 0 | 12 | 111 |
+| lib/features/timeblocks | 7 | 1,573 | 121 | 145 | 1,839 |
+| lib/features/timeblocks/data | 2 | 333 | 81 | 53 | 467 |
+| lib/features/timeblocks/data/models | 1 | 114 | 27 | 21 | 162 |
+| lib/features/timeblocks/data/repositories | 1 | 219 | 54 | 32 | 305 |
+| lib/features/timeblocks/presentation | 5 | 1,240 | 40 | 92 | 1,372 |
+| lib/features/timeblocks/presentation/screens | 3 | 794 | 38 | 61 | 893 |
+| lib/features/timeblocks/presentation/widgets | 2 | 446 | 2 | 31 | 479 |
+| linux | 9 | 325 | 37 | 92 | 454 |
+| linux (Files) | 1 | 104 | 0 | 25 | 129 |
+| linux/flutter | 4 | 105 | 9 | 27 | 141 |
+| linux/runner | 4 | 116 | 28 | 40 | 184 |
+| macos | 6 | 453 | 5 | 16 | 474 |
+| macos/Flutter | 1 | 12 | 3 | 4 | 19 |
+| macos/Runner | 4 | 434 | 0 | 8 | 442 |
+| macos/Runner (Files) | 2 | 23 | 0 | 7 | 30 |
+| macos/Runner/Assets.xcassets | 1 | 68 | 0 | 0 | 68 |
+| macos/Runner/Assets.xcassets/AppIcon.appiconset | 1 | 68 | 0 | 0 | 68 |
+| macos/Runner/Base.lproj | 1 | 343 | 0 | 1 | 344 |
+| macos/RunnerTests | 1 | 7 | 2 | 4 | 13 |
+| test | 12 | 1,431 | 170 | 265 | 1,866 |
+| test (Files) | 1 | 23 | 11 | 7 | 41 |
+| test/features | 1 | 126 | 18 | 22 | 166 |
+| test/features/habits | 1 | 126 | 18 | 22 | 166 |
+| test/features/habits/domain | 1 | 126 | 18 | 22 | 166 |
+| test/features/habits/domain/usecases | 1 | 126 | 18 | 22 | 166 |
+| test/widgets | 10 | 1,282 | 141 | 236 | 1,659 |
+| web | 2 | 54 | 15 | 5 | 74 |
+| windows | 14 | 675 | 94 | 188 | 957 |
+| windows (Files) | 1 | 89 | 0 | 20 | 109 |
+| windows/flutter | 4 | 124 | 9 | 29 | 162 |
+| windows/runner | 9 | 462 | 85 | 139 | 686 |
+
+Summary / [Details](details.md) / [Diff Summary](diff.md) / [Diff Details](diff-details.md)

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/services/local_storage.dart';
 import 'core/services/navigation_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/service_locator.dart';
 import 'core/utils/logger.dart';
 import 'core/theme/theme_manager.dart';
+import 'core/l10n/app_localizations.dart';
 import 'features/auth/data/models/user_model.dart';
 import 'features/activities/data/models/activity_model.dart';
 import 'features/timeblocks/data/models/time_block_model.dart';
@@ -51,6 +51,19 @@ Future<void> _initializeApp() async {
     // Inicializar repositorios
     await ServiceLocator.instance.initializeAll();
     logger.i('Servicios y repositorios inicializados', tag: 'App');
+
+    // Programar notificaciones para actividades existentes
+    await ServiceLocator.instance.activityNotificationService
+        .scheduleAllActivityNotifications();
+
+    // Programar notificaciones para hábitos existentes
+    await ServiceLocator.instance.habitNotificationService
+        .scheduleAllHabitNotifications();
+
+    // Mostrar notificaciones inmediatas para actividades próximas (dentro de 1 hora)
+    await _showImminentNotifications();
+
+    logger.i('Notificaciones programadas', tag: 'App');
 
     // Verificar autenticación
     final authService = AuthService();
@@ -97,6 +110,57 @@ Future<void> _initializeStorage() async {
     logger.e('Error al inicializar almacenamiento',
         tag: 'Storage', error: e, stackTrace: stackTrace);
     rethrow;
+  }
+}
+
+/// Muestra notificaciones inmediatas para actividades y hábitos próximos
+Future<void> _showImminentNotifications() async {
+  try {
+    final logger = Logger.instance;
+    final activityRepo = ServiceLocator.instance.activityRepository;
+    final notificationService = ServiceLocator.instance.notificationService;
+
+    // Obtener la fecha actual
+    final now = DateTime.now();
+
+    // Obtener actividades del día actual
+    final activities = await activityRepo.getActivitiesByDate(now);
+
+    // Filtrar actividades que comenzarán dentro de 1 hora
+    final upcomingActivities = activities.where((activity) {
+      // Si la actividad ya está completada, no mostrar notificación
+      if (activity.isCompleted) return false;
+
+      // Calcular tiempo hasta el inicio de la actividad
+      final timeUntilStart = activity.startTime.difference(now);
+
+      // Si la actividad comienza en menos de 60 minutos y no ha pasado
+      return timeUntilStart.inMinutes <= 60 && timeUntilStart.inMinutes > 0;
+    }).toList();
+
+    logger.i('Actividades próximas encontradas: ${upcomingActivities.length}',
+        tag: 'Notifications');
+
+    // Mostrar notificaciones para actividades próximas
+    for (final activity in upcomingActivities) {
+      final minutesUntilStart = activity.startTime.difference(now).inMinutes;
+
+      await notificationService.showNotification(
+        title: 'Actividad próxima',
+        body: '${activity.title} comienza en $minutesUntilStart minutos',
+        category: NotificationCategory.activities,
+        id: activity.id.hashCode,
+        payload: 'activity:${activity.id}',
+      );
+
+      logger.i(
+          'Notificación inmediata mostrada para actividad: ${activity.title}',
+          tag: 'Notifications');
+    }
+
+    // Nota: también se podrían mostrar hábitos del día actual que deban completarse pronto
+  } catch (e) {
+    debugPrint('Error al mostrar notificaciones inmediatas: $e');
   }
 }
 
@@ -155,16 +219,10 @@ class MyApp extends StatelessWidget {
               themeMode: themeManager.themeMode,
               navigatorKey: NavigationService.navigatorKey,
               initialRoute: isLoggedIn ? '/home' : '/login',
-              localizationsDelegates: const [
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              supportedLocales: const [
-                Locale('es'),
-                Locale('en'),
-              ],
-              locale: const Locale('es'),
+              localizationsDelegates:
+                  AppLocalizationsSetup.localizationsDelegates,
+              supportedLocales: AppLocalizationsSetup.supportedLocales,
+              locale: Locale(settingsProvider.settings.language),
               routes: {
                 '/login': (context) => const LoginScreen(),
                 '/home': (context) => const HomeScreen(),

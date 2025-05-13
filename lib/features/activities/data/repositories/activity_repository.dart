@@ -103,6 +103,12 @@ class ActivityRepository {
       await LocalStorage.saveData<ActivityModel>(
           _boxName, activity.id, activity);
       await _syncWithTimeBlock(activity);
+
+      // Programar notificación si es necesario
+      if (activity.sendReminder) {
+        await ServiceLocator.instance.activityNotificationService
+            .scheduleActivityNotification(activity);
+      }
     } catch (e) {
       _logger.e('Error al agregar actividad', tag: 'ActivityRepo', error: e);
       throw ActivityRepositoryException('Error al agregar actividad: $e');
@@ -119,6 +125,10 @@ class ActivityRepository {
       await LocalStorage.saveData<ActivityModel>(
           _boxName, activity.id, activity);
       await _syncWithTimeBlock(activity);
+
+      // Actualizar notificación
+      await ServiceLocator.instance.activityNotificationService
+          .updateActivityNotification(activity);
     } catch (e) {
       _logger.e('Error al actualizar actividad', tag: 'ActivityRepo', error: e);
       throw ActivityRepositoryException('Error al actualizar actividad: $e');
@@ -201,11 +211,21 @@ class ActivityRepository {
         throw ActivityRepositoryException('El ID no puede estar vacío');
       }
 
+      final activity = await getActivity(id);
+      if (activity == null) {
+        throw ActivityRepositoryException('Actividad no encontrada');
+      }
+
       await LocalStorage.deleteData(_boxName, id);
+
+      // Cancelar notificación si existía
+      await ServiceLocator.instance.activityNotificationService
+          .cancelActivityNotification(id);
+
       _logger.d('Actividad eliminada: $id', tag: 'ActivityRepo');
     } catch (e) {
-      _logger.e('Error eliminando actividad', tag: 'ActivityRepo', error: e);
-      throw ActivityRepositoryException('Error eliminando actividad: $e');
+      _logger.e('Error al eliminar actividad', tag: 'ActivityRepo', error: e);
+      throw ActivityRepositoryException('Error al eliminar actividad: $e');
     }
   }
 }

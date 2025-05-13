@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/validators/form_validators.dart';
 import '../../../../core/widgets/accessible_button.dart';
@@ -89,6 +90,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: AppColors.base,
       body: SafeArea(
@@ -124,18 +127,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
                 // Welcome Text
-                const Text(
-                  'Welcome',
-                  style: TextStyle(
+                Text(
+                  l10n.welcome,
+                  style: const TextStyle(
                     color: AppColors.text,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Sign in to your account or create a new one',
-                  style: TextStyle(
+                Text(
+                  l10n.signInMessage,
+                  style: const TextStyle(
                     color: AppColors.subtext1,
                     fontSize: 14,
                   ),
@@ -169,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           child: Text(
-                            'Login',
+                            l10n.login,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Theme.of(context).brightness ==
@@ -190,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? AppColors.mocha.subtext0
                                     : AppColors.latte.subtext0,
                           ),
-                          child: const Text('Register'),
+                          child: Text(l10n.register),
                         ),
                       ),
                     ],

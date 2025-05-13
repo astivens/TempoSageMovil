@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
@@ -7,7 +8,12 @@ import '../../data/models/time_block_model.dart';
 import '../../data/repositories/time_block_repository.dart';
 
 class CreateTimeBlockScreen extends StatefulWidget {
-  const CreateTimeBlockScreen({super.key});
+  final TimeBlockModel? timeBlock;
+
+  const CreateTimeBlockScreen({
+    super.key,
+    this.timeBlock,
+  });
 
   @override
   State<CreateTimeBlockScreen> createState() => _CreateTimeBlockScreenState();
@@ -159,10 +165,20 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isEditing = widget.timeBlock != null;
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Create Time Block',
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: CustomAppBar(
+        title: isEditing ? l10n.editTimeBlock : l10n.createTimeBlock,
         showBackButton: true,
+        titleStyle: TextStyle(
+          color: theme.colorScheme.onBackground,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -171,8 +187,10 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Add a new time block to your schedule',
+              Text(
+                widget.timeBlock != null
+                    ? l10n.editTimeBlock
+                    : l10n.createTimeBlock,
                 style: AppStyles.bodyMedium,
               ),
               const SizedBox(height: 24),
@@ -180,8 +198,8 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'Enter time block title',
+                  labelText: l10n.timeBlockTitle,
+                  hintText: l10n.timeBlockTitleHint,
                   filled: true,
                   fillColor: AppColors.surface0,
                   border: OutlineInputBorder(
@@ -191,7 +209,7 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
+                    return l10n.timeBlockTitleRequired;
                   }
                   return null;
                 },
@@ -282,6 +300,16 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
               // Category
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
+                decoration: InputDecoration(
+                  labelText: l10n.timeBlockCategory,
+                  hintText: l10n.timeBlockCategoryHint,
+                  filled: true,
+                  fillColor: AppColors.surface0,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
                 items: _categories.map((category) {
                   return DropdownMenuItem(
                     value: category,
@@ -293,15 +321,12 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
                     _selectedCategory = value!;
                   });
                 },
-                decoration: InputDecoration(
-                  labelText: 'Category',
-                  filled: true,
-                  fillColor: AppColors.surface0,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return l10n.timeBlockCategoryRequired;
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               // Focus Time Switch
@@ -315,9 +340,9 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
                   children: [
                     const Icon(Icons.timer, color: AppColors.overlay0),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Focus Time',
+                        l10n.timeBlockCategoryFocus,
                         style: AppStyles.bodyMedium,
                       ),
                     ),
@@ -374,8 +399,8 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
-                  labelText: 'Description (Optional)',
-                  hintText: 'Add details about this time block',
+                  labelText: l10n.timeBlockDescription,
+                  hintText: l10n.timeBlockDescriptionHint,
                   filled: true,
                   fillColor: AppColors.surface0,
                   border: OutlineInputBorder(
@@ -388,8 +413,11 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
               const SizedBox(height: 24),
               // Create Button
               AccessibleButton.primary(
-                text: 'Create Time Block',
+                text: widget.timeBlock != null
+                    ? l10n.saveChanges
+                    : l10n.createTimeBlock,
                 onPressed: _saveTimeBlock,
+                isFullWidth: true,
               ),
             ],
           ),

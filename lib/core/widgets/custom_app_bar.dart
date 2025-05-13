@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/app_styles.dart';
-import '../constants/accessibility_styles.dart';
-import '../theme/theme_extensions.dart';
 
 /// AppBar personalizada con soporte mejorado para accesibilidad.
 ///
@@ -73,7 +70,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       showBackButton: false,
       actions: actions,
       centerTitle: true,
-      titleStyle: AccessibilityStyles.accessibleTitleLarge,
     );
   }
 
@@ -92,21 +88,22 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       showBackButton: true,
       onBackPressed: onBackPressed,
       actions: actions,
-      titleStyle: AppStyles.headlineSmall,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AppBar(
-      backgroundColor: backgroundColor ?? context.backgroundColor,
+      backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
       elevation: elevation,
       centerTitle: centerTitle,
       leading: showBackButton && leading == null
           ? IconButton(
               icon: Icon(
                 Icons.arrow_back_ios,
-                color: context.textColor,
+                color: theme.colorScheme.onBackground,
               ),
               onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
             )
@@ -118,16 +115,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// Construye el widget de título y subtítulo
   Widget _buildTitle(BuildContext context) {
-    final textColor = context.textColor;
-    final subtextColor = context.subtextColor;
+    final theme = Theme.of(context);
+    final textColor = theme.colorScheme.onBackground;
+    final subtextColor = theme.colorScheme.onBackground.withOpacity(0.7);
 
     // Si no hay subtítulo, retornar solo el título
     if (subtitle == null) {
       return Text(
         title,
         style: titleStyle ??
-            AppStyles.titleMedium.copyWith(
+            TextStyle(
               color: textColor,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
       );
@@ -140,16 +139,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         Text(
           title,
           style: titleStyle ??
-              AppStyles.titleMedium.copyWith(
+              TextStyle(
                 color: textColor,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
         ),
         Text(
           subtitle!,
           style: subtitleStyle ??
-              AppStyles.bodySmall.copyWith(
+              TextStyle(
                 color: subtextColor,
+                fontSize: 14,
               ),
         ),
       ],

@@ -25,13 +25,15 @@ class ActivityModelAdapter extends TypeAdapter<ActivityModel> {
       endTime: fields[5] as DateTime,
       category: fields[6] as String,
       priority: fields[7] as String,
+      sendReminder: fields[8] as bool,
+      reminderMinutesBefore: fields[9] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, ActivityModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +49,11 @@ class ActivityModelAdapter extends TypeAdapter<ActivityModel> {
       ..writeByte(6)
       ..write(obj.category)
       ..writeByte(7)
-      ..write(obj.priority);
+      ..write(obj.priority)
+      ..writeByte(8)
+      ..write(obj.sendReminder)
+      ..writeByte(9)
+      ..write(obj.reminderMinutesBefore);
   }
 
   @override

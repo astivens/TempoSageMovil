@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_styles.dart';
 import '../../../../core/theme/theme_extensions.dart';
-import '../../data/models/activity_model.dart';
+import '../../../../core/utils/validators/form_validators.dart';
+import '../../../../core/widgets/accessible_button.dart';
 import '../../../../core/services/service_locator.dart';
+import '../../data/models/activity_model.dart';
 
 class EditActivityScreen extends StatefulWidget {
   final ActivityModel activity;
@@ -21,7 +23,6 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _repository = ServiceLocator.instance.activityRepository;
 
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _startTime = TimeOfDay.now();
@@ -88,7 +89,8 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
         isCompleted: _isCompleted,
       );
 
-      await _repository.updateActivity(updatedActivity);
+      await ServiceLocator.instance.activityRepository
+          .updateActivity(updatedActivity);
       if (mounted) {
         Navigator.pop(context);
       }
@@ -171,43 +173,50 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
     }
   }
 
+  Future<void> _deleteActivity() async {
+    try {
+      await ServiceLocator.instance.activityRepository
+          .deleteActivity(widget.activity.id);
+      if (mounted) {
+        Navigator.pop(context, true); // true indica que se eliminó la actividad
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        padding: EdgeInsets.only(
-          top: 16.0,
-          left: 16.0,
-          right: 16.0,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
-        ),
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.editActivity),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.close, color: context.textColor),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Editar Actividad',
-                    style: AppStyles.titleLarge.copyWith(
-                      color: context.textColor,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close, color: context.textColor),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: 'Título',
-                  hintText: 'Título de la actividad',
+                  labelText: l10n.activityTitle,
+                  hintText: l10n.activityTitleHint,
                   filled: true,
                   fillColor: context.surfaceColor,
                   border: OutlineInputBorder(
@@ -218,12 +227,8 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                   hintStyle: TextStyle(color: context.subtextColor),
                 ),
                 style: TextStyle(color: context.textColor),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa un título';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    FormValidators.validateRequired(value, l10n.activityTitle),
               ),
               const SizedBox(height: 16),
               InkWell(
@@ -239,7 +244,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                       Icon(Icons.calendar_today, color: context.textColor),
                       const SizedBox(width: 8),
                       Text(
-                        '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                        l10n.activityDate,
                         style: TextStyle(color: context.textColor),
                       ),
                     ],
@@ -263,7 +268,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                             Icon(Icons.access_time, color: context.textColor),
                             const SizedBox(width: 8),
                             Text(
-                              'Inicio: ${_startTime.format(context)}',
+                              '${l10n.activityStartTime}: ${_startTime.format(context)}',
                               style: TextStyle(color: context.textColor),
                             ),
                           ],
@@ -286,7 +291,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                             Icon(Icons.access_time, color: context.textColor),
                             const SizedBox(width: 8),
                             Text(
-                              'Fin: ${_endTime.format(context)}',
+                              '${l10n.activityEndTime}: ${_endTime.format(context)}',
                               style: TextStyle(color: context.textColor),
                             ),
                           ],
@@ -301,8 +306,8 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                 controller: _descriptionController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: 'Descripción',
-                  hintText: 'Descripción opcional',
+                  labelText: l10n.activityDescription,
+                  hintText: l10n.activityDescriptionHint,
                   filled: true,
                   fillColor: context.surfaceColor,
                   border: OutlineInputBorder(
@@ -339,7 +344,7 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
                       });
                     }
                   },
-                  hint: const Text('Category'),
+                  hint: Text(l10n.activityCategory),
                 ),
               ),
               const SizedBox(height: 16),
@@ -387,23 +392,42 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: AccessibleButton.primary(
+                  text: l10n.activitySaveChanges,
                   onPressed: _updateActivity,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(l10n.activityDelete),
+                        content: Text(l10n.activityDeleteConfirmation),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(l10n.cancel),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _deleteActivity();
+                            },
+                            child: Text(l10n.delete),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: context.primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
                   ),
-                  child: Text(
-                    'Guardar Cambios',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: Text(l10n.activityDelete),
                 ),
               ),
             ],

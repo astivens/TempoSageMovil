@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/widgets/page_transitions.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../data/models/time_block_model.dart';
 import '../widgets/time_block_timeline.dart';
+import 'create_time_block_screen.dart';
 
 /// Pantalla que muestra los bloques de tiempo organizados en una línea de tiempo.
 /// Permite visualizar, gestionar y sincronizar bloques de tiempo con hábitos.
@@ -172,7 +174,10 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
 
   /// Construye la pantalla de detalle para un bloque de tiempo
   Widget _buildTimeBlockDetailScreen(TimeBlockModel block) {
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Hero(
           tag: 'timeblock_title_${block.id}',
@@ -180,11 +185,16 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
             color: Colors.transparent,
             child: Text(
               block.title,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: theme.colorScheme.onBackground,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
-        backgroundColor: AppColors.surface0,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        iconTheme: IconThemeData(color: theme.colorScheme.onBackground),
+        elevation: 0,
       ),
       body: Center(
         child: Column(
@@ -194,24 +204,60 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
               tag: 'timeblock_${block.id}',
               child: Card(
                 margin: const EdgeInsets.all(16),
+                elevation: 4,
+                color: theme.cardColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         block.title,
-                        style: AppStyles.titleLarge,
+                        style: TextStyle(
+                          color: theme.colorScheme.onBackground,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${_timeFormat.format(block.startTime)} - ${_timeFormat.format(block.endTime)}',
-                        style: AppStyles.bodyMedium,
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${_timeFormat.format(block.startTime)} - ${_timeFormat.format(block.endTime)}',
+                            style: TextStyle(
+                              color: theme.colorScheme.onBackground,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                      ...[
-                        const SizedBox(height: 8),
+                      if (block.description.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Divider(
+                            color: theme.colorScheme.onBackground
+                                .withOpacity(0.1)),
+                        const SizedBox(height: 16),
                         Text(
                           block.description,
-                          style: AppStyles.bodyMedium,
+                          style: TextStyle(
+                            color:
+                                theme.colorScheme.onBackground.withOpacity(0.8),
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ],
@@ -227,7 +273,24 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
 
   /// Gestiona la eliminación de un bloque de tiempo
   Future<void> _handleTimeBlockDelete(TimeBlockModel block) async {
-    final confirmed = await _showDeleteConfirmationDialog(block);
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteTimeBlock),
+        content: Text(l10n.deleteTimeBlockConfirmation(block.title)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
 
     if (confirmed == true) {
       try {
@@ -235,71 +298,67 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
         _loadTimeBlocks();
 
         if (!mounted) return;
-        ErrorHandler.showSuccessSnackBar(context, '${block.title} eliminado');
+        ErrorHandler.showSuccessSnackBar(
+          context,
+          l10n.timeBlockDeleted(block.title),
+        );
       } catch (e) {
         ErrorHandler.logError('Error al eliminar timeblock', e, null);
 
         if (!mounted) return;
         ErrorHandler.showErrorSnackBar(
-            context, 'No se pudo eliminar el bloque de tiempo');
+          context,
+          l10n.timeBlockDeleteError,
+        );
       }
     }
   }
 
-  /// Muestra un diálogo de confirmación para eliminar un bloque
-  Future<bool?> _showDeleteConfirmationDialog(TimeBlockModel block) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar bloque'),
-        content:
-            Text('¿Estás seguro de que quieres eliminar "${block.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Bloques de Tiempo',
-                style: theme.textTheme.headlineLarge,
-              ),
-            ),
-            _buildTabs(theme),
-            Expanded(
-              child: _isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: theme.colorScheme.primary,
-                      ),
-                    )
-                  : _timeBlocks.isEmpty
+      appBar: CustomAppBar(
+        title: l10n.timeBlocks,
+        showBackButton: false,
+        titleStyle: TextStyle(
+          color: theme.colorScheme.onBackground,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add, color: theme.colorScheme.onBackground),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateTimeBlockScreen(),
+                ),
+              );
+              _loadTimeBlocks();
+            },
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildSectionSelector(theme),
+                Expanded(
+                  child: _timeBlocks.isEmpty
                       ? Center(
                           child: Text(
-                            'No hay bloques de tiempo para ${_activeSection == 'today' ? 'hoy' : _activeSection == 'tomorrow' ? 'mañana' : 'los próximos días'}',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onBackground
-                                  .withOpacity(0.6),
+                            _activeSection == 'today'
+                                ? l10n.timeBlocksNoBlocksToday
+                                : l10n.timeBlocksNoBlocksSelected,
+                            style: AppStyles.bodyLarge.copyWith(
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.7),
                             ),
                           ),
                         )
@@ -308,60 +367,72 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
                           onTimeBlockTap: _handleTimeBlockTap,
                           onTimeBlockDelete: _handleTimeBlockDelete,
                         ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/create_time_block'),
-        backgroundColor: theme.colorScheme.primary,
-        child: Icon(
-          Icons.add,
-          color: theme.colorScheme.onPrimary,
-        ),
-      ),
     );
   }
 
-  Widget _buildTabs(ThemeData theme) {
+  Widget _buildSectionSelector(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
-      height: 48,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildTabButton('today', 'Hoy', theme),
-          _buildTabButton('tomorrow', 'Mañana', theme),
-          _buildTabButton('upcoming', 'Próximos', theme),
+          _buildSectionButton(
+            theme,
+            'today',
+            l10n.timeBlocksToday,
+            Icons.today,
+          ),
+          _buildSectionButton(
+            theme,
+            'tomorrow',
+            l10n.timeBlocksTomorrow,
+            Icons.event,
+          ),
+          _buildSectionButton(
+            theme,
+            'upcoming',
+            l10n.timeBlocksUpcoming,
+            Icons.calendar_month,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTabButton(String section, String label, ThemeData theme) {
-    final isActive = _activeSection == section;
+  Widget _buildSectionButton(
+    ThemeData theme,
+    String section,
+    String label,
+    IconData icon,
+  ) {
+    final isSelected = _activeSection == section;
+    // Usar un color con mejor contraste para los elementos no seleccionados
+    final color =
+        isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _setActiveSection(section),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActive ? theme.colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: isActive
-                  ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.onSurface,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
+    return TextButton.icon(
+      onPressed: () {
+        _setActiveSection(section);
+      },
+      icon: Icon(icon, color: color, size: 20),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        backgroundColor: isSelected
+            ? theme.colorScheme.primaryContainer.withOpacity(0.2)
+            : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );

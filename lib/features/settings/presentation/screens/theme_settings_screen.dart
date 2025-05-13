@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/theme/theme_manager.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/widgets/themed_widget_wrapper.dart';
@@ -17,12 +15,19 @@ class ThemeSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final themeManager = Provider.of<ThemeManager>(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: context.backgroundColor,
-      appBar: const CustomAppBar(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: CustomAppBar(
         title: 'Tema',
         showBackButton: true,
+        titleStyle: TextStyle(
+          color: theme.colorScheme.onBackground,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+        centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -33,10 +38,11 @@ class ThemeSettingsScreen extends StatelessWidget {
               // Sección de selección de tema
               Text(
                 'Apariencia',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: context.textColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: TextStyle(
+                  color: theme.colorScheme.onBackground,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -48,22 +54,28 @@ class ThemeSettingsScreen extends StatelessWidget {
                     ListTile(
                       leading: Icon(
                         Icons.dark_mode,
-                        color: context.primaryColor,
+                        color: theme.colorScheme.primary,
                       ),
                       title: Text(
                         'Modo oscuro',
-                        style: TextStyle(color: context.textColor),
+                        style: TextStyle(
+                          color: theme.colorScheme.onBackground,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       subtitle: Text(
                         'Cambia los colores a un tema oscuro',
-                        style: TextStyle(color: context.subtextColor),
+                        style: TextStyle(
+                          color:
+                              theme.colorScheme.onBackground.withOpacity(0.7),
+                        ),
                       ),
                       trailing: Switch(
                         value: themeManager.isDarkMode,
                         onChanged: (value) {
                           settingsProvider.toggleDarkMode(value);
                         },
-                        activeColor: context.primaryColor,
+                        activeColor: theme.colorScheme.primary,
                       ),
                     ),
 
@@ -76,12 +88,10 @@ class ThemeSettingsScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: context.isDarkMode
-                              ? AppColors.mocha.mantle
-                              : AppColors.latte.mantle,
+                          color: theme.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: context.primaryColor.withOpacity(0.3),
+                            color: theme.colorScheme.primary.withOpacity(0.3),
                             width: 1,
                           ),
                         ),
@@ -90,29 +100,36 @@ class ThemeSettingsScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Vista previa del tema',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall
-                                  ?.copyWith(
-                                    color: context.textColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Así es como se verá tu aplicación',
-                              style: TextStyle(color: context.textColor),
+                              style: TextStyle(
+                                color: theme.colorScheme.onBackground,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                             const SizedBox(height: 16),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildColorPreview(
-                                    context, context.primaryColor, 'Principal'),
-                                _buildColorPreview(context,
-                                    context.secondaryColor, 'Secundario'),
+                                  context,
+                                  theme.colorScheme.primary,
+                                  'Principal',
+                                ),
                                 _buildColorPreview(
-                                    context, context.errorColor, 'Error'),
+                                  context,
+                                  theme.colorScheme.secondary,
+                                  'Secundario',
+                                ),
+                                _buildColorPreview(
+                                  context,
+                                  theme.colorScheme.background,
+                                  'Fondo',
+                                ),
+                                _buildColorPreview(
+                                  context,
+                                  theme.colorScheme.error,
+                                  'Error',
+                                ),
                               ],
                             ),
                           ],
@@ -123,16 +140,6 @@ class ThemeSettingsScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 24),
-
-              // Sección de accesibilidad
-              Text(
-                'Accesibilidad',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: context.textColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
               const SizedBox(height: 16),
 
               ThemedContainer(
@@ -142,22 +149,28 @@ class ThemeSettingsScreen extends StatelessWidget {
                     ListTile(
                       leading: Icon(
                         Icons.contrast,
-                        color: context.primaryColor,
+                        color: theme.colorScheme.primary,
                       ),
                       title: Text(
                         'Alto contraste',
-                        style: TextStyle(color: context.textColor),
+                        style: TextStyle(
+                          color: theme.colorScheme.onBackground,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       subtitle: Text(
                         'Mejora la visibilidad de los elementos',
-                        style: TextStyle(color: context.subtextColor),
+                        style: TextStyle(
+                          color:
+                              theme.colorScheme.onBackground.withOpacity(0.7),
+                        ),
                       ),
                       trailing: Switch(
                         value: themeManager.isHighContrast,
                         onChanged: (value) {
                           settingsProvider.toggleHighContrast(value);
                         },
-                        activeColor: context.primaryColor,
+                        activeColor: theme.colorScheme.primary,
                       ),
                     ),
 
@@ -167,63 +180,51 @@ class ThemeSettingsScreen extends StatelessWidget {
                     ListTile(
                       leading: Icon(
                         Icons.text_fields,
-                        color: context.primaryColor,
+                        color: theme.colorScheme.primary,
                       ),
                       title: Text(
                         'Tamaño de fuente',
-                        style: TextStyle(color: context.textColor),
+                        style: TextStyle(
+                          color: theme.colorScheme.onBackground,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       subtitle: Text(
                         'Escala el texto de la aplicación',
-                        style: TextStyle(color: context.subtextColor),
+                        style: TextStyle(
+                          color:
+                              theme.colorScheme.onBackground.withOpacity(0.7),
+                        ),
                       ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         children: [
-                          const Text('A', style: TextStyle(fontSize: 14)),
+                          Text('A',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onBackground)),
                           Expanded(
                             child: Slider(
                               value: themeManager.textScaleFactor,
-                              min: 0.8,
-                              max: 1.5,
-                              divisions: 7,
+                              min: 1.0,
+                              max: 2.0,
+                              divisions: 4,
                               onChanged: (value) {
-                                settingsProvider.updateFontSize(value.round());
+                                settingsProvider.updateFontSize(value.toInt());
                               },
-                              activeColor: context.primaryColor,
+                              activeColor: theme.colorScheme.primary,
                             ),
                           ),
-                          const Text('A', style: TextStyle(fontSize: 24)),
+                          Text('A',
+                              style: TextStyle(
+                                  fontSize: 24,
+                                  color: theme.colorScheme.onBackground)),
                         ],
                       ),
                     ),
-
-                    const Divider(),
-
-                    // Animaciones reducidas
-                    ListTile(
-                      leading: Icon(
-                        Icons.animation,
-                        color: context.primaryColor,
-                      ),
-                      title: Text(
-                        'Reducir animaciones',
-                        style: TextStyle(color: context.textColor),
-                      ),
-                      subtitle: Text(
-                        'Minimiza los efectos visuales',
-                        style: TextStyle(color: context.subtextColor),
-                      ),
-                      trailing: Switch(
-                        value: settingsProvider.settings.reducedAnimations,
-                        onChanged: (value) {
-                          settingsProvider.toggleReducedAnimations(value);
-                        },
-                        activeColor: context.primaryColor,
-                      ),
-                    ),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -236,6 +237,8 @@ class ThemeSettingsScreen extends StatelessWidget {
 
   /// Construye una vista previa de un color del tema
   Widget _buildColorPreview(BuildContext context, Color color, String label) {
+    final theme = Theme.of(context);
+
     return Column(
       children: [
         Container(
@@ -245,7 +248,7 @@ class ThemeSettingsScreen extends StatelessWidget {
             color: color,
             shape: BoxShape.circle,
             border: Border.all(
-              color: context.isDarkMode ? Colors.white30 : Colors.black12,
+              color: theme.colorScheme.onBackground.withOpacity(0.2),
               width: 1,
             ),
           ),
@@ -254,7 +257,7 @@ class ThemeSettingsScreen extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: context.subtextColor,
+            color: theme.colorScheme.onBackground,
             fontSize: 12,
           ),
         ),

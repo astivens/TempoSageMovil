@@ -188,10 +188,12 @@ class AppStyles {
         cardTheme: CardTheme(
           color: AppColors.latte.mantle,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(16.0),
           ),
           elevation: 2,
-          shadowColor: AppColors.latte.subtext0.withOpacity(0.3),
+          shadowColor: AppColors.latte.overlay0.withOpacity(0.6),
+          clipBehavior: Clip.antiAlias,
+          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
@@ -292,13 +294,14 @@ class AppStyles {
           background: AppColors.mocha.base,
           surface: AppColors.mocha.mantle,
           error: AppColors.mocha.red,
-          onPrimary: Colors.white,
-          onSecondary: Colors.white,
+          onPrimary: AppColors.mocha.base,
+          onSecondary: AppColors.mocha.base,
           onBackground: AppColors.mocha.text,
           onSurface: AppColors.mocha.text,
-          onError: Colors.white,
+          onError: AppColors.mocha.base,
           surfaceVariant: AppColors.mocha.crust,
           onSurfaceVariant: AppColors.mocha.subtext0,
+          outline: AppColors.mocha.overlay1,
           outlineVariant: AppColors.mocha.overlay0,
         ),
         scaffoldBackgroundColor: AppColors.mocha.base,
@@ -374,7 +377,7 @@ class AppStyles {
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.mocha.blue,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.mocha.base,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             minimumSize: const Size(88, 48),
             shape: RoundedRectangleBorder(
@@ -406,9 +409,12 @@ class AppStyles {
         cardTheme: CardTheme(
           color: AppColors.mocha.mantle,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(16.0),
           ),
           elevation: 2,
+          shadowColor: AppColors.mocha.overlay0.withOpacity(0.6),
+          clipBehavior: Clip.antiAlias,
+          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,

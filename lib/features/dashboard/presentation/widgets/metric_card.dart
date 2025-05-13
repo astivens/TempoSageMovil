@@ -90,15 +90,10 @@ class _MetricCardState extends State<MetricCard>
         builder: (context, child) => Transform.scale(
           scale: _scaleAnimation.value,
           child: Card(
-            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16.0),
                 color: cardColor,
               ),
               child: Column(

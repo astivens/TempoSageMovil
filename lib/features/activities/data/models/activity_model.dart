@@ -28,6 +28,12 @@ class ActivityModel extends HiveObject {
   @HiveField(7)
   final String priority;
 
+  @HiveField(8)
+  final bool sendReminder;
+
+  @HiveField(9)
+  final int reminderMinutesBefore;
+
   ActivityModel({
     required this.id,
     required this.title,
@@ -37,6 +43,8 @@ class ActivityModel extends HiveObject {
     required this.endTime,
     required this.category,
     required this.priority,
+    this.sendReminder = false,
+    this.reminderMinutesBefore = 15,
   });
 
   factory ActivityModel.create({
@@ -46,6 +54,8 @@ class ActivityModel extends HiveObject {
     required DateTime endTime,
     required String category,
     required String priority,
+    bool sendReminder = false,
+    int reminderMinutesBefore = 15,
   }) {
     return ActivityModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -55,6 +65,8 @@ class ActivityModel extends HiveObject {
       endTime: endTime,
       category: category,
       priority: priority,
+      sendReminder: sendReminder,
+      reminderMinutesBefore: reminderMinutesBefore,
     );
   }
 
@@ -67,6 +79,8 @@ class ActivityModel extends HiveObject {
     DateTime? endTime,
     String? category,
     String? priority,
+    bool? sendReminder,
+    int? reminderMinutesBefore,
   }) {
     return ActivityModel(
       id: id ?? this.id,
@@ -77,6 +91,9 @@ class ActivityModel extends HiveObject {
       endTime: endTime ?? this.endTime,
       category: category ?? this.category,
       priority: priority ?? this.priority,
+      sendReminder: sendReminder ?? this.sendReminder,
+      reminderMinutesBefore:
+          reminderMinutesBefore ?? this.reminderMinutesBefore,
     );
   }
 }

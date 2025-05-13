@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/services/service_locator.dart';
 import '../providers/settings_provider.dart';
 import '../screens/theme_settings_screen.dart';
 import '../widgets/settings_section.dart';
@@ -11,8 +13,10 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return AccessibleScaffold(
-      title: 'Ajustes',
+      title: l10n.settings,
       showBackButton: true,
       body: Consumer<SettingsProvider>(
         builder: (context, settingsProvider, child) {
@@ -20,12 +24,12 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(AccessibilityStyles.spacingMedium),
             children: [
               SettingsSection(
-                title: 'Apariencia',
+                title: l10n.appearance,
                 items: [
                   SettingsItem(
                     icon: Icons.color_lens,
-                    title: 'Tema',
-                    subtitle: 'Personaliza los colores y apariencia',
+                    title: l10n.theme,
+                    subtitle: l10n.themeDescription,
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       Navigator.push(
@@ -38,7 +42,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   SettingsItem(
                     icon: Icons.dark_mode,
-                    title: 'Modo oscuro',
+                    title: l10n.darkMode,
                     onChanged: (value) {
                       settingsProvider.toggleDarkMode(value);
                     },
@@ -46,14 +50,14 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   SettingsItem(
                     icon: Icons.contrast,
-                    title: 'Alto Contraste',
+                    title: l10n.highContrast,
                     value: settingsProvider.settings.highContrastMode,
                     onChanged: (value) =>
                         settingsProvider.toggleHighContrast(value),
                   ),
                   _buildSliderTile(
                     context: context,
-                    title: 'Tamaño de Texto',
+                    title: l10n.fontSize,
                     value: settingsProvider.settings.fontSizeScale.toDouble(),
                     min: 1,
                     max: 2,
@@ -65,31 +69,73 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: AccessibilityStyles.spacingLarge),
               SettingsSection(
-                title: 'Notificaciones',
+                title: l10n.notifications,
                 items: [
                   SettingsItem(
                     icon: Icons.notifications,
-                    title: 'Notificaciones',
+                    title: l10n.notifications,
                     value: settingsProvider.settings.notificationsEnabled,
                     onChanged: (value) =>
                         settingsProvider.toggleNotifications(value),
                   ),
                   SettingsItem(
                     icon: Icons.vibration,
-                    title: 'Vibración',
+                    title: l10n.vibration,
                     value: settingsProvider.settings.vibrationEnabled,
                     onChanged: (value) =>
                         settingsProvider.toggleVibration(value),
+                  ),
+                  SettingsItem(
+                    icon: Icons.notification_important,
+                    title: 'Probar notificaciones',
+                    subtitle: 'Envía una notificación de prueba inmediata',
+                    onTap: () async {
+                      try {
+                        // Mostrar indicador de carga
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Enviando notificación de prueba...'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+
+                        // Enviar notificación de prueba
+                        await ServiceLocator.instance.notificationService
+                            .showTestNotification();
+
+                        // Mostrar mensaje de éxito
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Notificación de prueba enviada. Revisa la barra de notificaciones.'),
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        // Mostrar error si ocurre
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error al enviar notificación: $e'),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 5),
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                 ],
               ),
               const SizedBox(height: AccessibilityStyles.spacingLarge),
               SettingsSection(
-                title: 'Accesibilidad',
+                title: l10n.accessibility,
                 items: [
                   SettingsItem(
                     icon: Icons.animation,
-                    title: 'Animaciones Reducidas',
+                    title: l10n.reducedAnimations,
                     value: settingsProvider.settings.reducedAnimations,
                     onChanged: (value) =>
                         settingsProvider.toggleReducedAnimations(value),
@@ -98,11 +144,11 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: AccessibilityStyles.spacingLarge),
               SettingsSection(
-                title: 'Idioma',
+                title: l10n.language,
                 items: [
                   _buildLanguageTile(
                     context: context,
-                    title: 'Español',
+                    title: l10n.spanish,
                     value: 'es',
                     currentValue: settingsProvider.settings.language,
                     onChanged: (value) =>
@@ -110,7 +156,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   _buildLanguageTile(
                     context: context,
-                    title: 'English',
+                    title: l10n.english,
                     value: 'en',
                     currentValue: settingsProvider.settings.language,
                     onChanged: (value) =>
@@ -119,22 +165,20 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AccessibilityStyles.spacingLarge),
-              // Botón de guardar (para efectos visuales, los cambios ya se guardan automáticamente)
               Padding(
                 padding: const EdgeInsets.symmetric(
                     horizontal: AccessibilityStyles.spacingLarge),
                 child: ElevatedButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Configuración guardada'),
-                        duration: Duration(seconds: 2),
+                      SnackBar(
+                        content: Text(l10n.settingsSaved),
+                        duration: const Duration(seconds: 2),
                       ),
                     );
-                    // Volver a la pantalla anterior
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Guardar y volver'),
+                  child: Text(l10n.saveAndReturn),
                 ),
               ),
               const SizedBox(height: AccessibilityStyles.spacingLarge),
