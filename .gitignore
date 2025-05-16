@@ -124,9 +124,13 @@ assets/ml_models/TiSASRec-master/__pycache__/
 **/android/gradlew
 **/android/gradlew.bat
 **/android/local.properties
-**/android/.gradle
 **/android/key.properties
 *.jks
+
+# Importante: Mantener estos archivos en el control de versiones
+!**/android/build.gradle
+!**/android/app/build.gradle
+!**/android/settings.gradle.kts
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
