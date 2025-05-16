@@ -112,8 +112,14 @@ wheels/
 venv/
 ENV/
 tisasrec_env/
-assets/ml_models/TiSASRec-master/tisasrec_env/
-assets/ml_models/TiSASRec-master/__pycache__/
+
+# Excluir completamente los entornos virtuales y librerías grandes
+**/tisasrec_env/
+**/site-packages/
+**/tensorflow/
+**/lib/python*/
+**/libtensorflow_*.so*
+**/libclang.so*
 *.tflite.tmp
 *.onnx.tmp
 
