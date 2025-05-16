@@ -11,6 +11,7 @@ import '../widgets/ai_assistant_sheet.dart';
 import '../widgets/dashboard_app_bar.dart';
 import '../widgets/activities_section.dart';
 import '../widgets/ai_recommendations.dart';
+import '../widgets/activity_recommendations_section.dart';
 import '../../../../core/services/voice_command_service.dart';
 import '../../domain/voice_command_handler.dart';
 import '../../controllers/dashboard_controller.dart';
@@ -175,6 +176,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 24),
                         AIRecommendations(
                           controller: controller,
+                          parentContext: context,
+                        ),
+                        const SizedBox(height: 24),
+                        ActivityRecommendationsSection(
                           parentContext: context,
                         ),
                       ],

@@ -38,6 +38,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _openRecommendationTest() {
+    Navigator.pushNamed(context, '/test-recommendation');
+  }
+
   @override
   Widget build(BuildContext context) {
     // Obtener colores del tema actual
@@ -47,6 +51,13 @@ class _HomeScreenState extends State<HomeScreen> {
       body: _selectedIndex < _screens.length
           ? _screens[_selectedIndex]
           : _screens[0], // Fallback a la primera pantalla por seguridad
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: _openRecommendationTest,
+              tooltip: 'Probar Recomendaciones',
+              child: const Icon(Icons.movie),
+            )
+          : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex >= _numScreens ? 0 : _selectedIndex,
         onTap: _onItemTapped,

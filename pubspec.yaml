@@ -53,6 +53,8 @@ dependencies:
   # Added dependencies for improved DI
   get_it: ^7.6.7
   catppuccin_flutter: ^1.0.0
+  flutter_onnxruntime: ^1.2.3
+  tflite_flutter: ^0.11.0
 
 dev_dependencies:
   flutter_test:
@@ -83,6 +85,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/ml_models/tisasrec/
 
   fonts:
     - family: Noto Sans

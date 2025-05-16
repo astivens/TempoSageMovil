@@ -26,31 +26,31 @@ Future<void> _setupCoreServices() async {
 /// Configura repositorios
 Future<void> _setupRepositories() async {
   // Registramos los repositorios como singletons
-  
+
   // TimeBlockRepository
   getIt.registerSingleton<TimeBlockRepository>(
     TimeBlockRepository(),
   );
-  
+
   // Inicializar el repositorio
   await getIt<TimeBlockRepository>().init();
-  
+
   // HabitRepository
   getIt.registerSingleton<HabitRepository>(
     HabitRepositoryImpl(),
   );
-  
+
   // Inicializar el repositorio
   // cast es seguro porque sabemos que HabitRepositoryImpl implementa HabitRepository
   await (getIt<HabitRepository>() as HabitRepositoryImpl).init();
-  
+
   // ActivityRepository
   getIt.registerSingleton<ActivityRepository>(
     ActivityRepository(
       timeBlockRepository: getIt<TimeBlockRepository>(),
     ),
   );
-  
+
   // Inicializar el repositorio
   await getIt<ActivityRepository>().init();
 }
@@ -61,7 +61,7 @@ Future<void> _setupUseCases() async {
   getIt.registerFactory<GetHabitsUseCase>(
     () => GetHabitsUseCase(getIt<HabitRepository>()),
   );
-  
+
   // Registra más casos de uso aquí
 }
 
@@ -74,7 +74,7 @@ Future<void> _setupServices() async {
       getIt<TimeBlockRepository>(),
     ),
   );
-  
+
   // Registra más servicios aquí
 }
 

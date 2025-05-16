@@ -1,0 +1,10 @@
+{
+    "venvPath": ".",
+    "venv": "tisasrec_env",
+    "extraPaths": [
+        "./tisasrec_env/lib/python3.12/site-packages"
+    ],
+    "reportMissingImports": false,
+    "reportUndefinedVariable": false,
+    "pythonVersion": "3.12"
+} 

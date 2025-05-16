@@ -23,6 +23,7 @@ import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/providers/settings_provider.dart';
 import 'features/dashboard/controllers/dashboard_controller.dart';
 import 'core/widgets/widgets.dart';
+import 'services/test_recommendation.dart';
 
 void main() async {
   await _initializeApp();
@@ -227,6 +228,8 @@ class MyApp extends StatelessWidget {
                 '/login': (context) => const LoginScreen(),
                 '/home': (context) => const HomeScreen(),
                 '/settings': (context) => const SettingsScreen(),
+                '/test-recommendation': (context) =>
+                    const TestRecommendationPage(),
               },
               builder: (context, child) {
                 return MediaQuery(
