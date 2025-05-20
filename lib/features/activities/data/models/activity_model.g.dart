@@ -3,66 +3,34 @@
 part of 'activity_model.dart';
 
 // **************************************************************************
-// TypeAdapterGenerator
+// JsonSerializableGenerator
 // **************************************************************************
 
-class ActivityModelAdapter extends TypeAdapter<ActivityModel> {
-  @override
-  final int typeId = 2;
-
-  @override
-  ActivityModel read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return ActivityModel(
-      id: fields[0] as String,
-      title: fields[1] as String,
-      description: fields[2] as String,
-      isCompleted: fields[3] as bool,
-      startTime: fields[4] as DateTime,
-      endTime: fields[5] as DateTime,
-      category: fields[6] as String,
-      priority: fields[7] as String,
-      sendReminder: fields[8] as bool,
-      reminderMinutesBefore: fields[9] as int,
+_$ActivityModelImpl _$$ActivityModelImplFromJson(Map<String, dynamic> json) =>
+    _$ActivityModelImpl(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      category: json['category'] as String,
+      startTime: DateTime.parse(json['startTime'] as String),
+      endTime: DateTime.parse(json['endTime'] as String),
+      priority: json['priority'] as String? ?? 'Media',
+      sendReminder: json['sendReminder'] as bool? ?? true,
+      reminderMinutesBefore:
+          (json['reminderMinutesBefore'] as num?)?.toInt() ?? 15,
+      isCompleted: json['isCompleted'] as bool? ?? false,
     );
-  }
 
-  @override
-  void write(BinaryWriter writer, ActivityModel obj) {
-    writer
-      ..writeByte(10)
-      ..writeByte(0)
-      ..write(obj.id)
-      ..writeByte(1)
-      ..write(obj.title)
-      ..writeByte(2)
-      ..write(obj.description)
-      ..writeByte(3)
-      ..write(obj.isCompleted)
-      ..writeByte(4)
-      ..write(obj.startTime)
-      ..writeByte(5)
-      ..write(obj.endTime)
-      ..writeByte(6)
-      ..write(obj.category)
-      ..writeByte(7)
-      ..write(obj.priority)
-      ..writeByte(8)
-      ..write(obj.sendReminder)
-      ..writeByte(9)
-      ..write(obj.reminderMinutesBefore);
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ActivityModelAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
+Map<String, dynamic> _$$ActivityModelImplToJson(_$ActivityModelImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'description': instance.description,
+      'category': instance.category,
+      'startTime': instance.startTime.toIso8601String(),
+      'endTime': instance.endTime.toIso8601String(),
+      'priority': instance.priority,
+      'sendReminder': instance.sendReminder,
+      'reminderMinutesBefore': instance.reminderMinutesBefore,
+      'isCompleted': instance.isCompleted,
+    };

@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../data/models/interaction_event.dart';
 import './recommendation_service.dart';
 import '../features/activities/data/models/activity_model.dart';
@@ -13,7 +11,7 @@ class ActivityRecommendationController extends ChangeNotifier {
   List<String> _recommendations = [];
   Map<String, dynamic>? _activityDetails = {};
   bool _isModelInitialized = false;
-  List<String> _recentlyCreatedActivities = [];
+  final List<String> _recentlyCreatedActivities = [];
 
   bool get isLoading => _isLoading;
   String get resultMessage => _resultMessage;
@@ -262,32 +260,26 @@ class ActivityRecommendationController extends ChangeNotifier {
       final description = getActivityDescription(activityId);
 
       // Si no se proporciona hora de inicio, usar la hora actual redondeada a la siguiente hora
-      if (startTime == null) {
-        final now = DateTime.now();
-        startTime = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          now.hour + 1,
-          0,
-        );
-      }
+      startTime ??= DateTime(
+        DateTime.now().year,
+        DateTime.now().month,
+        DateTime.now().day,
+        DateTime.now().hour + 1,
+        0,
+      );
 
       // Si no se proporciona hora de fin, usar hora de inicio + 1 hora
-      if (endTime == null) {
-        endTime = startTime.add(const Duration(hours: 1));
-      }
+      endTime ??= startTime.add(const Duration(hours: 1));
 
       // Crear el modelo de actividad
-      final activity = ActivityModel.create(
+      final activity = ActivityModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: title,
         description: description,
         startTime: startTime,
         endTime: endTime,
         category: category,
         priority: priority,
-        sendReminder: sendReminder,
-        reminderMinutesBefore: reminderMinutesBefore,
       );
 
       // Guardar en el repositorio
@@ -308,10 +300,5 @@ class ActivityRecommendationController extends ChangeNotifier {
       debugPrint('Error al crear actividad desde recomendación: $e');
       return null;
     }
-  }
-
-  void dispose() {
-    _recommendationService.dispose();
-    super.dispose();
   }
 }

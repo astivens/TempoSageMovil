@@ -69,7 +69,7 @@ class ActivityList extends StatelessWidget {
           activity: ActivityModel(
             id: activity.id,
             title: activity.name,
-            description: activity.description ?? '',
+            description: activity.description,
             isCompleted: activity.isCompleted,
             startTime: activity.date,
             endTime: activity.date.add(const Duration(hours: 1)),

@@ -10,6 +10,8 @@ import '../../features/habits/domain/usecases/get_habits_use_case.dart';
 import '../utils/logger.dart';
 import 'tempo_sage_api_service.dart';
 import 'notification_service.dart';
+import 'recommendation_service.dart';
+import '../../features/activities/domain/usecases/suggest_optimal_time_use_case.dart';
 
 /// Localizador de servicios e implementación de inyección de dependencias.
 ///
@@ -41,6 +43,9 @@ class ServiceLocator {
 
   // Casos de uso - inicialización perezosa
   GetHabitsUseCase? _getHabitsUseCase;
+
+  late final RecommendationService recommendationService;
+  late final SuggestOptimalTimeUseCase suggestOptimalTimeUseCase;
 
   /// Inicializa los repositorios de la aplicación.
   /// Este método se llama automáticamente al crear la instancia del ServiceLocator.
@@ -84,6 +89,12 @@ class ServiceLocator {
       await _activityRepository.init();
       await _timeBlockRepository.init();
       await _habitRepository.init();
+
+      // Inicializar servicios de recomendación
+      recommendationService = RecommendationService();
+      await recommendationService.initialize();
+
+      suggestOptimalTimeUseCase = SuggestOptimalTimeUseCase();
 
       _logger.i('Todos los repositorios inicializados correctamente',
           tag: 'ServiceLocator');
@@ -164,5 +175,10 @@ class ServiceLocator {
     _activityNotificationService = null;
     _habitNotificationService = null;
     _logger.i('Servicios reiniciados', tag: 'ServiceLocator');
+  }
+
+  void dispose() {
+    resetServices();
+    recommendationService.dispose();
   }
 }

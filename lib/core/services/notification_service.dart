@@ -240,7 +240,8 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    final DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+    final DarwinNotificationDetails iosDetails =
+        const DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
@@ -285,7 +286,8 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    final DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+    final DarwinNotificationDetails iosDetails =
+        const DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
@@ -335,7 +337,8 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    final DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+    final DarwinNotificationDetails iosDetails =
+        const DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,

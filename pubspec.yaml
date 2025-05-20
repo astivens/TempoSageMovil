@@ -53,8 +53,9 @@ dependencies:
   # Added dependencies for improved DI
   get_it: ^7.6.7
   catppuccin_flutter: ^1.0.0
-  flutter_onnxruntime: ^1.2.3
-  tflite_flutter: ^0.11.0
+  # flutter_onnxruntime: ^1.2.3
+  tflite_flutter: ^0.9.5
+  # tflite_flutter_helper: ^0.3.1  # Comentado temporalmente por conflicto de versiones
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +74,7 @@ dev_dependencies:
   mockito: ^5.4.3
   injectable_generator: ^2.5.0
   flutter_launcher_icons: ^0.13.1
+  image: ^4.0.15  # Versión específica requerida por flutter_launcher_icons
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -86,6 +88,9 @@ flutter:
   assets:
     - assets/images/
     - assets/ml_models/tisasrec/
+    - assets/ml_models/tisasrec/item_mapping.json
+    - assets/ml_models/tisasrec/tisasrec_model.tflite
+    - assets/ml_models/tisasrec/metadata.json
 
   fonts:
     - family: Noto Sans

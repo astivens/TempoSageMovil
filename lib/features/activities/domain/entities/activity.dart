@@ -3,15 +3,15 @@ class Activity {
   final String name;
   final DateTime date;
   final String category;
-  final String? description;
+  final String description;
   final bool isCompleted;
 
-  const Activity({
+  Activity({
     required this.id,
     required this.name,
     required this.date,
     required this.category,
-    this.description,
-    this.isCompleted = false,
+    required this.description,
+    required this.isCompleted,
   });
 }

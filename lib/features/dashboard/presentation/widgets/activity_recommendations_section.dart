@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../services/activity_recommendation_controller.dart';
-import '../widgets/ai_recommendation_card.dart';
 import '../../../../core/services/service_locator.dart';
+import '../../../activities/data/models/activity_model.dart';
+import '../../controllers/activity_recommendation_controller.dart';
+import '../widgets/ai_recommendation_card.dart';
 
 class ActivityRecommendationsSection extends StatefulWidget {
   final BuildContext parentContext;
@@ -19,7 +21,8 @@ class ActivityRecommendationsSection extends StatefulWidget {
 
 class _ActivityRecommendationsSectionState
     extends State<ActivityRecommendationsSection> {
-  late ActivityRecommendationController _controller;
+  late final ActivityRecommendationController _controller;
+  final _activityRepository = ServiceLocator.instance.activityRepository;
 
   @override
   void initState() {
@@ -32,8 +35,7 @@ class _ActivityRecommendationsSectionState
     try {
       await _controller.initialize();
       if (mounted) {
-        // Obtener recomendaciones después de inicializar
-        await _controller.getRecommendations();
+        await _controller.loadRecommendations();
       }
     } catch (e) {
       debugPrint('Error al inicializar el controlador de recomendaciones: $e');
@@ -48,147 +50,124 @@ class _ActivityRecommendationsSectionState
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(context),
-          const SizedBox(height: 16),
-          ListenableBuilder(
-              listenable: _controller,
-              builder: (context, _) {
-                return _buildContent(context);
-              }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.auto_awesome,
-              color: isDarkMode ? AppColors.mocha.teal : AppColors.latte.teal,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Actividades Recomendadas',
-              style: TextStyle(
-                color: isDarkMode ? AppColors.mocha.text : AppColors.latte.text,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+    return ChangeNotifierProvider.value(
+      value: _controller,
+      child: Consumer<ActivityRecommendationController>(
+        builder: (context, controller, child) {
+          if (!controller.isModelInitialized) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Inicializando modelo de recomendaciones...'),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.refresh,
-            color: (isDarkMode ? AppColors.mocha.text : AppColors.latte.text)
-                .withOpacity(0.7),
-          ),
-          tooltip: 'Actualizar recomendaciones',
-          onPressed:
-              _controller.isLoading ? null : _controller.getRecommendations,
-        ),
-      ],
-    );
-  }
+            );
+          }
 
-  Widget _buildContent(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+          if (controller.isLoading) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Cargando recomendaciones...'),
+                  ],
+                ),
+              ),
+            );
+          }
 
-    // Mostrar indicador de carga
-    if (_controller.isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+          if (controller.error != null) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error: ${controller.error}',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.red,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: _initializeController,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            );
+          }
 
-    // Mostrar mensaje si no hay recomendaciones
-    if (_controller.recommendations.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Column(
+          final activities = controller.recommendedActivities;
+          if (activities.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
+                child: Text(
+                  'No hay recomendaciones disponibles en este momento.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.info_outline,
-                size: 40,
-                color: isDarkMode
-                    ? AppColors.mocha.subtext0
-                    : AppColors.latte.subtext0,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'No hay suficientes datos para generar recomendaciones.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isDarkMode
-                      ? AppColors.mocha.subtext0
-                      : AppColors.latte.subtext0,
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Recomendaciones para ti',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
+              ...activities.take(3).map((activity) => _buildRecommendationCard(
+                    context,
+                    activity,
+                    activities.indexOf(activity),
+                  )),
+              if (activities.length > 3)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(
+                    child: TextButton.icon(
+                      onPressed: () => _showAllRecommendations(context),
+                      icon: const Icon(Icons.visibility),
+                      label: const Text('Ver todas las recomendaciones'),
+                      style: TextButton.styleFrom(
+                        foregroundColor:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.mocha.blue
+                                : AppColors.latte.blue,
+                      ),
+                    ),
+                  ),
+                ),
             ],
-          ),
-        ),
-      );
-    }
-
-    // Mostrar recomendaciones
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (int i = 0; i < _controller.recommendations.length && i < 3; i++)
-          _buildRecommendationCard(context, _controller.recommendations[i], i),
-        if (_controller.recommendations.length > 3)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Center(
-              child: TextButton.icon(
-                onPressed: () => _showAllRecommendations(context),
-                icon: const Icon(Icons.visibility),
-                label: const Text('Ver todas las recomendaciones'),
-                style: TextButton.styleFrom(
-                  foregroundColor:
-                      isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue,
-                ),
-              ),
-            ),
-          ),
-      ],
+          );
+        },
+      ),
     );
   }
 
   Widget _buildRecommendationCard(
-      BuildContext context, String activityId, int index) {
+      BuildContext context, ActivityModel activity, int index) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    // Obtener colores según el índice para variedad visual
     final List<Color> accentColors = isDarkMode
         ? [AppColors.mocha.blue, AppColors.mocha.mauve, AppColors.mocha.green]
         : [AppColors.latte.blue, AppColors.latte.mauve, AppColors.latte.green];
@@ -196,15 +175,14 @@ class _ActivityRecommendationsSectionState
     final accentColor = accentColors[index % accentColors.length];
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: AIRecommendationCard(
         icon: Icons.stars,
         accentColor: accentColor,
-        title: _controller.getActivityTitle(activityId),
-        description:
-            '${_controller.getActivityCategory(activityId)}\n${_controller.getActivityDescription(activityId)}',
+        title: activity.title,
+        description: '${activity.category}\n${activity.description}',
         actionText: 'Crear actividad',
-        onApply: () => _showCreateActivityDialog(context, activityId),
+        onApply: () => _showCreateActivityDialog(context, activity),
         onDismiss: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -225,14 +203,14 @@ class _ActivityRecommendationsSectionState
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: _controller.recommendations.map((activityId) {
+            children: _controller.recommendedActivities.map((activity) {
               return ListTile(
-                title: Text(_controller.getActivityTitle(activityId)),
-                subtitle: Text(_controller.getActivityCategory(activityId)),
+                title: Text(activity.title),
+                subtitle: Text(activity.category),
                 leading: const Icon(Icons.check_circle_outline),
                 onTap: () {
                   Navigator.pop(context);
-                  _showCreateActivityDialog(widget.parentContext, activityId);
+                  _showCreateActivityDialog(widget.parentContext, activity);
                 },
               );
             }).toList(),
@@ -248,269 +226,82 @@ class _ActivityRecommendationsSectionState
     );
   }
 
-  void _showCreateActivityDialog(BuildContext context, String activityId) {
-    final title = _controller.getActivityTitle(activityId);
-    final category = _controller.getActivityCategory(activityId);
-    final description = _controller.getActivityDescription(activityId);
-
-    // Valores por defecto para la nueva actividad
-    final now = DateTime.now();
-    DateTime startTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      now.hour + 1,
-      0,
-    );
-    DateTime endTime = startTime.add(const Duration(hours: 1));
-    String priority = 'Media';
-    bool sendReminder = true;
-    int reminderMinutes = 15;
-
+  void _showCreateActivityDialog(BuildContext context, ActivityModel activity) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final dialogBackgroundColor =
         isDarkMode ? AppColors.mocha.base : AppColors.latte.base;
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: dialogBackgroundColor,
-          title: const Text('Crear Nueva Actividad'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Mostrar detalles de la actividad recomendada
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Categoría: $category',
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    color: isDarkMode
-                        ? AppColors.mocha.subtext0
-                        : AppColors.latte.subtext0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(description),
-                const Divider(height: 24),
-
-                // Selector de fecha y hora
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.access_time),
-                  title: const Text('Hora de inicio'),
-                  subtitle: Text(
-                    '${startTime.day}/${startTime.month} - ${startTime.hour}:${startTime.minute.toString().padLeft(2, '0')}',
-                  ),
-                  trailing: const Icon(Icons.edit),
-                  onTap: () async {
-                    final newDate = await showDatePicker(
-                      context: context,
-                      initialDate: startTime,
-                      firstDate: now.subtract(const Duration(days: 1)),
-                      lastDate: now.add(const Duration(days: 365)),
-                    );
-                    if (newDate != null) {
-                      final newTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(startTime),
-                      );
-                      if (newTime != null && mounted) {
-                        setState(() {
-                          startTime = DateTime(
-                            newDate.year,
-                            newDate.month,
-                            newDate.day,
-                            newTime.hour,
-                            newTime.minute,
-                          );
-                          // Actualizar hora de fin para que sea 1 hora después
-                          endTime = startTime.add(const Duration(hours: 1));
-                        });
-                      }
-                    }
-                  },
-                ),
-
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.access_time_filled),
-                  title: const Text('Hora de fin'),
-                  subtitle: Text(
-                    '${endTime.day}/${endTime.month} - ${endTime.hour}:${endTime.minute.toString().padLeft(2, '0')}',
-                  ),
-                  trailing: const Icon(Icons.edit),
-                  onTap: () async {
-                    final newDate = await showDatePicker(
-                      context: context,
-                      initialDate: endTime,
-                      firstDate: startTime,
-                      lastDate: startTime.add(const Duration(days: 365)),
-                    );
-                    if (newDate != null) {
-                      final newTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(endTime),
-                      );
-                      if (newTime != null && mounted) {
-                        setState(() {
-                          endTime = DateTime(
-                            newDate.year,
-                            newDate.month,
-                            newDate.day,
-                            newTime.hour,
-                            newTime.minute,
-                          );
-                        });
-                      }
-                    }
-                  },
-                ),
-
-                // Selector de prioridad
-                Row(
-                  children: [
-                    const Text('Prioridad: '),
-                    const SizedBox(width: 8),
-                    DropdownButton<String>(
-                      value: priority,
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            priority = value;
-                          });
-                        }
-                      },
-                      items: ['Alta', 'Media', 'Baja']
-                          .map((e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e),
-                              ))
-                          .toList(),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                // Opción de recordatorio
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Enviar recordatorio'),
-                  value: sendReminder,
-                  onChanged: (value) {
-                    setState(() {
-                      sendReminder = value;
-                    });
-                  },
-                ),
-
-                if (sendReminder)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Row(
-                      children: [
-                        const Text('Minutos antes: '),
-                        const SizedBox(width: 8),
-                        DropdownButton<int>(
-                          value: reminderMinutes,
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                reminderMinutes = value;
-                              });
-                            }
-                          },
-                          items: [5, 10, 15, 30, 60]
-                              .map((e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text('$e min'),
-                                  ))
-                              .toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
+      builder: (context) => AlertDialog(
+        backgroundColor: dialogBackgroundColor,
+        title: Text('Crear Actividad: ${activity.title}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Categoría'),
+                subtitle: Text(activity.category),
+                leading: const Icon(Icons.category),
+              ),
+              ListTile(
+                title: const Text('Descripción'),
+                subtitle: Text(activity.description),
+                leading: const Icon(Icons.description),
+              ),
+              ListTile(
+                title: const Text('Hora de inicio sugerida'),
+                subtitle: Text(
+                    '${activity.startTime.hour}:${activity.startTime.minute.toString().padLeft(2, '0')}'),
+                leading: const Icon(Icons.access_time),
+              ),
+              ListTile(
+                title: const Text('Duración sugerida'),
+                subtitle: Text(
+                    '${activity.endTime.difference(activity.startTime).inHours} horas'),
+                leading: const Icon(Icons.timer),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                // Cerrar el diálogo
-                Navigator.pop(context);
-                // Mostrar indicador de progreso
-                _showProgressDialog(context);
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              _showProgressDialog(context);
 
-                // Crear la actividad
-                final activity =
-                    await _controller.createActivityFromRecommendation(
-                  activityId,
-                  startTime: startTime,
-                  endTime: endTime,
-                  priority: priority,
-                  sendReminder: sendReminder,
-                  reminderMinutesBefore: reminderMinutes,
-                );
-
-                // Cerrar indicador de progreso
-                if (context.mounted) Navigator.pop(context);
-
-                // Mostrar confirmación
-                if (activity != null && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Actividad creada exitosamente'),
-                      backgroundColor: Colors.green,
-                      duration: const Duration(seconds: 2),
-                      action: SnackBarAction(
-                        label: 'Deshacer',
-                        textColor: Colors.white,
-                        onPressed: () async {
-                          // Cancelar la actividad recién creada
-                          final activityRepo =
-                              ServiceLocator.instance.activityRepository;
-                          await activityRepo.deleteActivity(activity.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Actividad cancelada'),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  );
-                } else if (context.mounted) {
+              try {
+                await _activityRepository.addActivity(activity);
+                if (context.mounted) {
+                  Navigator.pop(context); // Cerrar diálogo de progreso
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Error al crear la actividad'),
-                      backgroundColor: Colors.red,
+                      content: Text('Actividad creada exitosamente'),
                       duration: Duration(seconds: 2),
                     ),
                   );
                 }
-              },
-              child: const Text('Crear'),
-            ),
-          ],
-        ),
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context); // Cerrar diálogo de progreso
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al crear la actividad: $e'),
+                      backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Crear Actividad'),
+          ),
+        ],
       ),
     );
   }
@@ -519,17 +310,16 @@ class _ActivityRecommendationsSectionState
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text('Creando actividad...'),
-            ],
-          ),
-        );
-      },
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Creando actividad...'),
+          ],
+        ),
+      ),
     );
   }
 }

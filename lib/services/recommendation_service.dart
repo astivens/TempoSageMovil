@@ -1,169 +1,111 @@
-import 'dart:math' as math; // Asegurar que math esté importado
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:tflite_flutter/tflite_flutter.dart' as tflite;
-// Asumiendo que tflite_flutter es el plugin que usarás.
-// Necesitarás añadir `tflite_flutter` a tu pubspec.yaml
+// Eliminamos la importación de tflite_flutter
 
 import '../data/models/interaction_event.dart';
-import './tisasrec_preprocessor.dart';
+// Eliminamos la importación de tisasrec_preprocessor
 
 class RecommendationService {
-  late tflite.Interpreter _interpreter;
-  late TisasrecPreprocessor _preprocessor;
-  bool _isInterpreterLoaded = false;
+  bool _isInitialized = false;
 
-  final String modelPath;
   final String itemMapPath;
-  final String reverseItemMapPath;
-  final String modelConfigPath;
 
-  // Mapeo de ID de ítem entero (salida del modelo) a ID original
-  late Map<int, String> _reverseItemMapping;
-  late Map<String, int> _itemMapping;
-
-  // Configuración del modelo
-  late int _maxlen;
-  late int _timeSpan;
-  late int _hiddenUnits;
+  // Mapeo de categorías
+  Map<String, int> _itemMapping = {};
 
   RecommendationService({
-    this.modelPath = 'assets/ml_models/tisasrec/tisasrec_ml1m.tflite',
-    this.itemMapPath = 'assets/ml_models/tisasrec/item_mapping_ml1m.json',
-    this.reverseItemMapPath =
-        'assets/ml_models/tisasrec/reverse_item_mapping_ml1m.json',
-    this.modelConfigPath = 'assets/ml_models/tisasrec/model_config.json',
+    this.itemMapPath = 'assets/ml_models/tisasrec/item_mapping.json',
   });
 
   Future<void> loadModelAndPreprocessor() async {
-    if (_isInterpreterLoaded) return;
+    if (_isInitialized) return;
 
     try {
-      // 1. Cargar la configuración del modelo
-      final String modelConfigJson =
-          await rootBundle.loadString(modelConfigPath);
-      final Map<String, dynamic> modelConfig = json.decode(modelConfigJson);
-
-      _maxlen = modelConfig['maxlen'] ?? DEFAULT_MAX_LEN;
-      _timeSpan = modelConfig['time_span'] ?? DEFAULT_TIME_SPAN;
-      _hiddenUnits = modelConfig['hidden_units'] ?? 50;
-
-      print(
-          'RecommendationService: Configuración cargada: maxlen=$_maxlen, timeSpan=$_timeSpan, hiddenUnits=$_hiddenUnits');
-
-      // 2. Cargar los mapeos de items
+      // Cargar mapeo de categorías
       final String itemMapJson = await rootBundle.loadString(itemMapPath);
       _itemMapping = Map<String, int>.from(json.decode(itemMapJson));
-
-      final String reverseItemMapJson =
-          await rootBundle.loadString(reverseItemMapPath);
-      _reverseItemMapping =
-          Map<String, dynamic>.from(json.decode(reverseItemMapJson))
-              .map((key, value) => MapEntry(int.parse(key), value.toString()));
 
       print(
           'RecommendationService: Mapeos cargados. Items en vocabulario: ${_itemMapping.length}');
 
-      // 3. Inicializar el preprocesador
-      _preprocessor = TisasrecPreprocessor(
-        itemMapping: _itemMapping,
-        maxlen: _maxlen,
-        timeSpan: _timeSpan,
-      );
-
-      // 4. Cargar el intérprete TFLite
-      _interpreter = await tflite.Interpreter.fromAsset(modelPath);
-
-      _isInterpreterLoaded = true;
-      print(
-          'RecommendationService: Modelo TFLite y preprocesador cargados correctamente.');
+      _isInitialized = true;
+      print('RecommendationService: Servicio inicializado correctamente.');
     } catch (e) {
-      print('Error al cargar el modelo TFLite o el preprocesador: $e');
-      _isInterpreterLoaded = false;
-      rethrow;
+      print('Error al cargar el mapeo de categorías: $e');
+      _isInitialized = false;
+      _initializeDefaultMapping();
     }
+  }
+
+  void _initializeDefaultMapping() {
+    _itemMapping = {
+      'Trabajo': 1,
+      'Estudio': 2,
+      'Ejercicio': 3,
+      'Ocio': 4,
+      'Otro': 5,
+    };
+    _isInitialized = true;
+    print('RecommendationService: Usando mapeo de categorías predeterminado.');
   }
 
   Future<List<String>> getRecommendations(
       List<InteractionEvent> userInteractionHistory,
       {int topK = 10,
       List<String>? candidateItemOriginalIds}) async {
-    if (!_isInterpreterLoaded) {
-      print('Error: El intérprete TFLite no está cargado.');
+    if (!_isInitialized) {
       await loadModelAndPreprocessor();
-      if (!_isInterpreterLoaded) throw Exception("Fallo al cargar el modelo");
     }
 
     try {
-      // 1. Preprocesar las entradas
-      final List<Object> inputs =
-          _preprocessor.preprocessInput(userInteractionHistory);
-
-      // 2. Determinar cuántos ítems hay en el vocabulario
-      int numOutputScores = _itemMapping.length;
-
-      // 3. Preparar el buffer de salida
-      var outputBuffer =
-          List.generate(1, (_) => List<double>.filled(numOutputScores, 0.0));
-
-      // 4. Ejecutar la inferencia
-      Map<int, Object> outputsMap = {0: outputBuffer};
-
-      _interpreter.runForMultipleInputs(inputs, outputsMap);
-      List<double> logits = outputBuffer[0];
-
-      // 5. Procesar los resultados
-      List<MapEntry<int, double>> scoredItems = [];
-
-      // Procesar las puntuaciones para cada ítem
-      for (int i = 0; i < logits.length; i++) {
-        // El índice corresponde al ID interno del ítem + 1
-        int itemIdInt = i + 1;
-        if (_reverseItemMapping.containsKey(itemIdInt)) {
-          scoredItems.add(MapEntry(itemIdInt, logits[i]));
-        }
-      }
-
-      // Ordenar por score descendente
-      scoredItems.sort((a, b) => b.value.compareTo(a.value));
-
-      // Filtrar ítems que el usuario ya ha visto, si es necesario
-      Set<String> userInteractedItems =
-          userInteractionHistory.map((e) => e.itemId).toSet();
-
-      // Tomar topK y mapear de vuelta a IDs originales
-      List<String> recommendedItemOriginalIds = [];
-      for (int i = 0; i < math.min(topK, scoredItems.length); i++) {
-        String? originalId = _reverseItemMapping[scoredItems[i].key];
-        if (originalId != null && !userInteractedItems.contains(originalId)) {
-          recommendedItemOriginalIds.add(originalId);
-        }
-      }
-
-      // Si no tenemos suficientes recomendaciones después de filtrar
-      if (recommendedItemOriginalIds.length < topK) {
-        // Intentar agregar más ítems que no estén ya en la lista
-        for (int i = topK;
-            i < scoredItems.length && recommendedItemOriginalIds.length < topK;
-            i++) {
-          String? originalId = _reverseItemMapping[scoredItems[i].key];
-          if (originalId != null && !userInteractedItems.contains(originalId)) {
-            recommendedItemOriginalIds.add(originalId);
-          }
-        }
-      }
-
-      return recommendedItemOriginalIds;
+      // Implementación basada en reglas
+      return _getRuleBasedRecommendations(userInteractionHistory, topK);
     } catch (e) {
-      print('Error durante la inferencia de recomendaciones: $e');
-      return [];
+      print('Error durante la generación de recomendaciones: $e');
+      // Devolver categorías predeterminadas en caso de error
+      return ['Trabajo', 'Estudio', 'Ejercicio', 'Ocio', 'Otro']
+          .take(topK)
+          .toList();
     }
   }
 
-  void dispose() {
-    if (_isInterpreterLoaded) {
-      _interpreter.close();
-      _isInterpreterLoaded = false;
+  List<String> _getRuleBasedRecommendations(
+      List<InteractionEvent> userHistory, int topK) {
+    if (userHistory.isEmpty) {
+      return ['Trabajo', 'Estudio', 'Ejercicio', 'Ocio', 'Otro']
+          .take(topK)
+          .toList();
     }
+
+    // Contar frecuencia de categorías
+    final Map<String, int> categoryCounts = {};
+    for (var event in userHistory) {
+      categoryCounts[event.itemId] = (categoryCounts[event.itemId] ?? 0) + 1;
+    }
+
+    // Ordenar por frecuencia
+    final sortedCategories = categoryCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    // Obtener las categorías más frecuentes
+    final topCategories =
+        sortedCategories.take(topK).map((e) => e.key).toList();
+
+    // Si no hay suficientes categorías, agregar algunas predeterminadas
+    final defaultCategories = ['Trabajo', 'Estudio', 'Ejercicio', 'Ocio'];
+    while (topCategories.length < topK && defaultCategories.isNotEmpty) {
+      final category = defaultCategories.removeAt(0);
+      if (!topCategories.contains(category)) {
+        topCategories.add(category);
+      }
+    }
+
+    print(
+        'RecommendationService: Recomendaciones basadas en reglas generadas: $topCategories');
+    return topCategories;
+  }
+
+  void dispose() {
+    _isInitialized = false;
   }
 }

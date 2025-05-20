@@ -10,7 +10,7 @@ import 'core/utils/logger.dart';
 import 'core/theme/theme_manager.dart';
 import 'core/l10n/app_localizations.dart';
 import 'features/auth/data/models/user_model.dart';
-import 'features/activities/data/models/activity_model.dart';
+import 'features/activities/data/models/activity_model_adapter.dart';
 import 'features/timeblocks/data/models/time_block_model.dart';
 import 'features/settings/data/models/settings_model.dart';
 import 'features/habits/data/models/habit_model.dart';
@@ -207,8 +207,16 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer2<SettingsProvider, ThemeManager>(
         builder: (context, settingsProvider, themeManager, _) {
-          // Actualizar el ThemeManager cuando cambien las configuraciones
-          themeManager.updateFromSettings(settingsProvider);
+          // Usar un efecto post-frame para actualizar el tema
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (themeManager.isDarkMode != settingsProvider.settings.darkMode ||
+                themeManager.isHighContrast !=
+                    settingsProvider.settings.highContrastMode ||
+                themeManager.textScaleFactor !=
+                    settingsProvider.settings.fontSizeScale.toDouble()) {
+              themeManager.updateFromSettings(settingsProvider);
+            }
+          });
 
           return AccessibleApp(
             highContrast: themeManager.isHighContrast,

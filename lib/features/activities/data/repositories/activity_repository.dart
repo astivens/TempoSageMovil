@@ -3,6 +3,7 @@ import '../../../../core/services/service_locator.dart';
 import '../models/activity_model.dart';
 import '../../../timeblocks/data/repositories/time_block_repository.dart';
 import '../../../../core/services/local_storage.dart';
+import 'package:flutter/foundation.dart';
 
 /// Excepción específica para el repositorio de actividades
 class ActivityRepositoryException implements Exception {
@@ -23,6 +24,7 @@ class ActivityRepository {
   static const String _boxName = 'activities';
   final TimeBlockRepository _timeBlockRepository;
   final Logger _logger = Logger.instance;
+  final List<ActivityModel> _activities = [];
 
   ActivityRepository({
     required TimeBlockRepository timeBlockRepository,
@@ -97,11 +99,8 @@ class ActivityRepository {
   /// Agrega una nueva actividad
   Future<void> addActivity(ActivityModel activity) async {
     try {
-      _validateActivity(activity);
-
-      _logger.d('Agregando actividad: ${activity.title}', tag: 'ActivityRepo');
-      await LocalStorage.saveData<ActivityModel>(
-          _boxName, activity.id, activity);
+      _activities.add(activity);
+      debugPrint('Actividad agregada: ${activity.title}');
       await _syncWithTimeBlock(activity);
 
       // Programar notificación si es necesario
@@ -110,35 +109,29 @@ class ActivityRepository {
             .scheduleActivityNotification(activity);
       }
     } catch (e) {
-      _logger.e('Error al agregar actividad', tag: 'ActivityRepo', error: e);
-      throw ActivityRepositoryException('Error al agregar actividad: $e');
+      debugPrint('Error al agregar actividad: $e');
+      rethrow;
     }
   }
 
   /// Actualiza una actividad existente
   Future<void> updateActivity(ActivityModel activity) async {
     try {
-      _validateActivity(activity);
+      final index = _activities.indexWhere((a) => a.id == activity.id);
+      if (index != -1) {
+        _activities[index] = activity;
+        debugPrint('Actividad actualizada: ${activity.title}');
+        await _syncWithTimeBlock(activity);
 
-      _logger.d('Actualizando actividad: ${activity.title}',
-          tag: 'ActivityRepo');
-      await LocalStorage.saveData<ActivityModel>(
-          _boxName, activity.id, activity);
-      await _syncWithTimeBlock(activity);
-
-      // Actualizar notificación
-      await ServiceLocator.instance.activityNotificationService
-          .updateActivityNotification(activity);
+        // Actualizar notificación
+        await ServiceLocator.instance.activityNotificationService
+            .updateActivityNotification(activity);
+      } else {
+        throw Exception('Actividad no encontrada');
+      }
     } catch (e) {
-      _logger.e('Error al actualizar actividad', tag: 'ActivityRepo', error: e);
-      throw ActivityRepositoryException('Error al actualizar actividad: $e');
-    }
-  }
-
-  /// Valida una actividad
-  void _validateActivity(ActivityModel activity) {
-    if (activity.title.isEmpty) {
-      throw ActivityRepositoryException('El título no puede estar vacío');
+      debugPrint('Error al actualizar actividad: $e');
+      rethrow;
     }
   }
 
@@ -211,21 +204,20 @@ class ActivityRepository {
         throw ActivityRepositoryException('El ID no puede estar vacío');
       }
 
-      final activity = await getActivity(id);
-      if (activity == null) {
-        throw ActivityRepositoryException('Actividad no encontrada');
+      final index = _activities.indexWhere((a) => a.id == id);
+      if (index != -1) {
+        final activity = _activities.removeAt(index);
+        debugPrint('Actividad eliminada: ${activity.title}');
+
+        // Cancelar notificación si existía
+        await ServiceLocator.instance.activityNotificationService
+            .cancelActivityNotification(id);
+      } else {
+        throw Exception('Actividad no encontrada');
       }
-
-      await LocalStorage.deleteData(_boxName, id);
-
-      // Cancelar notificación si existía
-      await ServiceLocator.instance.activityNotificationService
-          .cancelActivityNotification(id);
-
-      _logger.d('Actividad eliminada: $id', tag: 'ActivityRepo');
     } catch (e) {
-      _logger.e('Error al eliminar actividad', tag: 'ActivityRepo', error: e);
-      throw ActivityRepositoryException('Error al eliminar actividad: $e');
+      debugPrint('Error al eliminar actividad: $e');
+      rethrow;
     }
   }
 }

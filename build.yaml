@@ -6,6 +6,7 @@ targets:
           include:
             - lib/features/habits/cubit/habit_cubit.dart
             - lib/features/habits/domain/entities/habit.dart
+            - lib/features/activities/data/models/activity_model.dart
         options:
           copy_with: true
           equals: true
