@@ -61,6 +61,12 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
     super.dispose();
   }
 
+  int _compareTime(TimeOfDay time1, TimeOfDay time2) {
+    final minutes1 = time1.hour * 60 + time1.minute;
+    final minutes2 = time2.hour * 60 + time2.minute;
+    return minutes1 - minutes2;
+  }
+
   Future<void> _updateActivity() async {
     if (_formKey.currentState?.validate() ?? false) {
       final startDateTime = DateTime(
@@ -136,24 +142,9 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: isStartTime ? _startTime : _endTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme(
-              brightness:
-                  context.isDarkMode ? Brightness.dark : Brightness.light,
-              primary: context.primaryColor,
-              onPrimary: context.isDarkMode ? Colors.white : Colors.black,
-              secondary: context.secondaryColor,
-              onSecondary: context.isDarkMode ? Colors.white : Colors.black,
-              surface: context.surfaceColor,
-              onSurface: context.textColor,
-              background: context.backgroundColor,
-              onBackground: context.textColor,
-              error: context.errorColor,
-              onError: Colors.white,
-            ),
-          ),
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
           child: child!,
         );
       },
@@ -162,9 +153,12 @@ class _EditActivityScreenState extends State<EditActivityScreen> {
       setState(() {
         if (isStartTime) {
           _startTime = picked;
-          if (_startTime.hour >= _endTime.hour &&
-              _startTime.minute >= _endTime.minute) {
-            _endTime = _startTime.replacing(hour: _startTime.hour + 1);
+          if (_compareTime(_startTime, _endTime) > 0) {
+            // Si la hora de inicio es después de la hora de fin, ajustar la hora de fin
+            _endTime = TimeOfDay(
+              hour: (_startTime.hour + 1) % 24,
+              minute: _startTime.minute,
+            );
           }
         } else {
           _endTime = picked;

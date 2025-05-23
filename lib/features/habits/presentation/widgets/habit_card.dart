@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../data/models/habit_model.dart';
 
 class HabitCard extends StatelessWidget {
@@ -27,6 +28,22 @@ class HabitCard extends StatelessWidget {
       }
     }).join(' · ');
     return shortNames;
+  }
+
+  String _formatTimeIn12Hour() {
+    // Convertir la hora de formato "HH:MM" a formato de 12 horas con AM/PM
+    final timeParts = habit.time.split(':');
+    if (timeParts.length != 2) return habit.time;
+    
+    final hour = int.tryParse(timeParts[0]);
+    final minute = int.tryParse(timeParts[1]);
+    if (hour == null || minute == null) return habit.time;
+    
+    // Crear un DateTime temporal para usar intl.DateFormat
+    final now = DateTime.now();
+    final dateTime = DateTime(now.year, now.month, now.day, hour, minute);
+    
+    return DateFormat('h:mm a').format(dateTime);
   }
 
   Color _getCategoryColor(BuildContext context) {
@@ -168,7 +185,7 @@ class HabitCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      habit.time,
+                      _formatTimeIn12Hour(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.6),
                         fontWeight: FontWeight.w500,

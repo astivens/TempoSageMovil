@@ -142,8 +142,18 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
               surface: AppColors.surface0,
               onSurface: AppColors.text,
             ),
+            // Configurar para usar formato de 12 horas
+            timePickerTheme: TimePickerThemeData(
+              hourMinuteTextStyle: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
           ),
-          child: child!,
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+            child: child!,
+          ),
         );
       },
     );

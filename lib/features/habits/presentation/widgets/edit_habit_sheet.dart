@@ -125,23 +125,21 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   }
 
   Future<void> _selectTime() async {
-    // Parsear la hora actual para mostrarla en el selector
-    final currentTime = _timeController.text.split(':');
-    final initialTime = TimeOfDay(
-      hour: int.tryParse(currentTime.first) ?? TimeOfDay.now().hour,
-      minute: currentTime.length > 1 ? int.tryParse(currentTime.last) ?? 0 : 0,
-    );
-
     final selectedTime = await showTimePicker(
       context: context,
-      initialTime: initialTime,
+      initialTime: TimeOfDay.fromDateTime(
+          DateTime.parse('2021-01-01 ${_timeController.text}:00')),
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
-
     if (selectedTime != null) {
-      final formattedHour = selectedTime.hour.toString().padLeft(2, '0');
-      final formattedMinute = selectedTime.minute.toString().padLeft(2, '0');
       setState(() {
-        _timeController.text = '$formattedHour:$formattedMinute';
+        _timeController.text =
+            '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
       });
     }
   }

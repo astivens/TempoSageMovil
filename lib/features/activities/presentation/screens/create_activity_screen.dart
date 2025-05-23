@@ -193,6 +193,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: _startTime,
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
     if (pickedTime != null && pickedTime != _startTime) {
       setState(() {
@@ -212,6 +218,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: _endTime,
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
     if (pickedTime != null && pickedTime != _endTime) {
       setState(() {
