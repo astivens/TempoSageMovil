@@ -16,6 +16,11 @@ class Logger {
   static Logger get instance => _instance;
 
   Logger._internal();
+  
+  /// Constructor público para crear un logger con tag específico
+  factory Logger(String tag) {
+    return _TaggedLogger(tag);
+  }
 
   /// Configuración del nivel mínimo de log
   LogLevel _minLevel = kDebugMode ? LogLevel.debug : LogLevel.info;
@@ -158,5 +163,42 @@ class Logger {
 
     // Aquí podrías integrar servicios de reporting como Firebase Crashlytics
     // para niveles de error y críticos
+  }
+}
+
+/// Logger con tag predefinido
+class _TaggedLogger extends Logger {
+  final String _tag;
+  
+  _TaggedLogger(this._tag) : super._internal();
+  
+  @override
+  void d(String message, {String? tag, Map<String, dynamic>? data}) {
+    super.d(message, tag: tag ?? _tag, data: data);
+  }
+  
+  @override
+  void i(String message, {String? tag, Map<String, dynamic>? data}) {
+    super.i(message, tag: tag ?? _tag, data: data);
+  }
+  
+  @override
+  void w(String message, {String? tag, Map<String, dynamic>? data}) {
+    super.w(message, tag: tag ?? _tag, data: data);
+  }
+  
+  @override
+  void e(String message, {String? tag, dynamic error, StackTrace? stackTrace, Map<String, dynamic>? data}) {
+    super.e(message, tag: tag ?? _tag, error: error, stackTrace: stackTrace, data: data);
+  }
+  
+  @override
+  void c(String message, {String? tag, dynamic error, StackTrace? stackTrace, Map<String, dynamic>? data}) {
+    super.c(message, tag: tag ?? _tag, error: error, stackTrace: stackTrace, data: data);
+  }
+  
+  @override
+  void exception(AppException exception, {String? tag, StackTrace? stackTrace, Map<String, dynamic>? data}) {
+    super.exception(exception, tag: tag ?? _tag, stackTrace: stackTrace, data: data);
   }
 }

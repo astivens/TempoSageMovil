@@ -5,6 +5,10 @@ import '../../../../core/services/service_locator.dart';
 import '../../../activities/data/models/activity_model.dart';
 import '../../controllers/activity_recommendation_controller.dart';
 import '../widgets/ai_recommendation_card.dart';
+import '../../../../core/constants/app_styles.dart';
+import '../../../../core/services/recommendation_service.dart';
+import '../../../../presentation/pages/task_recommendation_page.dart';
+import '../../../../core/models/productive_block.dart';
 
 class ActivityRecommendationsSection extends StatefulWidget {
   final BuildContext parentContext;
@@ -50,275 +54,166 @@ class _ActivityRecommendationsSectionState
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _controller,
-      child: Consumer<ActivityRecommendationController>(
-        builder: (context, controller, child) {
-          if (!controller.isModelInitialized) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Inicializando modelo de recomendaciones...'),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          if (controller.isLoading) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Cargando recomendaciones...'),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          if (controller.error != null) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error: ${controller.error}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.red,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _initializeController,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final activities = controller.recommendedActivities;
-          if (activities.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(
-                child: Text(
-                  'No hay recomendaciones disponibles en este momento.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Recomendaciones para ti',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              ...activities.take(3).map((activity) => _buildRecommendationCard(
-                    context,
-                    activity,
-                    activities.indexOf(activity),
-                  )),
-              if (activities.length > 3)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Center(
-                    child: TextButton.icon(
-                      onPressed: () => _showAllRecommendations(context),
-                      icon: const Icon(Icons.visibility),
-                      label: const Text('Ver todas las recomendaciones'),
-                      style: TextButton.styleFrom(
-                        foregroundColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.mocha.blue
-                                : AppColors.latte.blue,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildRecommendationCard(
-      BuildContext context, ActivityModel activity, int index) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    final List<Color> accentColors = isDarkMode
-        ? [AppColors.mocha.blue, AppColors.mocha.mauve, AppColors.mocha.green]
-        : [AppColors.latte.blue, AppColors.latte.mauve, AppColors.latte.green];
-
-    final accentColor = accentColors[index % accentColors.length];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: AIRecommendationCard(
-        icon: Icons.stars,
-        accentColor: accentColor,
-        title: activity.title,
-        description: '${activity.category}\n${activity.description}',
-        actionText: 'Crear actividad',
-        onApply: () => _showCreateActivityDialog(context, activity),
-        onDismiss: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Recomendación descartada'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
+        borderRadius: BorderRadius.circular(20),
       ),
-    );
-  }
-
-  void _showAllRecommendations(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Todas las Recomendaciones'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: _controller.recommendedActivities.map((activity) {
-              return ListTile(
-                title: Text(activity.title),
-                subtitle: Text(activity.category),
-                leading: const Icon(Icons.check_circle_outline),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showCreateActivityDialog(widget.parentContext, activity);
-                },
-              );
-            }).toList(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 16),
+          _buildContent(context),
         ],
       ),
     );
   }
 
-  void _showCreateActivityDialog(BuildContext context, ActivityModel activity) {
+  Widget _buildHeader(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final dialogBackgroundColor =
-        isDarkMode ? AppColors.mocha.base : AppColors.latte.base;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: dialogBackgroundColor,
-        title: Text('Crear Actividad: ${activity.title}'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('Categoría'),
-                subtitle: Text(activity.category),
-                leading: const Icon(Icons.category),
-              ),
-              ListTile(
-                title: const Text('Descripción'),
-                subtitle: Text(activity.description),
-                leading: const Icon(Icons.description),
-              ),
-              ListTile(
-                title: const Text('Hora de inicio sugerida'),
-                subtitle: Text(
-                    '${activity.startTime.hour}:${activity.startTime.minute.toString().padLeft(2, '0')}'),
-                leading: const Icon(Icons.access_time),
-              ),
-              ListTile(
-                title: const Text('Duración sugerida'),
-                subtitle: Text(
-                    '${activity.endTime.difference(activity.startTime).inHours} horas'),
-                leading: const Icon(Icons.timer),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              _showProgressDialog(context);
-
-              try {
-                await _activityRepository.addActivity(activity);
-                if (context.mounted) {
-                  Navigator.pop(context); // Cerrar diálogo de progreso
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Actividad creada exitosamente'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  Navigator.pop(context); // Cerrar diálogo de progreso
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error al crear la actividad: $e'),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Crear Actividad'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showProgressDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Creando actividad...'),
+            Icon(
+              Icons.psychology,
+              color: isDarkMode ? AppColors.mocha.sapphire : AppColors.latte.sapphire,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Gestión Inteligente de Tareas',
+              style: AppStyles.titleMedium.copyWith(
+                color: isDarkMode ? AppColors.mocha.text : AppColors.latte.text,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Aprovecha la inteligencia artificial para organizar tus tareas de manera óptima y mejorar tu productividad.',
+          style: AppStyles.bodyMedium.copyWith(
+            color: isDarkMode 
+                ? AppColors.mocha.text.withOpacity(0.8) 
+                : AppColors.latte.text.withOpacity(0.8),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildFeatureCard(
+          context: context,
+          icon: Icons.category,
+          title: 'Categorización de Tareas',
+          description: 'Clasifica automáticamente tus tareas y estima su duración',
+          color: colorScheme.primary,
+        ),
+        const SizedBox(height: 8),
+        _buildFeatureCard(
+          context: context,
+          icon: Icons.schedule,
+          title: 'Sugerencia de Horarios',
+          description: 'Encuentra los mejores momentos para realizar cada tipo de tarea',
+          color: colorScheme.secondary,
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TaskRecommendationPage(),
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.add_task,
+              color: colorScheme.onPrimary,
+            ),
+            label: const Text('Crear Tarea Inteligente'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+  }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDarkMode 
+            ? AppColors.mocha.crust 
+            : AppColors.latte.crust.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppStyles.titleSmall.copyWith(
+                    color: isDarkMode ? AppColors.mocha.text : AppColors.latte.text,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: AppStyles.bodySmall.copyWith(
+                    color: isDarkMode 
+                        ? AppColors.mocha.text.withOpacity(0.8) 
+                        : AppColors.latte.text.withOpacity(0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

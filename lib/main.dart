@@ -11,6 +11,7 @@ import 'core/theme/theme_manager.dart';
 import 'core/l10n/app_localizations.dart';
 import 'features/auth/data/models/user_model.dart';
 import 'features/activities/data/models/activity_model_adapter.dart';
+import 'features/activities/data/models/activity_model.dart';
 import 'features/timeblocks/data/models/time_block_model.dart';
 import 'features/settings/data/models/settings_model.dart';
 import 'features/habits/data/models/habit_model.dart';
@@ -23,7 +24,6 @@ import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/providers/settings_provider.dart';
 import 'features/dashboard/controllers/dashboard_controller.dart';
 import 'core/widgets/widgets.dart';
-import 'services/test_recommendation.dart';
 
 void main() async {
   await _initializeApp();
@@ -97,20 +97,48 @@ Future<void> _initializeStorage() async {
     // Inicializar Hive para almacenamiento local
     await LocalStorage.init();
 
-    // Registrar adaptadores de modelos
-    Hive.registerAdapter(UserModelAdapter());
-    Hive.registerAdapter(ActivityModelAdapter());
-    Hive.registerAdapter(TimeBlockModelAdapter());
-    Hive.registerAdapter(SettingsModelAdapter());
-    Hive.registerAdapter(HabitModelAdapter());
-    Hive.registerAdapter(TimeOfDayAdapter());
-    // Hive.registerAdapter(TimeOfDayConverterAdapter()); // Comentado para evitar conflicto de typeId
+    // Registrar adaptadores de modelos solo si no están registrados
+    _safeRegisterAdapter<UserModel>(1, UserModelAdapter(), 'UserModelAdapter');
+    _safeRegisterAdapter<ActivityModel>(
+        2, ActivityModelAdapter(), 'ActivityModelAdapter');
+    _safeRegisterAdapter<TimeBlockModel>(
+        6, TimeBlockModelAdapter(), 'TimeBlockModelAdapter');
+    _safeRegisterAdapter<HabitModel>(
+        3, HabitModelAdapter(), 'HabitModelAdapter');
+    _safeRegisterAdapter<SettingsModel>(
+        4, SettingsModelAdapter(), 'SettingsModelAdapter');
+    _safeRegisterAdapter<TimeOfDay>(8, TimeOfDayAdapter(), 'TimeOfDayAdapter');
+    // _safeRegisterAdapter<TimeOfDayConverter>(9, TimeOfDayConverterAdapter(), 'TimeOfDayConverterAdapter');
 
     logger.i('Adaptadores de Hive registrados', tag: 'Storage');
   } catch (e, stackTrace) {
     logger.e('Error al inicializar almacenamiento',
         tag: 'Storage', error: e, stackTrace: stackTrace);
     rethrow;
+  }
+}
+
+/// Registra un adaptador de forma segura, capturando errores si ya está registrado
+void _safeRegisterAdapter<T>(
+    int typeId, TypeAdapter<T> adapter, String adapterName) {
+  final globalLogger = Logger.instance;
+  try {
+    if (!Hive.isAdapterRegistered(typeId)) {
+      Hive.registerAdapter<T>(adapter);
+      globalLogger.d('Adaptador $adapterName registrado con typeId $typeId',
+          tag: 'Hive');
+    } else {
+      globalLogger.d(
+          'Adaptador $adapterName con typeId $typeId ya está registrado.',
+          tag: 'Hive');
+    }
+  } catch (e) {
+    globalLogger.w(
+        'Error al intentar registrar $adapterName con typeId $typeId: $e',
+        tag: 'Hive');
+    if (!e.toString().contains('already a TypeAdapter for typeId')) {
+      rethrow;
+    }
   }
 }
 
@@ -236,8 +264,6 @@ class MyApp extends StatelessWidget {
                 '/login': (context) => const LoginScreen(),
                 '/home': (context) => const HomeScreen(),
                 '/settings': (context) => const SettingsScreen(),
-                '/test-recommendation': (context) =>
-                    const TestRecommendationPage(),
               },
               builder: (context, child) {
                 return MediaQuery(

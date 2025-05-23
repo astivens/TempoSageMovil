@@ -71,7 +71,7 @@
     "aiListening": "Escuchando...",
     "aiProcessing": "Procesando...",
     "aiError": "Error al procesar el comando",
-    "calendarActivities": "Actividades",
+    "calendarActivities": "Calendario de Actividades",
     "calendarNoEvents": "No hay eventos",
     "calendarNoEventsToday": "No hay eventos para hoy",
     "calendarNoEventsSelected": "No hay eventos para la fecha seleccionada",
@@ -156,5 +156,7 @@
     "dashboardActivitiesAndHabits": "Actividades y hábitos",
     "habits": "Hábitos",
     "noHabits": "No hay hábitos",
-    "activities": "Actividades"
+    "activities": "Actividades",
+    "noActivitiesToday": "No hay actividades para hoy",
+    "noActivitiesSelected": "No hay actividades para la fecha seleccionada"
 } 

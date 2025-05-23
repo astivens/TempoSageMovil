@@ -1,0 +1,38 @@
+{
+  "model_info": {
+    "name": "TISASREC_UNIFIED",
+    "version": "1.0.0",
+    "description": "Modelo de recomendaci\u00f3n de actividades TempoSage",
+    "author": "TempoSage Team",
+    "date_created": "2025-05-21 10:36:38"
+  },
+  "input_shape": [
+    1,
+    50
+  ],
+  "output_shape": [
+    1,
+    40
+  ],
+  "input_type": "float32",
+  "output_type": "float32",
+  "normalization": {
+    "input": {
+      "type": "categorical",
+      "max_value": 40
+    },
+    "output": {
+      "type": "softmax"
+    }
+  },
+  "categories": [
+    "Trabajo",
+    "Estudio",
+    "Ejercicio",
+    "Ocio",
+    "Descanso",
+    "Comida",
+    "Transporte",
+    "Otro"
+  ]
+}

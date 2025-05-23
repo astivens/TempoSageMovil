@@ -54,7 +54,9 @@ dependencies:
   get_it: ^7.6.7
   catppuccin_flutter: ^1.0.0
   # flutter_onnxruntime: ^1.2.3
-  tflite_flutter: ^0.9.5
+  tflite_flutter: ^0.11.0
+  device_calendar: ^4.3.3
+  csv: ^6.0.0
   # tflite_flutter_helper: ^0.3.1  # Comentado temporalmente por conflicto de versiones
 
 dev_dependencies:
@@ -86,11 +88,13 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/models/
+    - assets/models/metadata/
     - assets/images/
+    - assets/ml_models/
+    - assets/ml_models/metadata/
     - assets/ml_models/tisasrec/
-    - assets/ml_models/tisasrec/item_mapping.json
-    - assets/ml_models/tisasrec/tisasrec_model.tflite
-    - assets/ml_models/tisasrec/metadata.json
+    - assets/ml_models/TPS_Model/
 
   fonts:
     - family: Noto Sans
@@ -120,3 +124,12 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/images/logo.png"
+
+# Configuración específica para tflite_flutter
+tflite_flutter:
+  # Configuraciones adicionales para Linux
+  linux:
+    enabled: true  # Habilitar para Linux
+    download_ext: true  # Intentar descargar automáticamente bibliotecas faltantes
+    override_libraries:
+      libtensorflowlite_c: libtensorflowlite_c-linux.so

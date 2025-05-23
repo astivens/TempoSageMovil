@@ -4,6 +4,7 @@ import '../../../../core/services/service_locator.dart';
 import '../../../activities/data/models/activity_model.dart';
 import '../../../activities/data/repositories/activity_repository.dart';
 import '../../../activities/presentation/screens/create_activity_screen.dart';
+import '../../../activities/presentation/widgets/activity_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -21,6 +22,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   late DateTime _focusedDay;
   Map<DateTime, List<ActivityModel>> _events = {};
   List<ActivityModel> _selectedEvents = [];
+  bool _showCreateForm = false;
+  String? _selectedCategory;
+
+  // Lista de categorías disponibles para filtrar
+  final List<String> _categories = ['Trabajo', 'Estudio', 'Ejercicio', 'Ocio', 'Otro'];
 
   // Definir un rango de fechas que incluya el día actual
   late final DateTime kFirstDay;
@@ -87,13 +93,55 @@ class _CalendarScreenState extends State<CalendarScreen> {
   List<ActivityModel> _getEventsForDay(DateTime day) {
     // Normalizar la fecha eliminando la hora
     final date = DateTime(day.year, day.month, day.day);
-    return _events.entries
+    
+    // Obtener todas las actividades para la fecha
+    final activities = _events.entries
         .where((entry) =>
             entry.key.year == date.year &&
             entry.key.month == date.month &&
             entry.key.day == date.day)
         .expand((entry) => entry.value)
         .toList();
+    
+    // Filtrar por categoría si hay una seleccionada
+    if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
+      return activities.where((activity) => 
+        activity.category == _selectedCategory).toList();
+    }
+    
+    return activities;
+  }
+
+  void _toggleCreateForm() {
+    setState(() {
+      _showCreateForm = !_showCreateForm;
+    });
+  }
+
+  Future<void> _createActivityInline(BuildContext context) async {
+    // Obtener la fecha actual sin hora para comparaciones
+    final DateTime today = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
+    
+    // Asegurarnos de que la fecha seleccionada no sea anterior a hoy
+    final DateTime dateToUse = _selectedDay.isBefore(today) ? today : _selectedDay;
+    
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateActivityScreen(
+          initialDate: dateToUse,
+        ),
+      ),
+    );
+    
+    if (result == true) {
+      await _loadActivities();
+      _toggleCreateForm();
+    }
   }
 
   @override
@@ -104,7 +152,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CustomAppBar(
-        title: l10n.calendarActivities,
+        title: l10n.activities,
         showBackButton: false,
         titleStyle: TextStyle(
           color: theme.colorScheme.onBackground,
@@ -115,14 +163,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: theme.colorScheme.onBackground),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreateActivityScreen(),
-                ),
-              );
-              _loadActivities();
+            onPressed: () => _createActivityInline(context),
+          ),
+          IconButton(
+            icon: Icon(Icons.filter_list, color: theme.colorScheme.onBackground),
+            onPressed: () {
+              _showCategoryFilterDialog(context);
             },
           ),
         ],
@@ -178,6 +224,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
                 _selectedEvents = _getEventsForDay(selectedDay);
+                // Reiniciar el formulario de creación cuando cambia el día
+                _showCreateForm = false;
               });
             },
             onPageChanged: (focusedDay) {
@@ -192,26 +240,60 @@ class _CalendarScreenState extends State<CalendarScreen> {
             height: 1,
           ),
 
-          // Título de la sección de eventos
+          // Título de la sección de eventos con un botón para añadir actividad
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  l10n.calendarActivities,
-                  style: TextStyle(
-                    color: theme.colorScheme.onBackground,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      l10n.activities,
+                      style: TextStyle(
+                        color: theme.colorScheme.onBackground,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    if (_selectedCategory != null) ...[
+                      const SizedBox(width: 8),
+                      Chip(
+                        label: Text(_selectedCategory!),
+                        onDeleted: () {
+                          setState(() {
+                            _selectedCategory = null;
+                            _selectedEvents = _getEventsForDay(_selectedDay);
+                          });
+                        },
+                        backgroundColor: theme.colorScheme.primaryContainer,
+                        labelStyle: TextStyle(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                Text(
-                  '${_selectedDay.day}/${_selectedDay.month}/${_selectedDay.year}',
-                  style: TextStyle(
-                    color: theme.colorScheme.onBackground.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '${_selectedDay.day}/${_selectedDay.month}/${_selectedDay.year}',
+                      style: TextStyle(
+                        color: theme.colorScheme.onBackground.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: Icon(
+                        Icons.add_circle,
+                        color: theme.colorScheme.primary,
+                      ),
+                      onPressed: () => _createActivityInline(context),
+                      tooltip: l10n.createActivity,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -221,14 +303,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Expanded(
             child: _selectedEvents.isEmpty
                 ? Center(
-                    child: Text(
-                      _selectedDay.isAtSameMomentAs(DateTime.now())
-                          ? l10n.calendarNoEventsToday
-                          : l10n.calendarNoEventsSelected,
-                      style: TextStyle(
-                        color: theme.colorScheme.onBackground.withOpacity(0.7),
-                        fontSize: 16,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.event_note,
+                          size: 64,
+                          color: theme.colorScheme.primary.withOpacity(0.6),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _selectedDay.isAtSameMomentAs(DateTime.now())
+                              ? l10n.noActivitiesToday
+                              : l10n.noActivitiesSelected,
+                          style: TextStyle(
+                            color: theme.colorScheme.onBackground.withOpacity(0.7),
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _createActivityInline(context),
+                          icon: const Icon(Icons.add),
+                          label: Text(l10n.createActivity),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : ListView.builder(
@@ -236,48 +339,52 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     itemCount: _selectedEvents.length,
                     itemBuilder: (context, index) {
                       final event = _selectedEvents[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12.0),
-                        child: ListTile(
-                          title: Text(
-                            event.title,
-                            style: TextStyle(
-                              color: theme.colorScheme.onBackground,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          subtitle: Text(
-                            '${event.startTime.hour}:${event.startTime.minute.toString().padLeft(2, '0')} - ${event.endTime.hour}:${event.endTime.minute.toString().padLeft(2, '0')}',
-                            style: TextStyle(
-                              color: theme.colorScheme.onBackground
-                                  .withOpacity(0.7),
-                            ),
-                          ),
-                          leading: Container(
-                            width: 12,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          trailing: Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color:
-                                theme.colorScheme.onBackground.withOpacity(0.5),
-                          ),
-                          onTap: () {
-                            // Abrir la vista de detalle o edición
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CreateActivityScreen(
-                                  activity: event,
-                                ),
+                      return ActivityCard(
+                        activity: event,
+                        onToggleComplete: () async {
+                          final updatedActivity = event.copyWith(
+                            isCompleted: !event.isCompleted,
+                          );
+                          await _repository.updateActivity(updatedActivity);
+                          await _loadActivities();
+                        },
+                        onEdit: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CreateActivityScreen(
+                                activity: event,
                               ),
-                            ).then((_) => _loadActivities());
-                          },
-                        ),
+                            ),
+                          );
+                          if (result == true) {
+                            await _loadActivities();
+                          }
+                        },
+                        onDelete: () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(l10n.delete),
+                              content: Text(l10n.activityDeleteConfirmation),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                  child: Text(l10n.cancel),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  child: Text(l10n.delete),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) {
+                            await _repository.deleteActivity(event.id);
+                            await _loadActivities();
+                          }
+                        },
+                        onTap: () {},
                       );
                     },
                   ),
@@ -285,5 +392,76 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ],
       ),
     );
+  }
+
+  void _showCategoryFilterDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Filtrar por categoría'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                ListTile(
+                  title: const Text('Todas las categorías'),
+                  leading: Icon(
+                    Icons.clear_all,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  selected: _selectedCategory == null,
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = null;
+                      _selectedEvents = _getEventsForDay(_selectedDay);
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                const Divider(),
+                ..._categories.map((category) => ListTile(
+                      title: Text(category),
+                      leading: Icon(
+                        _getCategoryIcon(category),
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      selected: _selectedCategory == category,
+                      onTap: () {
+                        setState(() {
+                          _selectedCategory = category;
+                          _selectedEvents = _getEventsForDay(_selectedDay);
+                        });
+                        Navigator.pop(context);
+                      },
+                    )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'trabajo':
+        return Icons.work;
+      case 'estudio':
+        return Icons.school;
+      case 'ejercicio':
+        return Icons.fitness_center;
+      case 'ocio':
+        return Icons.sports_esports;
+      default:
+        return Icons.category;
+    }
   }
 }

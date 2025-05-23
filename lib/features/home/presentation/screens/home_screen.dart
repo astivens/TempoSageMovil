@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
-import '../../../activities/presentation/screens/activity_list_screen.dart';
 import '../../../calendar/presentation/screens/calendar_screen.dart';
 import '../../../timeblocks/presentation/screens/time_blocks_screen.dart';
 import '../../../habits/presentation/screens/habits_screen.dart';
@@ -17,14 +16,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = const [
     DashboardScreen(),
-    ActivityListScreen(),
     CalendarScreen(),
     TimeBlocksScreen(),
     HabitsScreen(),
   ];
 
   // Número de pantallas disponibles (sin contar ajustes que es una navegación)
-  final int _numScreens = 5;
+  final int _numScreens = 4;
 
   void _onItemTapped(int index) {
     if (index == _numScreens) {
@@ -67,12 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Panel',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Actividades',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
-            label: 'Calendario',
+            label: 'Actividades',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.timer),

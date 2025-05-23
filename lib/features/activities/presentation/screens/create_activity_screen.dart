@@ -9,8 +9,13 @@ import '../controllers/activity_recommendation_controller.dart';
 
 class CreateActivityScreen extends StatefulWidget {
   final ActivityModel? activity;
+  final DateTime? initialDate;
 
-  const CreateActivityScreen({super.key, this.activity});
+  const CreateActivityScreen({
+    super.key, 
+    this.activity,
+    this.initialDate,
+  });
 
   @override
   State<CreateActivityScreen> createState() => _CreateActivityScreenState();
@@ -20,11 +25,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _startTime = TimeOfDay.now();
-  TimeOfDay _endTime = TimeOfDay.now().replacing(
-    hour: TimeOfDay.now().hour + 1 > 23 ? 23 : TimeOfDay.now().hour + 1,
-  );
+  late DateTime _selectedDate;
+  late TimeOfDay _startTime;
+  late TimeOfDay _endTime;
   String _category = 'Trabajo';
   String _priority = 'Media';
   bool _isCompleted = false;
@@ -50,6 +53,14 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     super.initState();
     _recommendationController = ActivityRecommendationController();
     _loadRecommendations();
+    
+    // Obtener la fecha actual sin hora para comparaciones
+    final DateTime today = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
+    
     if (widget.activity != null) {
       _titleController.text = widget.activity!.title;
       _descriptionController.text = widget.activity!.description;
@@ -61,6 +72,18 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       _isCompleted = widget.activity!.isCompleted;
       _sendReminder = widget.activity!.sendReminder;
       _reminderMinutesBefore = widget.activity!.reminderMinutesBefore;
+    } else {
+      // Para una nueva actividad
+      // Usar la fecha inicial proporcionada o la fecha actual
+      _selectedDate = widget.initialDate != null ?
+          // Si hay una fecha inicial, verificamos que no sea anterior a hoy
+          (widget.initialDate!.isBefore(today) ? today : widget.initialDate!) :
+          today;
+          
+      _startTime = TimeOfDay.now();
+      _endTime = TimeOfDay.now().replacing(
+        hour: TimeOfDay.now().hour + 1 > 23 ? 23 : TimeOfDay.now().hour + 1,
+      );
     }
   }
 
@@ -137,12 +160,28 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   }
 
   Future<void> _selectDate() async {
+    // Obtenemos la fecha actual sin hora para comparaciones
+    final DateTime today = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
+    
+    // Configuramos la primera fecha seleccionable
+    // Si estamos editando una actividad existente, permitimos fechas pasadas
+    // Si estamos creando una nueva, solo permitimos desde hoy
+    final DateTime firstSelectableDate = widget.activity != null ? 
+        today.subtract(const Duration(days: 365)) : 
+        today;
+    
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      initialDate: _selectedDate.isBefore(today) && widget.activity == null ? 
+                  today : _selectedDate,
+      firstDate: firstSelectableDate,
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
+    
     if (pickedDate != null && pickedDate != _selectedDate) {
       setState(() {
         _selectedDate = pickedDate;

@@ -1,7 +1,14 @@
 {
-  "Trabajo": 1,
-  "Estudio": 2,
-  "Ejercicio": 3,
-  "Ocio": 4,
-  "Otro": 5
+  "categories": {
+    "0": "Trabajo",
+    "1": "Estudio",
+    "2": "Salud",
+    "3": "Bienestar",
+    "4": "Social",
+    "5": "Ocio",
+    "6": "Desarrollo",
+    "7": "Alimentación",
+    "8": "Descanso",
+    "9": "Productividad"
+  }
 } 

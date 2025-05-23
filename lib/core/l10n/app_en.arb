@@ -153,8 +153,10 @@
     "dashboardFocusScoreSubtitle": "of productivity",
     "dashboardOverview": "Day overview",
     "dashboardNoItems": "No items for today.",
-    "dashboardActivitiesAndHabits": "Activities and habits",
+    "dashboardActivitiesAndHabits": "Activities and Habits",
     "habits": "Habits",
     "noHabits": "No habits",
-    "activities": "Activities"
+    "activities": "Activities",
+    "noActivitiesToday": "No activities for today",
+    "noActivitiesSelected": "No activities for selected date"
 } 

@@ -3,7 +3,8 @@ import 'activity_model.dart';
 
 class ActivityModelAdapter extends TypeAdapter<ActivityModel> {
   @override
-  final int typeId = 1; // Asegúrate de que este ID no esté en uso
+  final int typeId =
+      2; // Cambiado a 2 para evitar colisión con UserModelAdapter (1)
 
   @override
   ActivityModel read(BinaryReader reader) {
