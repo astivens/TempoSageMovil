@@ -79,7 +79,7 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Activities',
+        title: 'Actividades',
         showBackButton: false,
         actions: [
           IconButton(
@@ -104,7 +104,7 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Manage all your scheduled activities and tasks',
+                  'Administra todas tus actividades y tareas programadas',
                   style: AppStyles.bodyMedium,
                 ),
                 const SizedBox(height: 16),
@@ -112,7 +112,7 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search activities...',
+                    hintText: 'Buscar actividades...',
                     hintStyle: AppStyles.bodyMedium.copyWith(
                       color: isDarkMode
                           ? AppColors.mocha.overlay0
@@ -132,29 +132,10 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
                     ),
                   ),
                   style: AppStyles.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-                // Filters
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildFilterDropdown(
-                        'Category',
-                        _selectedCategory,
-                        ['Todos', 'Trabajo', 'Personal'],
-                        (value) => setState(() => _selectedCategory = value!),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildFilterDropdown(
-                        'Priority',
-                        _selectedPriority,
-                        ['Todas', 'Alta', 'Media', 'Baja'],
-                        (value) => setState(() => _selectedPriority = value!),
-                      ),
-                    ),
-                  ],
+                  onChanged: (value) {
+                    // Implementar búsqueda de actividades
+                    setState(() {});
+                  },
                 ),
               ],
             ),
@@ -163,16 +144,41 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _activities.length,
-                    itemBuilder: (context, index) {
-                      final activity = _activities[index];
-                      return _buildActivityCard(activity);
-                    },
-                  ),
+                : _activities.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No hay actividades',
+                          style: AppStyles.bodyLarge,
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _activities.length,
+                        itemBuilder: (context, index) {
+                          final activity = _activities[index];
+                          // Filtra solo por texto de búsqueda
+                          if (_searchController.text.isEmpty ||
+                              activity.title.toLowerCase().contains(_searchController.text.toLowerCase())) {
+                            return _buildActivityCard(activity);
+                          } else {
+                            return const SizedBox.shrink();
+                          }
+                        },
+                      ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CreateActivityScreen(),
+            ),
+          );
+          _loadActivities();
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }

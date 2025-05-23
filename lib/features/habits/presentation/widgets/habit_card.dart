@@ -46,21 +46,15 @@ class HabitCard extends StatelessWidget {
     return DateFormat('h:mm a').format(dateTime);
   }
 
-  Color _getCategoryColor(BuildContext context) {
+  Color _getHabitColor(BuildContext context) {
     final theme = Theme.of(context);
-    switch (habit.category.toLowerCase()) {
-      case 'salud': return Colors.green;
-      case 'trabajo': return Colors.blue;
-      case 'estudio': return Colors.orange;
-      case 'personal': return Colors.purple;
-      default: return theme.colorScheme.primary;
-    }
+    return theme.colorScheme.primary;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final categoryColor = _getCategoryColor(context);
+    final habitColor = _getHabitColor(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     
     return Card(
@@ -90,7 +84,7 @@ class HabitCard extends StatelessWidget {
                         width: 16,
                         height: 16,
                         decoration: BoxDecoration(
-                          color: categoryColor,
+                          color: habitColor,
                           shape: BoxShape.circle,
                         ),
                       ),

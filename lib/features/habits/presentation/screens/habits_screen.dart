@@ -18,7 +18,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
   final _repository = ServiceLocator.instance.habitRepository;
   List<HabitModel> _habits = [];
   bool _isLoading = true;
-  String _selectedCategory = 'Todos';
   int _todaysCompletedHabits = 0;
   double _weeklyCompletionRate = 0.0;
   int _currentStreak = 0;
@@ -178,25 +177,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
       }
     }
   }
-  
-  List<HabitModel> _getFilteredHabits() {
-    if (_selectedCategory == 'Todos') {
-      return _habits;
-    } else {
-      return _habits.where((habit) => habit.category == _selectedCategory).toList();
-    }
-  }
-  
-  List<String> _getCategories() {
-    final categories = _habits.map((habit) => habit.category).toSet().toList();
-    return ['Todos', ...categories];
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final filteredHabits = _getFilteredHabits();
     final today = DateTime.now().weekday;
     final todaysHabits = _habits.where((habit) {
       return habit.daysOfWeek.any((day) {
@@ -212,8 +197,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
         }
       });
     }).toList();
-    
-    final categories = _getCategories();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -267,38 +250,22 @@ class _HabitsScreenState extends State<HabitsScreen> {
                           const SizedBox(height: 24),
                         ],
                         
-                        // Filtro por categorías
+                        // Lista de todos los hábitos
                         _buildSectionTitle(theme, 'Todos los hábitos'),
-                        const SizedBox(height: 8),
-                        _buildCategoryFilter(theme, categories),
                         const SizedBox(height: 12),
                         
-                        // Lista de hábitos
-                        if (filteredHabits.isEmpty) 
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Text(
-                                'No hay hábitos en esta categoría',
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  color: theme.colorScheme.onBackground.withOpacity(0.6),
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          ...filteredHabits.map((habit) => HabitCard(
-                            habit: habit,
-                            onComplete: () async {
-                              final habitEntity = _mapModelToEntity(habit);
-                              final updatedEntity = habitEntity.copyWith(isDone: !habit.isCompleted);
-                              await _repository.updateHabit(updatedEntity);
-                              if (mounted) {
-                                _loadHabits();
-                              }
-                            },
-                            onDelete: () => _deleteHabit(habit),
-                          )),
+                        ..._habits.map((habit) => HabitCard(
+                          habit: habit,
+                          onComplete: () async {
+                            final habitEntity = _mapModelToEntity(habit);
+                            final updatedEntity = habitEntity.copyWith(isDone: !habit.isCompleted);
+                            await _repository.updateHabit(updatedEntity);
+                            if (mounted) {
+                              _loadHabits();
+                            }
+                          },
+                          onDelete: () => _deleteHabit(habit),
+                        )),
                       ],
                     ),
             ),
@@ -435,38 +402,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
       ),
     );
   }
-
-  Widget _buildCategoryFilter(ThemeData theme, List<String> categories) {
-    return SizedBox(
-      height: 40,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: categories.map((category) {
-          final isSelected = _selectedCategory == category;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: Text(category),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  _selectedCategory = category;
-                });
-              },
-              backgroundColor: theme.scaffoldBackgroundColor,
-              selectedColor: theme.colorScheme.primary.withOpacity(0.2),
-              checkmarkColor: theme.colorScheme.primary,
-              labelStyle: TextStyle(
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onBackground,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
 }
 
 class AddHabitDialog extends StatefulWidget {
@@ -481,8 +416,6 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
   final _descriptionController = TextEditingController();
   TimeOfDay _selectedTime = TimeOfDay.now();
   final List<bool> _selectedDays = List.generate(7, (index) => false);
-  String _selectedCategory = 'Hábito';
-  final List<String> _categories = ['Hábito', 'Salud', 'Trabajo', 'Estudio', 'Personal'];
 
   @override
   void dispose() {
@@ -548,31 +481,6 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                   ),
                 ),
                 maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              
-              // Categoría
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Categoría',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                value: _selectedCategory,
-                items: _categories.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
-                    child: Text(category),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _selectedCategory = value;
-                    });
-                  }
-                },
               ),
               const SizedBox(height: 16),
               
@@ -657,7 +565,7 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                           id: DateTime.now().millisecondsSinceEpoch.toString(),
                           title: _titleController.text,
                           description: _descriptionController.text,
-                          category: _selectedCategory,
+                          category: 'Hábito',
                           isCompleted: false,
                           streak: 0,
                           totalCompletions: 0,
