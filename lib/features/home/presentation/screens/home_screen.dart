@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/widgets/widgets.dart';
+import '../../../../core/services/service_locator.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
-import '../../../calendar/presentation/screens/calendar_screen.dart';
+import '../../../activities/presentation/screens/activities_screen.dart';
+import '../../../habits/presentation/screens/habits_screen.dart'
+    hide AddHabitDialog;
+import '../../../habits/presentation/widgets/add_habit_dialog.dart';
+import '../../../habits/data/models/habit_model.dart';
+import '../../../habits/domain/entities/habit.dart';
 import '../../../timeblocks/presentation/screens/time_blocks_screen.dart';
-import '../../../habits/presentation/screens/habits_screen.dart';
+import '../../../dashboard/controllers/dashboard_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,77 +24,202 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = const [
     DashboardScreen(),
-    CalendarScreen(),
-    TimeBlocksScreen(),
+    ActivitiesScreen(),
     HabitsScreen(),
+    TimeBlocksScreen(),
   ];
 
-  // Número de pantallas disponibles (sin contar ajustes que es una navegación)
-  final int _numScreens = 4;
+  final List<String> _screenTitles = const [
+    'Dashboard',
+    'Actividades',
+    'Hábitos',
+    'Bloques de Tiempo',
+  ];
 
   void _onItemTapped(int index) {
-    if (index == _numScreens) {
-      // Si el índice es igual al número de pantallas, navegar a configuración
-      Navigator.pushNamed(context, '/settings');
-    } else if (index >= 0 && index < _numScreens) {
-      // Solo actualizar el índice si está dentro del rango válido
+    if (index >= 0 && index < _screens.length) {
       setState(() {
         _selectedIndex = index;
       });
     }
   }
 
-  void _openRecommendationTest() {
-    Navigator.pushNamed(context, '/test-recommendation');
+  void _openSettings() {
+    Navigator.pushNamed(context, '/settings');
   }
 
   @override
   Widget build(BuildContext context) {
-    // Obtener colores del tema actual
-    final theme = Theme.of(context);
-
     return Scaffold(
-      body: _selectedIndex < _screens.length
-          ? _screens[_selectedIndex]
-          : _screens[0], // Fallback a la primera pantalla por seguridad
-      floatingActionButton: _selectedIndex == 0
-          ? FloatingActionButton(
-              onPressed: _openRecommendationTest,
-              tooltip: 'Probar Recomendaciones',
-              child: const Icon(Icons.movie),
-            )
-          : null,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex >= _numScreens ? 0 : _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Panel',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Actividades',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.timer),
-            label: 'Time Blocks',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.auto_awesome),
-            label: 'Hábitos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Ajustes',
+      appBar: CustomAppBar.main(
+        title: _screenTitles[_selectedIndex],
+        actions: [
+          IconButton(
+            onPressed: _openSettings,
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Configuración',
           ),
         ],
-        type: BottomNavigationBarType.fixed,
-        // Usar colores del tema en lugar de colores fijos
-        backgroundColor: theme.bottomNavigationBarTheme.backgroundColor,
-        selectedItemColor: theme.bottomNavigationBarTheme.selectedItemColor,
-        unselectedItemColor: theme.bottomNavigationBarTheme.unselectedItemColor,
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
+      floatingActionButton: _selectedIndex == 0
+          ? ExpandableFab(
+              icon: const Icon(Icons.add),
+              closeIcon: const Icon(Icons.close),
+              openFabTooltip: 'Crear nuevo',
+              closeFabTooltip: 'Cerrar menú',
+              children: _getFabActions(),
+            )
+          : FloatingActionButton(
+              onPressed: () {
+                switch (_selectedIndex) {
+                  case 1: // Actividades
+                    _navigateToCreate('activity');
+                    break;
+                  case 2: // Hábitos
+                    _navigateToCreate('habit');
+                    break;
+                  case 3: // Bloques de Tiempo
+                    _navigateToCreate('timeblock');
+                    break;
+                }
+              },
+              child: const Icon(Icons.add),
+            ),
+      bottomNavigationBar: BottomNavigation.tempoSage(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
+  }
+
+  void _navigateToCreate(String type) async {
+    debugPrint('🎯 Navegando para crear: $type');
+
+    switch (type) {
+      case 'activity':
+        final result = await Navigator.pushNamed(context, '/create-activity');
+        debugPrint('📊 Resultado creación actividad: $result');
+        // Refrescar dashboard si se creó una actividad
+        if (result == true && mounted) {
+          _refreshDashboardIfNeeded();
+        }
+        break;
+      case 'habit':
+        debugPrint('🔧 Mostrando diálogo para crear hábito...');
+        final result = await showDialog<HabitModel>(
+          context: context,
+          builder: (context) => const AddHabitDialog(),
+        );
+
+        debugPrint(
+            '📝 Resultado del diálogo de hábito: ${result != null ? result.title : 'null'}');
+
+        if (result != null) {
+          try {
+            debugPrint('💾 Guardando hábito: ${result.title}');
+            debugPrint(
+                '📅 Días seleccionados: ${result.daysOfWeek.join(', ')}');
+            debugPrint('⏰ Hora: ${result.time}');
+
+            // Convertir HabitModel a Habit entity
+            final habitEntity = Habit(
+              id: result.id,
+              name: result.title,
+              description: result.description,
+              daysOfWeek: result.daysOfWeek,
+              category: result.category,
+              reminder: result.reminder,
+              time: result.time,
+              isDone: result.isCompleted,
+              dateCreation: result.dateCreation,
+            );
+
+            // Guardar el hábito en el repositorio
+            final habitRepository = ServiceLocator.instance.habitRepository;
+            await habitRepository.addHabit(habitEntity);
+
+            debugPrint('✅ Hábito guardado exitosamente en el repositorio');
+
+            // Refrescar dashboard después de crear el hábito
+            debugPrint('🔄 Solicitando refresh del dashboard...');
+            _refreshDashboardIfNeeded();
+
+            // Esperar un poco para asegurar que se procese
+            await Future.delayed(const Duration(milliseconds: 500));
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Hábito "${result.title}" creado exitosamente'),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                ),
+              );
+            }
+          } catch (e) {
+            debugPrint('❌ Error creando hábito: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error al crear el hábito: $e'),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+              );
+            }
+          }
+        }
+        break;
+      case 'timeblock':
+        final result = await Navigator.pushNamed(context, '/create-timeblock');
+        debugPrint('⏰ Resultado creación timeblock: $result');
+        // Refrescar dashboard si se creó un timeblock
+        if (result == true && mounted) {
+          _refreshDashboardIfNeeded();
+        }
+        break;
+    }
+  }
+
+  // Método para refrescar el dashboard cuando estamos en esa pestaña
+  void _refreshDashboardIfNeeded() {
+    debugPrint(
+        '🔍 Verificando si necesita refresh... índice actual: $_selectedIndex');
+    if (_selectedIndex == 0) {
+      // Dashboard es el índice 0
+      try {
+        debugPrint('📊 Refrescando dashboard desde HomeScreen...');
+        final dashboardController =
+            Provider.of<DashboardController>(context, listen: false);
+        dashboardController.refreshDashboard();
+      } catch (e) {
+        debugPrint('❌ Error al refrescar dashboard: $e');
+      }
+    } else {
+      debugPrint('⏭️ No es necesario refrescar, no estamos en dashboard');
+    }
+  }
+
+  List<Widget> _getFabActions() {
+    // Solo para Dashboard - opciones múltiples
+    return [
+      ActionButton(
+        onPressed: () => _navigateToCreate('activity'),
+        icon: const Icon(Icons.assignment_outlined),
+        tooltip: 'Nueva Actividad',
+      ),
+      ActionButton(
+        onPressed: () => _navigateToCreate('habit'),
+        icon: const Icon(Icons.auto_awesome_outlined),
+        tooltip: 'Nuevo Hábito',
+      ),
+      ActionButton(
+        onPressed: () => _navigateToCreate('timeblock'),
+        icon: const Icon(Icons.schedule_outlined),
+        tooltip: 'Nuevo Bloque',
+      ),
+    ];
   }
 }

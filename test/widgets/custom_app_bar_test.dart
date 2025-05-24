@@ -22,7 +22,7 @@ void main() {
       expect(find.text(testTitle), findsOneWidget);
 
       // Verificar que se muestra el botón de regreso por defecto
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back_ios), findsOneWidget);
     });
 
     testWidgets('Muestra título y subtítulo correctamente',
@@ -60,7 +60,7 @@ void main() {
       );
 
       // Verificar que no se muestra el botón de regreso
-      expect(find.byIcon(Icons.arrow_back), findsNothing);
+      expect(find.byIcon(Icons.arrow_back_ios), findsNothing);
     });
 
     testWidgets('Llama a onBackPressed cuando se proporciona',
@@ -81,7 +81,7 @@ void main() {
       );
 
       // Tocar el botón de regreso
-      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.tap(find.byIcon(Icons.arrow_back_ios));
 
       // Verificar que se llamó a onBackPressed
       expect(backPressed, isTrue);
@@ -155,8 +155,8 @@ void main() {
       // Verificar configuración para pantalla principal
       expect(find.text('Pantalla principal'), findsOneWidget);
       expect(find.text('Descripción'), findsOneWidget);
-      expect(
-          find.byIcon(Icons.arrow_back), findsNothing); // Sin botón de regreso
+      expect(find.byIcon(Icons.arrow_back_ios),
+          findsNothing); // Sin botón de regreso
 
       // Verificar que el título está centrado
       final appBar = tester.widget<AppBar>(find.byType(AppBar));
@@ -179,7 +179,7 @@ void main() {
       // Verificar configuración para pantalla de detalle
       expect(find.text('Detalle'), findsOneWidget);
       expect(find.text('Información adicional'), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_back),
+      expect(find.byIcon(Icons.arrow_back_ios),
           findsOneWidget); // Con botón de regreso
     });
   });

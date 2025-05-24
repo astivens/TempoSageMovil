@@ -6,6 +6,8 @@ import 'package:temposage/features/habits/data/models/habit_model.dart';
 import 'package:temposage/features/habits/domain/entities/habit.dart';
 import 'package:temposage/features/habits/presentation/widgets/habit_card.dart';
 import 'package:temposage/core/widgets/custom_app_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:temposage/features/dashboard/controllers/dashboard_controller.dart';
 
 class HabitsScreen extends StatefulWidget {
   const HabitsScreen({super.key});
@@ -17,27 +19,28 @@ class HabitsScreen extends StatefulWidget {
 class _HabitsScreenState extends State<HabitsScreen> {
   final _repository = ServiceLocator.instance.habitRepository;
   List<HabitModel> _habits = [];
+  List<HabitModel> _recommendedHabits = [];
   bool _isLoading = true;
   int _todaysCompletedHabits = 0;
-  double _weeklyCompletionRate = 0.0;
-  int _currentStreak = 0;
   int _longestStreak = 0;
 
   @override
   void initState() {
     super.initState();
     _loadHabits();
+    _loadRecommendations();
   }
 
   Future<void> _loadHabits() async {
     setState(() => _isLoading = true);
     try {
       final habitsEntities = await _repository.getAllHabits();
-      final habitModels = habitsEntities.map(_mapEntityToModel).toList().cast<HabitModel>();
-      
+      final habitModels =
+          habitsEntities.map(_mapEntityToModel).toList().cast<HabitModel>();
+
       // Calcular estadísticas
       _calculateStatistics(habitModels);
-      
+
       setState(() {
         _habits = habitModels;
         _isLoading = false;
@@ -46,28 +49,54 @@ class _HabitsScreenState extends State<HabitsScreen> {
       setState(() => _isLoading = false);
     }
   }
-  
+
+  Future<void> _loadRecommendations() async {
+    try {
+      final recommendationService =
+          ServiceLocator.instance.habitRecommendationService;
+      final recommendations =
+          await recommendationService.getHabitRecommendations();
+
+      // Guardar las recomendaciones para mostrar más tarde
+      setState(() {
+        _recommendedHabits = recommendations;
+      });
+    } catch (e) {
+      // Manejar errores silenciosamente
+      print('Error cargando recomendaciones de hábitos: $e');
+    }
+  }
+
   void _calculateStatistics(List<HabitModel> habits) {
     final now = DateTime.now();
     final today = now.weekday; // 1 = Lunes, 7 = Domingo
-    
+
     // Contar hábitos completados hoy
-    _todaysCompletedHabits = habits.where((h) => 
-      h.isCompleted && 
-      h.daysOfWeek.any((day) {
-        switch(day) {
-          case 'Lunes': return today == 1;
-          case 'Martes': return today == 2;
-          case 'Miércoles': return today == 3;
-          case 'Jueves': return today == 4;
-          case 'Viernes': return today == 5;
-          case 'Sábado': return today == 6;
-          case 'Domingo': return today == 7;
-          default: return false;
-        }
-      })
-    ).length;
-    
+    _todaysCompletedHabits = habits
+        .where((h) =>
+            h.isCompleted &&
+            h.daysOfWeek.any((day) {
+              switch (day) {
+                case 'Lunes':
+                  return today == 1;
+                case 'Martes':
+                  return today == 2;
+                case 'Miércoles':
+                  return today == 3;
+                case 'Jueves':
+                  return today == 4;
+                case 'Viernes':
+                  return today == 5;
+                case 'Sábado':
+                  return today == 6;
+                case 'Domingo':
+                  return today == 7;
+                default:
+                  return false;
+              }
+            }))
+        .length;
+
     // Calcular racha actual y más larga
     int maxStreak = 0;
     for (final habit in habits) {
@@ -76,14 +105,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
       }
     }
     _longestStreak = maxStreak;
-    
-    // Tasa de finalización semanal (simplificada)
-    final totalHabitsThisWeek = habits.where((h) => h.daysOfWeek.isNotEmpty).length;
-    final completedThisWeek = habits.where((h) => h.isCompleted).length;
-    
-    _weeklyCompletionRate = totalHabitsThisWeek > 0 
-        ? (completedThisWeek / totalHabitsThisWeek) * 100 
-        : 0.0;
   }
 
   // Métodos para convertir entre entidad y modelo
@@ -126,8 +147,50 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
     if (result != null) {
       final habitEntity = _mapModelToEntity(result);
+
+      // Guardar el hábito en el repositorio
       await _repository.addHabit(habitEntity);
+
+      // Crear automáticamente bloques de tiempo para este hábito
+      try {
+        final habitToTimeBlockService =
+            ServiceLocator.instance.habitToTimeBlockService;
+
+        // Planificar bloques para el nuevo hábito (30 días por defecto)
+        final bloquesPlanificados = await habitToTimeBlockService
+            .planificarBloquesParaNuevoHabito(result);
+
+        debugPrint(
+            'Creados $bloquesPlanificados bloques de tiempo automáticamente para el hábito ${result.title}');
+
+        // Mostrar confirmación al usuario si se crearon bloques
+        if (mounted && bloquesPlanificados > 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Se programaron automáticamente $bloquesPlanificados recordatorios'),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error al crear bloques de tiempo automáticos: $e');
+        // No mostramos error al usuario para no interrumpir la experiencia
+      }
+
+      // Recargar la lista de hábitos
       _loadHabits();
+
+      // Intentar refrescar el dashboard también
+      try {
+        final dashboardController =
+            Provider.of<DashboardController>(context, listen: false);
+        dashboardController.refreshDashboard();
+      } catch (e) {
+        debugPrint('No se pudo refrescar el dashboard desde habits_screen: $e');
+        // No es crítico si falla, el dashboard se actualizará la próxima vez que se abra
+      }
     }
   }
 
@@ -185,15 +248,23 @@ class _HabitsScreenState extends State<HabitsScreen> {
     final today = DateTime.now().weekday;
     final todaysHabits = _habits.where((habit) {
       return habit.daysOfWeek.any((day) {
-        switch(day) {
-          case 'Lunes': return today == 1;
-          case 'Martes': return today == 2;
-          case 'Miércoles': return today == 3;
-          case 'Jueves': return today == 4;
-          case 'Viernes': return today == 5;
-          case 'Sábado': return today == 6;
-          case 'Domingo': return today == 7;
-          default: return false;
+        switch (day) {
+          case 'Lunes':
+            return today == 1;
+          case 'Martes':
+            return today == 2;
+          case 'Miércoles':
+            return today == 3;
+          case 'Jueves':
+            return today == 4;
+          case 'Viernes':
+            return today == 5;
+          case 'Sábado':
+            return today == 6;
+          case 'Domingo':
+            return today == 7;
+          default:
+            return false;
         }
       });
     }).toList();
@@ -209,16 +280,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
           fontSize: 20,
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: theme.colorScheme.onBackground),
-            onPressed: _showAddHabitDialog,
-          ),
-        ],
       ),
       body: _isLoading
           ? Center(
-              child: CircularProgressIndicator(color: theme.colorScheme.primary))
+              child:
+                  CircularProgressIndicator(color: theme.colorScheme.primary))
           : RefreshIndicator(
               onRefresh: _loadHabits,
               color: theme.colorScheme.primary,
@@ -230,42 +296,50 @@ class _HabitsScreenState extends State<HabitsScreen> {
                         // Sección de estadísticas
                         _buildStatisticsSection(theme),
                         const SizedBox(height: 24),
-                        
+
+                        // Sección de recomendaciones (si hay)
+                        if (_recommendedHabits.isNotEmpty) ...[
+                          _buildRecommendationsSection(theme),
+                          const SizedBox(height: 24),
+                        ],
+
                         // Hábitos de hoy
                         if (todaysHabits.isNotEmpty) ...[
                           _buildSectionTitle(theme, 'Hábitos de hoy'),
                           const SizedBox(height: 12),
                           ...todaysHabits.map((habit) => HabitCard(
-                            habit: habit,
-                            onComplete: () async {
-                              final habitEntity = _mapModelToEntity(habit);
-                              final updatedEntity = habitEntity.copyWith(isDone: !habit.isCompleted);
-                              await _repository.updateHabit(updatedEntity);
-                              if (mounted) {
-                                _loadHabits();
-                              }
-                            },
-                            onDelete: () => _deleteHabit(habit),
-                          )),
+                                habit: habit,
+                                onComplete: () async {
+                                  final habitEntity = _mapModelToEntity(habit);
+                                  final updatedEntity = habitEntity.copyWith(
+                                      isDone: !habit.isCompleted);
+                                  await _repository.updateHabit(updatedEntity);
+                                  if (mounted) {
+                                    _loadHabits();
+                                  }
+                                },
+                                onDelete: () => _deleteHabit(habit),
+                              )),
                           const SizedBox(height: 24),
                         ],
-                        
+
                         // Lista de todos los hábitos
                         _buildSectionTitle(theme, 'Todos los hábitos'),
                         const SizedBox(height: 12),
-                        
+
                         ..._habits.map((habit) => HabitCard(
-                          habit: habit,
-                          onComplete: () async {
-                            final habitEntity = _mapModelToEntity(habit);
-                            final updatedEntity = habitEntity.copyWith(isDone: !habit.isCompleted);
-                            await _repository.updateHabit(updatedEntity);
-                            if (mounted) {
-                              _loadHabits();
-                            }
-                          },
-                          onDelete: () => _deleteHabit(habit),
-                        )),
+                              habit: habit,
+                              onComplete: () async {
+                                final habitEntity = _mapModelToEntity(habit);
+                                final updatedEntity = habitEntity.copyWith(
+                                    isDone: !habit.isCompleted);
+                                await _repository.updateHabit(updatedEntity);
+                                if (mounted) {
+                                  _loadHabits();
+                                }
+                              },
+                              onDelete: () => _deleteHabit(habit),
+                            )),
                       ],
                     ),
             ),
@@ -346,9 +420,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
               ),
               _buildStatisticItem(
                 theme,
-                'Tasa semanal',
-                '${_weeklyCompletionRate.toStringAsFixed(0)}%',
-                Icons.trending_up,
+                'Racha máxima',
+                '$_longestStreak',
+                Icons.whatshot,
               ),
               _buildStatisticItem(
                 theme,
@@ -363,7 +437,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
     );
   }
 
-  Widget _buildStatisticItem(ThemeData theme, String title, String value, IconData icon) {
+  Widget _buildStatisticItem(
+      ThemeData theme, String title, String value, IconData icon) {
     return Expanded(
       child: Column(
         children: [
@@ -400,6 +475,91 @@ class _HabitsScreenState extends State<HabitsScreen> {
         fontWeight: FontWeight.bold,
         color: theme.colorScheme.onBackground,
       ),
+    );
+  }
+
+  Widget _buildRecommendationsSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.lightbulb_outline, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(
+              'Hábitos Recomendados',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onBackground,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Basado en tus patrones y objetivos, te sugerimos:',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onBackground.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _recommendedHabits.length.clamp(0, 3),
+            itemBuilder: (context, index) {
+              final habit = _recommendedHabits[index];
+              return Container(
+                width: 280,
+                margin: const EdgeInsets.only(right: 12),
+                child: Stack(
+                  children: [
+                    HabitCard(
+                      habit: habit,
+                      onComplete:
+                          () {}, // No hay acción para completar un hábito recomendado
+                      onDelete:
+                          () {}, // No hay acción para eliminar un hábito recomendado
+                    ),
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: FloatingActionButton.small(
+                        heroTag: 'add_habit_${habit.id}',
+                        onPressed: () async {
+                          // Agregar el hábito recomendado
+                          final habitEntity = _mapModelToEntity(habit);
+                          await _repository.addHabit(habitEntity);
+
+                          // Remover de las recomendaciones y actualizar la lista
+                          setState(() {
+                            _recommendedHabits.remove(habit);
+                          });
+                          _loadHabits();
+
+                          // Mostrar confirmación
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                    Text('Hábito "${habit.title}" agregado'),
+                                backgroundColor: theme.colorScheme.primary,
+                              ),
+                            );
+                          }
+                        },
+                        backgroundColor: theme.colorScheme.primary,
+                        child: const Icon(Icons.add),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -443,7 +603,7 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
@@ -483,7 +643,7 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                 maxLines: 2,
               ),
               const SizedBox(height: 16),
-              
+
               // Hora
               ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -495,7 +655,7 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                 ),
               ),
               const SizedBox(height: 8),
-              
+
               // Días de la semana
               const Text('Días de la semana'),
               const SizedBox(height: 8),
@@ -522,7 +682,7 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                 ],
               ),
               const SizedBox(height: 24),
-              
+
               // Botones
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -539,7 +699,8 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                         if (_selectedDays[i]) selectedDays.add(i + 1);
                       }
 
-                      if (_titleController.text.isNotEmpty && selectedDays.isNotEmpty) {
+                      if (_titleController.text.isNotEmpty &&
+                          selectedDays.isNotEmpty) {
                         final now = DateTime.now();
                         final today = DateTime(now.year, now.month, now.day);
 
@@ -580,7 +741,8 @@ class _AddHabitDialogState extends State<AddHabitDialog> {
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Por favor, introduce un título y selecciona al menos un día'),
+                            content: Text(
+                                'Por favor, introduce un título y selecciona al menos un día'),
                           ),
                         );
                       }

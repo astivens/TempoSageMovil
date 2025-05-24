@@ -21,13 +21,12 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<ActivityModel> _activities = [];
   bool _isLoading = true;
-  String _selectedCategory = 'Todos';
-  String _selectedPriority = 'Todas';
 
   @override
   void initState() {
     super.initState();
     _loadActivities();
+    _loadRecommendations();
   }
 
   @override
@@ -46,6 +45,18 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadRecommendations() async {
+    try {
+      final recommendationController =
+          ServiceLocator.instance.activityRecommendationController;
+      await recommendationController.loadRecommendations();
+
+      // No actualizar el estado aquí, solo queremos tener las recomendaciones listas
+    } catch (e) {
+      // Manejar error silenciosamente
     }
   }
 
@@ -81,20 +92,6 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
       appBar: CustomAppBar(
         title: 'Actividades',
         showBackButton: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreateActivityScreen(),
-                ),
-              );
-              _loadActivities(); // Reload activities after returning
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -137,6 +134,10 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
                     setState(() {});
                   },
                 ),
+
+                // Sección de recomendaciones
+                const SizedBox(height: 16),
+                _buildRecommendationsSection(context),
               ],
             ),
           ),
@@ -158,7 +159,8 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
                           final activity = _activities[index];
                           // Filtra solo por texto de búsqueda
                           if (_searchController.text.isEmpty ||
-                              activity.title.toLowerCase().contains(_searchController.text.toLowerCase())) {
+                              activity.title.toLowerCase().contains(
+                                  _searchController.text.toLowerCase())) {
                             return _buildActivityCard(activity);
                           } else {
                             return const SizedBox.shrink();
@@ -170,51 +172,167 @@ class _ActivityListScreenState extends State<ActivityListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.push(
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const CreateActivityScreen(),
             ),
           );
-          _loadActivities();
+          // Recargar siempre las actividades al volver
+          await _loadActivities();
+
+          // Si la actividad se creó con éxito, mostrar mensaje
+          if (result == true && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Actividad creada con éxito'),
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
         },
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildFilterDropdown(
-    String label,
-    String value,
-    List<String> items,
-    void Function(String?) onChanged,
-  ) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: DropdownButton<String>(
-        value: value,
-        items: items
-            .map((item) => DropdownMenuItem(
-                  value: item,
-                  child: Text(item),
-                ))
-            .toList(),
-        onChanged: onChanged,
-        style: AppStyles.bodyMedium,
-        dropdownColor:
-            isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
-        icon: Icon(Icons.arrow_drop_down,
-            color: isDarkMode
-                ? AppColors.mocha.overlay0
-                : AppColors.latte.overlay0),
-        isExpanded: true,
-        underline: const SizedBox(),
-      ),
+  Widget _buildRecommendationsSection(BuildContext context) {
+    final recommendationController =
+        ServiceLocator.instance.activityRecommendationController;
+    final recommendedActivities =
+        recommendationController.recommendedActivities;
+
+    if (recommendedActivities.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.lightbulb_outline, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              'Actividades Recomendadas',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color:
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Basado en tu historial de actividades, te recomendamos:',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: recommendedActivities.length.clamp(0, 3),
+                  itemBuilder: (context, index) {
+                    final recommendation = recommendedActivities[index];
+                    return Card(
+                      margin: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        onTap: () async {
+                          try {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CreateActivityScreen(
+                                  activity: recommendation,
+                                ),
+                              ),
+                            );
+                            if (result == true && mounted) {
+                              _loadActivities();
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error al crear actividad: $e'),
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: Container(
+                          width: 200,
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                recommendation.title,
+                                style: Theme.of(context).textTheme.titleSmall,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                recommendation.category,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                              ),
+                              const Spacer(),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Icon(
+                                    Icons.add_circle_outline,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Añadir',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

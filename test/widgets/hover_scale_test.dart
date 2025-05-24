@@ -40,8 +40,13 @@ void main() {
         ),
       );
 
-      // Obtener el MouseRegion
-      final mouseRegion = tester.widget<MouseRegion>(find.byType(MouseRegion));
+      // Obtener el MouseRegion dentro del HoverScale
+      final hoverScaleFinder = find.byType(HoverScale);
+      final mouseRegionFinder = find.descendant(
+        of: hoverScaleFinder,
+        matching: find.byType(MouseRegion),
+      );
+      final mouseRegion = tester.widget<MouseRegion>(mouseRegionFinder);
 
       // Verificar que los callbacks están configurados
       expect(mouseRegion.onEnter, isNotNull);
@@ -60,8 +65,13 @@ void main() {
       // La animación debería haber iniciado, avanzar medio camino
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Obtener el Transform.scale actual
-      final transform = tester.widget<Transform>(find.byType(Transform));
+      // Obtener el Transform.scale dentro del HoverScale
+      final hoverScaleFinderForTransform = find.byType(HoverScale);
+      final transformFinder = find.descendant(
+        of: hoverScaleFinderForTransform,
+        matching: find.byType(Transform),
+      );
+      final transform = tester.widget<Transform>(transformFinder);
 
       // La escala debería ser mayor a 1.0 pero menor al valor final (1.5)
       expect(transform.transform.getMaxScaleOnAxis(), greaterThan(1.0));
@@ -84,8 +94,13 @@ void main() {
         ),
       );
 
-      // Obtener el MouseRegion
-      final mouseRegion = tester.widget<MouseRegion>(find.byType(MouseRegion));
+      // Obtener el MouseRegion dentro del HoverScale
+      final hoverScaleFinder = find.byType(HoverScale);
+      final mouseRegionFinder = find.descendant(
+        of: hoverScaleFinder,
+        matching: find.byType(MouseRegion),
+      );
+      final mouseRegion = tester.widget<MouseRegion>(mouseRegionFinder);
 
       // Verificar que los callbacks están configurados como null
       expect(mouseRegion.onEnter, isNull);

@@ -15,34 +15,35 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
   final RecommendationService _recommendationService = RecommendationService();
   final CSVService _csvService = CSVService();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _durationController = TextEditingController(text: '60');
-  
+  final TextEditingController _durationController =
+      TextEditingController(text: '60');
+
   double _priority = 3;
   double _energyLevel = 0.5;
   double _moodLevel = 0.5;
-  
+
   TaskPrediction? _prediction;
   List<ProductiveBlock> _top3Blocks = [];
   bool _isLoading = false;
   String? _errorMessage;
-  
+
   @override
   void initState() {
     super.initState();
     _initializeService();
   }
-  
+
   Future<void> _initializeService() async {
     try {
       setState(() {
         _isLoading = true;
       });
-      
+
       await _recommendationService.initialize();
-      
+
       // Cargar bloques por defecto
       _top3Blocks = await _csvService.loadTop3Blocks();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -53,7 +54,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       });
     }
   }
-  
+
   Future<void> _predictTask() async {
     if (_descriptionController.text.isEmpty) {
       setState(() {
@@ -61,14 +62,14 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       });
       return;
     }
-    
+
     final duration = double.tryParse(_durationController.text) ?? 60.0;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    
+
     try {
       final prediction = await _recommendationService.predictTaskDetails(
         description: _descriptionController.text,
@@ -77,7 +78,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
         energyLevel: _energyLevel,
         moodLevel: _moodLevel,
       );
-      
+
       setState(() {
         _prediction = prediction;
         _isLoading = false;
@@ -89,7 +90,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       });
     }
   }
-  
+
   @override
   void dispose() {
     _descriptionController.dispose();
@@ -97,12 +98,13 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
     _recommendationService.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
+      backgroundColor: isDarkMode ? AppColors.mocha.base : AppColors.latte.base,
       appBar: AppBar(
         title: const Text('Recomendación de Tareas'),
         centerTitle: true,
@@ -126,22 +128,19 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
                     ],
                   ),
                 ),
-              if (_errorMessage != null)
-                _buildErrorMessage(),
-              if (_prediction != null && !_isLoading)
-                _buildPredictionResult(),
-              if (!_isLoading && _prediction == null)
-                _buildProductiveBlocks(),
+              if (_errorMessage != null) _buildErrorMessage(),
+              if (_prediction != null && !_isLoading) _buildPredictionResult(),
+              if (!_isLoading && _prediction == null) _buildProductiveBlocks(),
             ],
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildInputForm() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -154,8 +153,8 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
             Text(
               'Describe tu tarea',
               style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16.0),
             Semantics(
@@ -167,9 +166,12 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
                   hintText: 'Ej. Preparar informe de ventas',
                   border: const OutlineInputBorder(),
                   filled: true,
-                  fillColor: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
+                  fillColor: isDarkMode
+                      ? AppColors.mocha.surface0
+                      : AppColors.latte.surface0,
                   prefixIcon: const Icon(Icons.description),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 maxLines: 2,
                 textInputAction: TextInputAction.next,
@@ -185,9 +187,12 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
                   hintText: 'Ej. 60',
                   border: const OutlineInputBorder(),
                   filled: true,
-                  fillColor: isDarkMode ? AppColors.mocha.surface0 : AppColors.latte.surface0,
+                  fillColor: isDarkMode
+                      ? AppColors.mocha.surface0
+                      : AppColors.latte.surface0,
                   prefixIcon: const Icon(Icons.timer),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 keyboardType: TextInputType.number,
               ),
@@ -202,7 +207,8 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
                 icon: const Icon(Icons.analytics),
                 label: const Text('Predecir y Recomendar'),
                 style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -211,18 +217,16 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       ),
     );
   }
-  
+
   Widget _buildContextSection() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Contexto personal',
           style: Theme.of(context).textTheme.titleMedium!.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 16.0),
         _buildSlider(
@@ -272,7 +276,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       ],
     );
   }
-  
+
   Widget _buildSlider({
     required String label,
     required double value,
@@ -284,7 +288,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
     required Function(double) onChanged,
   }) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -326,7 +330,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       ],
     );
   }
-  
+
   Widget _buildErrorMessage() {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -346,9 +350,9 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
               Text(
                 'Error',
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  color: Colors.red[900],
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: Colors.red[900],
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ],
           ),
@@ -361,10 +365,10 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       ),
     );
   }
-  
+
   Widget _buildPredictionResult() {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 16.0),
@@ -385,15 +389,15 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
                       Text(
                         'Resultados del Análisis',
                         style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
                       ),
                       Text(
                         'Basado en tus datos y patrones de productividad',
                         style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.7),
-                        ),
+                              color: colorScheme.onSurface.withOpacity(0.7),
+                            ),
                       ),
                     ],
                   ),
@@ -411,7 +415,8 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
             _buildPredictionDetail(
               icon: Icons.timelapse,
               title: 'Duración Estimada',
-              value: '${_prediction!.estimatedDuration.toStringAsFixed(0)} minutos',
+              value:
+                  '${_prediction!.estimatedDuration.toStringAsFixed(0)} minutos',
               color: colorScheme.secondary,
             ),
             const SizedBox(height: 24),
@@ -420,8 +425,8 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
               child: Text(
                 'Bloque Horario Sugerido',
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ),
             const SizedBox(height: 12),
@@ -437,7 +442,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       ),
     );
   }
-  
+
   Widget _buildPredictionDetail({
     required IconData icon,
     required String title,
@@ -462,15 +467,15 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ],
           ),
@@ -478,18 +483,29 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       ],
     );
   }
-  
+
   Widget _buildSuggestedTimeCard(DateTime dateTime) {
-    final days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    final days = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
     final day = days[dateTime.weekday - 1];
-    final hour = dateTime.hour < 10 ? '0${dateTime.hour}:00' : '${dateTime.hour}:00';
+    final hour =
+        dateTime.hour < 10 ? '0${dateTime.hour}:00' : '${dateTime.hour}:00';
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Semantics(
       label: 'Día recomendado: $day a las $hour',
       child: Card(
         elevation: 2,
-        color: isDarkMode ? AppColors.mocha.blue.withOpacity(0.2) : AppColors.latte.blue.withOpacity(0.2),
+        color: isDarkMode
+            ? AppColors.mocha.blue.withOpacity(0.2)
+            : AppColors.latte.blue.withOpacity(0.2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: EdgeInsets.zero,
         child: Padding(
@@ -497,7 +513,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
           child: Row(
             children: [
               Icon(
-                Icons.schedule, 
+                Icons.schedule,
                 color: isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue,
                 size: 32,
               ),
@@ -509,8 +525,8 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
                     Text(
                       day,
                       style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     Text(
                       'a las $hour',
@@ -522,12 +538,16 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? AppColors.mocha.green.withOpacity(0.3) : AppColors.latte.green.withOpacity(0.3),
+                  color: isDarkMode
+                      ? AppColors.mocha.green.withOpacity(0.3)
+                      : AppColors.latte.green.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.check,
-                  color: isDarkMode ? AppColors.mocha.green : AppColors.latte.green,
+                  color: isDarkMode
+                      ? AppColors.mocha.green
+                      : AppColors.latte.green,
                 ),
               ),
             ],
@@ -536,7 +556,7 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
       ),
     );
   }
-  
+
   Widget _buildProductiveBlocksList(List<ProductiveBlock> blocks) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -546,31 +566,42 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
           child: Text(
             'Bloques más productivos para esta categoría',
             style: Theme.of(context).textTheme.titleMedium!.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
         ),
         const SizedBox(height: 12),
         Column(
-          children: blocks.map((block) => _buildProductiveBlockItem(block)).toList(),
+          children:
+              blocks.map((block) => _buildProductiveBlockItem(block)).toList(),
         ),
       ],
     );
   }
-  
+
   Widget _buildProductiveBlockItem(ProductiveBlock block) {
-    final days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    final dayName = block.weekday >= 0 && block.weekday < days.length 
-        ? days[block.weekday] 
+    final days = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
+    final dayName = block.weekday >= 0 && block.weekday < days.length
+        ? days[block.weekday]
         : 'Desconocido';
-    final hourFormatted = block.hour < 10 ? '0${block.hour}:00' : '${block.hour}:00';
+    final hourFormatted =
+        block.hour < 10 ? '0${block.hour}:00' : '${block.hour}:00';
     final percentage = (block.completionRate * 100).toStringAsFixed(1);
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Semantics(
-        label: 'Bloque productivo: $dayName a las $hourFormatted, tasa de completado $percentage por ciento',
+        label:
+            'Bloque productivo: $dayName a las $hourFormatted, tasa de completado $percentage por ciento',
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: _getColorForCompletionRate(block.completionRate),
@@ -586,24 +617,25 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
           title: Text(
             '$dayName a las $hourFormatted',
             style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-          subtitle: block.category != null 
+          subtitle: block.category != null
               ? Text('Categoría: ${block.category}')
               : null,
-          trailing: block.isProductiveBlock 
+          trailing: block.isProductiveBlock
               ? Tooltip(
                   message: 'Bloque altamente productivo',
                   child: Icon(Icons.star, color: Colors.amber),
                 )
               : null,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         ),
       ),
     );
   }
-  
+
   Widget _buildProductiveBlocks() {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -616,13 +648,14 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
           children: [
             Row(
               children: [
-                Icon(Icons.insights, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.insights,
+                    color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8.0),
                 Text(
                   'Bloques más productivos',
                   style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
             ),
@@ -640,14 +673,16 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
                     ),
                   )
                 : Column(
-                    children: _top3Blocks.map((block) => _buildProductiveBlockItem(block)).toList(),
+                    children: _top3Blocks
+                        .map((block) => _buildProductiveBlockItem(block))
+                        .toList(),
                   ),
           ],
         ),
       ),
     );
   }
-  
+
   Color _getColorForCompletionRate(double rate) {
     if (rate >= 0.8) return Colors.green[700]!;
     if (rate >= 0.6) return Colors.green[400]!;
@@ -655,12 +690,4 @@ class _TaskRecommendationPageState extends State<TaskRecommendationPage> {
     if (rate >= 0.2) return Colors.deepOrange;
     return Colors.red;
   }
-  
-  String _formatDateTime(DateTime dateTime) {
-    final days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    final day = days[dateTime.weekday - 1];
-    final hour = dateTime.hour < 10 ? '0${dateTime.hour}:00' : '${dateTime.hour}:00';
-    
-    return '$day a las $hour';
-  }
-} 
+}

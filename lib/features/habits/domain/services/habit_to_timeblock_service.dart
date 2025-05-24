@@ -13,6 +13,7 @@ import 'package:uuid/uuid.dart';
 /// - Convertir hábitos a bloques de tiempo para fechas específicas
 /// - Evitar la creación de bloques duplicados
 /// - Mantener la consistencia entre hábitos y sus representaciones como bloques de tiempo
+/// - Automatizar la creación de bloques de tiempo basados en hábitos
 class HabitToTimeBlockService {
   // Dependencias
   final HabitRepository _habitRepository;
@@ -29,6 +30,82 @@ class HabitToTimeBlockService {
 
   /// Constructor con inyección de dependencias.
   HabitToTimeBlockService(this._habitRepository, this._timeBlockRepository);
+
+  /// Planifica automáticamente los bloques de tiempo para hábitos para los próximos días
+  ///
+  /// [daysAhead] Número de días hacia adelante para planificar (por defecto 7 días)
+  ///
+  /// Retorna el número total de bloques de tiempo creados
+  Future<int> planificarBloquesHabitosAutomaticamente(
+      {int daysAhead = 7}) async {
+    try {
+      int totalCreados = 0;
+      final hoy = DateTime.now();
+
+      // Crear bloques para hoy y los próximos días
+      for (int i = 0; i <= daysAhead; i++) {
+        final fecha = hoy.add(Duration(days: i));
+        final bloques = await convertHabitsToTimeBlocks(fecha);
+        totalCreados += bloques.length;
+
+        debugPrint(
+            'Creados ${bloques.length} bloques para ${_getDateKey(fecha)}');
+      }
+
+      debugPrint('Total de bloques creados automáticamente: $totalCreados');
+      return totalCreados;
+    } catch (e) {
+      ErrorHandler.logError(
+          'Error al planificar bloques automáticamente', e, null);
+      return 0;
+    }
+  }
+
+  /// Crea automáticamente bloques de tiempo para un nuevo hábito para las próximas ocurrencias
+  ///
+  /// [habit] El hábito para el que crear bloques de tiempo
+  /// [daysAhead] Número de días hacia adelante para planificar
+  ///
+  /// Retorna el número de bloques creados
+  Future<int> planificarBloquesParaNuevoHabito(HabitModel habit,
+      {int daysAhead = 30}) async {
+    try {
+      int bloquesPlanificados = 0;
+      final hoy = DateTime.now();
+
+      // Obtener lista de días de la semana del hábito
+      final diasSemana = habit.daysOfWeek;
+      if (diasSemana.isEmpty) return 0;
+
+      // Para cada día en el período especificado
+      for (int i = 0; i <= daysAhead; i++) {
+        final fecha = hoy.add(Duration(days: i));
+        final diaSemana = _getCurrentDayName(fecha);
+
+        // Si el hábito debe ocurrir este día de la semana
+        if (diasSemana.contains(diaSemana)) {
+          // Crear bloque de tiempo para esta fecha
+          final timeBlock = _createTimeBlockFromHabit(habit, targetDate: fecha);
+          await _timeBlockRepository.addTimeBlock(timeBlock);
+
+          // Actualizar caché
+          final dateKey = _getDateKey(fecha);
+          _convertedHabitsCache[dateKey] ??= {};
+          _updateCache(habit, timeBlock, dateKey);
+
+          bloquesPlanificados++;
+        }
+      }
+
+      debugPrint(
+          'Planificados $bloquesPlanificados bloques para el hábito ${habit.title}');
+      return bloquesPlanificados;
+    } catch (e) {
+      ErrorHandler.logError(
+          'Error al planificar bloques para nuevo hábito', e, null);
+      return 0;
+    }
+  }
 
   /// Convierte todos los hábitos programados para una fecha específica a bloques de tiempo.
   ///
@@ -322,8 +399,9 @@ class HabitToTimeBlockService {
   }
 
   /// Crea un TimeBlockModel a partir de un hábito.
-  TimeBlockModel _createTimeBlockFromHabit(HabitModel habit) {
-    final now = DateTime.now();
+  TimeBlockModel _createTimeBlockFromHabit(HabitModel habit,
+      {DateTime? targetDate}) {
+    final now = targetDate ?? DateTime.now();
 
     // Extraer hora y minuto del string de tiempo (formato HH:mm)
     final timeParts = habit.time.split(':');

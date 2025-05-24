@@ -31,7 +31,6 @@ void main() {
     testWidgets('Soporta eliminación de elementos',
         (WidgetTester tester) async {
       int? removedIndex;
-
       final items = [
         const Text('Item 1', key: Key('item1')),
         const Text('Item 2', key: Key('item2')),
@@ -54,8 +53,9 @@ void main() {
       // Verificar que se muestra el Dismissible
       expect(find.byType(Dismissible), findsNWidgets(3));
 
-      // Simular deslizamiento para eliminar el segundo elemento
-      await tester.drag(find.text('Item 2'), const Offset(500.0, 0.0));
+      // Simular deslizamiento completo para eliminar el segundo elemento
+      final dismissible = find.byType(Dismissible).at(1);
+      await tester.drag(dismissible, const Offset(-500.0, 0.0));
       await tester.pumpAndSettle();
 
       // Verificar que se llamó al callback onRemove con el índice correcto

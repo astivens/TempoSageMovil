@@ -45,7 +45,16 @@ void main() {
       );
 
       // Verificar que se aplica el padding
-      final paddingWidget = tester.widget<Padding>(find.byType(Padding));
+      final accessibleCardFinder = find.byType(AccessibleCard);
+      final inkWellFinder = find.descendant(
+        of: accessibleCardFinder,
+        matching: find.byType(InkWell),
+      );
+      final paddingFinder = find.descendant(
+        of: inkWellFinder,
+        matching: find.byType(Padding),
+      );
+      final paddingWidget = tester.widget<Padding>(paddingFinder);
       expect(paddingWidget.padding, equals(customPadding));
     });
 

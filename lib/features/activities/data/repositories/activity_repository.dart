@@ -99,8 +99,16 @@ class ActivityRepository {
   /// Agrega una nueva actividad
   Future<void> addActivity(ActivityModel activity) async {
     try {
+      // Guardar en la lista en memoria
       _activities.add(activity);
       debugPrint('Actividad agregada: ${activity.title}');
+
+      // Guardar en el almacenamiento local (Hive)
+      await LocalStorage.saveData<ActivityModel>(
+          _boxName, activity.id, activity);
+      debugPrint('Actividad guardada en almacenamiento local: ${activity.id}');
+
+      // Sincronizar con bloques de tiempo
       await _syncWithTimeBlock(activity);
 
       // Programar notificación si es necesario
@@ -117,18 +125,25 @@ class ActivityRepository {
   /// Actualiza una actividad existente
   Future<void> updateActivity(ActivityModel activity) async {
     try {
+      // Actualizar en la lista en memoria
       final index = _activities.indexWhere((a) => a.id == activity.id);
       if (index != -1) {
         _activities[index] = activity;
-        debugPrint('Actividad actualizada: ${activity.title}');
-        await _syncWithTimeBlock(activity);
-
-        // Actualizar notificación
-        await ServiceLocator.instance.activityNotificationService
-            .updateActivityNotification(activity);
       } else {
-        throw Exception('Actividad no encontrada');
+        _activities.add(activity); // Si no existe, la agregamos
       }
+
+      // Guardar en el almacenamiento local
+      await LocalStorage.saveData<ActivityModel>(
+          _boxName, activity.id, activity);
+      debugPrint('Actividad actualizada: ${activity.title}');
+
+      // Sincronizar con bloque de tiempo
+      await _syncWithTimeBlock(activity);
+
+      // Actualizar notificación
+      await ServiceLocator.instance.activityNotificationService
+          .updateActivityNotification(activity);
     } catch (e) {
       debugPrint('Error al actualizar actividad: $e');
       rethrow;
@@ -188,7 +203,14 @@ class ActivityRepository {
       final updatedActivity = activity.copyWith(
         isCompleted: !activity.isCompleted,
       );
+
+      // Actualizar en memoria y en almacenamiento
       await updateActivity(updatedActivity);
+
+      // Log para depuración
+      _logger.d(
+          'Estado de actividad cambiado: ${updatedActivity.isCompleted ? 'Completada' : 'Pendiente'}',
+          tag: 'ActivityRepo');
     } catch (e) {
       _logger.e('Error al cambiar estado de actividad',
           tag: 'ActivityRepo', error: e);
@@ -204,16 +226,24 @@ class ActivityRepository {
         throw ActivityRepositoryException('El ID no puede estar vacío');
       }
 
+      // Eliminar de la lista en memoria
       final index = _activities.indexWhere((a) => a.id == id);
       if (index != -1) {
         final activity = _activities.removeAt(index);
-        debugPrint('Actividad eliminada: ${activity.title}');
+        debugPrint('Actividad eliminada de memoria: ${activity.title}');
+
+        // Eliminar del almacenamiento local
+        await LocalStorage.deleteData(_boxName, id);
+        debugPrint('Actividad eliminada del almacenamiento: $id');
 
         // Cancelar notificación si existía
         await ServiceLocator.instance.activityNotificationService
             .cancelActivityNotification(id);
       } else {
-        throw Exception('Actividad no encontrada');
+        // Intentar eliminar del almacenamiento de todas formas por si existe allí
+        await LocalStorage.deleteData(_boxName, id);
+        debugPrint(
+            'Actividad con ID $id no encontrada en memoria pero eliminada del almacenamiento');
       }
     } catch (e) {
       debugPrint('Error al eliminar actividad: $e');

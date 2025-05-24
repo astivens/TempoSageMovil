@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_styles.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../activities/presentation/screens/edit_activity_screen.dart';
 import '../../../activities/data/models/activity_model.dart';
 import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/widgets/edit_habit_sheet.dart';
 import '../widgets/quick_stats_section.dart';
 import '../widgets/day_overview_section.dart';
-import '../widgets/ai_assistant_sheet.dart';
 import '../widgets/dashboard_app_bar.dart';
 import '../widgets/activities_section.dart';
 import '../widgets/ai_recommendations.dart';
-import '../widgets/activity_recommendations_section.dart';
-import '../../../../core/services/voice_command_service.dart';
-import '../../domain/voice_command_handler.dart';
+// Comentado: import '../widgets/activity_recommendations_section.dart'; - REMOVIDO POR ERRORES
 import '../../controllers/dashboard_controller.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -24,17 +23,12 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  late final VoiceCommandHandler _voiceCommandHandler;
   late final DashboardController _controller;
 
   @override
   void initState() {
     super.initState();
     _controller = Provider.of<DashboardController>(context, listen: false);
-    _voiceCommandHandler = VoiceCommandHandler(
-      context: context,
-      controller: _controller,
-    );
 
     // Cargar los datos básicos de la aplicación
     _controller.loadData().then((_) {
@@ -88,21 +82,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.didChangeDependencies();
   }
 
-  void _handleVoiceCommand(VoiceCommand command) async {
-    await _voiceCommandHandler.handleCommand(command);
-  }
-
-  void _showAIAssistant() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.transparent,
-      isScrollControlled: true,
-      builder: (context) => AIAssistantSheet(
-        onCommandRecognized: _handleVoiceCommand,
-      ),
-    );
-  }
-
   void _showEditActivityModal(ActivityModel activity) {
     showModalBottomSheet(
       context: context,
@@ -143,58 +122,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Consumer<DashboardController>(
           builder: (context, controller, child) {
             if (controller.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
+              return const LoadingState(
+                message: 'Cargando tu dashboard...',
+                showSkeleton: true,
               );
             }
+
+            // Verificar si es un usuario nuevo sin datos
+            final hasData = controller.activities.isNotEmpty ||
+                controller.habits.isNotEmpty;
 
             return CustomScrollView(
               slivers: [
                 const DashboardAppBar(),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        _buildQuickStats(controller),
-                        const SizedBox(height: 24),
-                        _buildDayOverview(controller),
-                        const SizedBox(height: 24),
-                        ActivitiesSection(
-                          controller: controller,
-                          onEditActivity: _showEditActivityModal,
-                          onDeleteActivity: (activity) =>
-                              controller.deleteActivity(activity.id),
-                          onToggleActivity: (activity) =>
-                              controller.toggleActivityCompletion(activity.id),
-                          onEditHabit: _showEditHabitModal,
-                          onDeleteHabit: (habit) =>
-                              controller.deleteHabit(habit),
-                          onToggleHabit: (habit) =>
-                              controller.toggleHabitCompletion(habit),
-                        ),
-                        const SizedBox(height: 24),
-                        AIRecommendations(
-                          controller: controller,
-                          parentContext: context,
-                        ),
-                        const SizedBox(height: 24),
-                        ActivityRecommendationsSection(
-                          parentContext: context,
-                        ),
-                      ],
+                if (!hasData)
+                  SliverFillRemaining(
+                    child: EmptyState.dashboard(),
+                  )
+                else
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          _buildQuickStats(controller),
+                          const SizedBox(height: 16),
+
+                          // Resumen del día
+                          Card(
+                            margin: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: _buildDayOverview(controller),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Actividades y hábitos del día
+                          ActivitiesSection(
+                            controller: controller,
+                            onEditActivity: _showEditActivityModal,
+                            onDeleteActivity: (activity) =>
+                                controller.deleteActivity(activity.id),
+                            onToggleActivity: (activity) => controller
+                                .toggleActivityCompletion(activity.id),
+                            onEditHabit: _showEditHabitModal,
+                            onDeleteHabit: (habit) =>
+                                controller.deleteHabit(habit),
+                            onToggleHabit: (habit) =>
+                                controller.toggleHabitCompletion(habit),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Sección unificada de IA
+                          _buildUnifiedAISection(controller),
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             );
           },
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAIAssistant,
-        backgroundColor: theme.colorScheme.primary,
-        child: Icon(Icons.mic, color: theme.colorScheme.onPrimary),
       ),
     );
   }
@@ -244,6 +233,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
       morningHabits: hour >= 6 && hour < 12 ? controller.habits : [],
       afternoonHabits: hour >= 12 && hour < 18 ? controller.habits : [],
       eveningHabits: hour >= 18 || hour < 6 ? controller.habits : [],
+    );
+  }
+
+  Widget _buildUnifiedAISection(DashboardController controller) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Título de la sección unificada
+            Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Asistente Inteligente',
+                    style: AppStyles.titleMedium.copyWith(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Sugerencias Inteligentes
+            AIRecommendations(
+              controller: controller,
+              parentContext: context,
+            ),
+
+            // REMOVIDO: ActivityRecommendationsSection debido a errores
+            // const SizedBox(height: 16),
+            // ActivityRecommendationsSection(
+            //   parentContext: context,
+            // ),
+          ],
+        ),
+      ),
     );
   }
 }

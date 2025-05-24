@@ -12,6 +12,8 @@ import 'tempo_sage_api_service.dart';
 import 'notification_service.dart';
 import 'recommendation_service.dart';
 import '../../features/activities/domain/usecases/suggest_optimal_time_use_case.dart';
+import '../../features/activities/presentation/controllers/activity_recommendation_controller.dart';
+import '../../features/habits/domain/services/habit_recommendation_service.dart';
 
 /// Localizador de servicios e implementación de inyección de dependencias.
 ///
@@ -46,6 +48,8 @@ class ServiceLocator {
 
   late final RecommendationService recommendationService;
   late final SuggestOptimalTimeUseCase suggestOptimalTimeUseCase;
+  late final ActivityRecommendationController _activityRecommendationController;
+  late final HabitRecommendationService _habitRecommendationService;
 
   /// Inicializa los repositorios de la aplicación.
   /// Este método se llama automáticamente al crear la instancia del ServiceLocator.
@@ -95,6 +99,17 @@ class ServiceLocator {
       await recommendationService.initialize();
 
       suggestOptimalTimeUseCase = SuggestOptimalTimeUseCase();
+
+      // Inicializar controladores y servicios adicionales
+      _activityRecommendationController = ActivityRecommendationController(
+        activityRepository: _activityRepository,
+        recommendationService: recommendationService,
+      );
+
+      _habitRecommendationService = HabitRecommendationService(
+        recommendationService: recommendationService,
+        habitRepository: _habitRepository,
+      );
 
       _logger.i('Todos los repositorios inicializados correctamente',
           tag: 'ServiceLocator');
@@ -164,6 +179,16 @@ class ServiceLocator {
     return _habitNotificationService!;
   }
 
+  /// Obtiene el controlador de recomendaciones de actividades.
+  ActivityRecommendationController get activityRecommendationController {
+    return _activityRecommendationController;
+  }
+
+  /// Obtiene el servicio de recomendaciones de hábitos.
+  HabitRecommendationService get habitRecommendationService {
+    return _habitRecommendationService;
+  }
+
   /// Reinicia todos los servicios y limpia cachés.
   /// Útil para pruebas o cuando se requiere un estado limpio.
   void resetServices() {
@@ -180,5 +205,6 @@ class ServiceLocator {
   void dispose() {
     resetServices();
     recommendationService.dispose();
+    _activityRecommendationController.dispose();
   }
 }

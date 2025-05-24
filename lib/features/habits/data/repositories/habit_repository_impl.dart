@@ -54,9 +54,18 @@ class HabitRepositoryImpl implements HabitRepository {
   @override
   Future<List<Habit>> getAllHabits() async {
     try {
+      debugPrint('📋 Obteniendo todos los hábitos...');
       final habits = await _getHabits();
+      debugPrint('📊 Total de hábitos encontrados: ${habits.length}');
+
+      for (final habit in habits) {
+        debugPrint(
+            '   - ${habit.title} (días: ${habit.daysOfWeek.join(', ')})');
+      }
+
       return habits.map(_mapModelToEntity).toList();
     } catch (e) {
+      debugPrint('❌ Error al obtener todos los hábitos: $e');
       throw HabitRepositoryException('Error al obtener todos los hábitos: $e');
     }
   }
@@ -64,12 +73,28 @@ class HabitRepositoryImpl implements HabitRepository {
   @override
   Future<List<Habit>> getHabitsByDayOfWeek(String dayOfWeek) async {
     try {
+      debugPrint('🗓️ Buscando hábitos para el día: $dayOfWeek');
       final habits = await _getHabits();
-      return habits
+      debugPrint('📊 Total de hábitos en storage: ${habits.length}');
+
+      for (final habit in habits) {
+        debugPrint(
+            '   - ${habit.title}: días [${habit.daysOfWeek.join(', ')}]');
+      }
+
+      final filteredHabits = habits
           .where((habit) => habit.daysOfWeek.contains(dayOfWeek))
-          .map(_mapModelToEntity)
           .toList();
+
+      debugPrint(
+          '✅ Hábitos encontrados para $dayOfWeek: ${filteredHabits.length}');
+      for (final habit in filteredHabits) {
+        debugPrint('   ✓ ${habit.title}');
+      }
+
+      return filteredHabits.map(_mapModelToEntity).toList();
     } catch (e) {
+      debugPrint('❌ Error al obtener hábitos por día de la semana: $e');
       throw HabitRepositoryException(
           'Error al obtener hábitos por día de la semana: $e');
     }

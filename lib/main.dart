@@ -24,6 +24,10 @@ import 'features/settings/presentation/screens/settings_screen.dart';
 import 'features/settings/presentation/providers/settings_provider.dart';
 import 'features/dashboard/controllers/dashboard_controller.dart';
 import 'core/widgets/widgets.dart';
+import 'features/activities/presentation/screens/create_activity_screen.dart';
+import 'features/timeblocks/presentation/screens/create_time_block_screen.dart';
+import 'features/habits/presentation/screens/create_habit_screen.dart';
+import 'features/auth/presentation/screens/onboarding_screen.dart';
 
 void main() async {
   await _initializeApp();
@@ -52,6 +56,12 @@ Future<void> _initializeApp() async {
     // Inicializar repositorios
     await ServiceLocator.instance.initializeAll();
     logger.i('Servicios y repositorios inicializados', tag: 'App');
+
+    // Precargar recomendaciones en segundo plano
+    _precargaModeloML();
+
+    // Planificar automáticamente bloques de tiempo para hábitos
+    _planificarBloquesAutomaticamente();
 
     // Programar notificaciones para actividades existentes
     await ServiceLocator.instance.activityNotificationService
@@ -87,6 +97,30 @@ Future<void> _initializeApp() async {
     // En caso de error crítico, mostrar una pantalla de error
     runApp(const ErrorApp());
   }
+}
+
+/// Planifica automáticamente bloques de tiempo para hábitos
+void _planificarBloquesAutomaticamente() {
+  final logger = Logger.instance;
+
+  // Ejecutar en segundo plano para no bloquear la UI
+  Future.microtask(() async {
+    try {
+      final habitToTimeBlockService =
+          ServiceLocator.instance.habitToTimeBlockService;
+
+      // Planificar bloques para los próximos 7 días
+      final bloquesPlanificados = await habitToTimeBlockService
+          .planificarBloquesHabitosAutomaticamente();
+
+      logger.i(
+          'Planificados $bloquesPlanificados bloques de tiempo para hábitos automáticamente',
+          tag: 'App');
+    } catch (e) {
+      // Solo loguear error, no interrumpir flujo de la aplicación
+      logger.w('Error al planificar bloques automáticamente: $e', tag: 'App');
+    }
+  });
 }
 
 /// Inicializa los componentes de almacenamiento
@@ -193,6 +227,52 @@ Future<void> _showImminentNotifications() async {
   }
 }
 
+/// Precarga el modelo de ML en segundo plano para que esté listo cuando se necesite
+void _precargaModeloML() {
+  final logger = Logger.instance;
+
+  // Inicializar los controladores de recomendación en segundo plano
+  Future.microtask(() async {
+    try {
+      logger.i('Iniciando precarga de modelos ML en segundo plano', tag: 'ML');
+
+      // Obtener instancias de los controladores
+      final activityRecommendationController =
+          ServiceLocator.instance.activityRecommendationController;
+      final habitRecommendationService =
+          ServiceLocator.instance.habitRecommendationService;
+
+      // Inicializar el controlador de recomendaciones de actividades
+      await activityRecommendationController.initialize();
+
+      // Precargar recomendaciones de hábitos en segundo plano
+      habitRecommendationService
+          .getHabitRecommendations()
+          .then((recomendaciones) {
+        // COMENTADO: No crear automáticamente recomendaciones de hábitos
+        // _crearRecomendacionesAutomaticas(recomendaciones);
+        logger.d('Recomendaciones de hábitos disponibles para ML', tag: 'ML');
+      }).catchError((e) {
+        logger.w('Error al precargar recomendaciones de hábitos: $e',
+            tag: 'ML');
+        return null;
+      });
+
+      // Precargar datos de bloques productivos y otras estadísticas
+      await ServiceLocator.instance.recommendationService.initialize();
+
+      // COMENTADO: No crear actividades automáticamente
+      // _crearRecomendacionesActividades(); // DESHABILITADO: No crear actividades automáticamente
+
+      logger.i('Precarga de modelos ML completada con éxito', tag: 'ML');
+    } catch (e) {
+      // No reportar error al usuario, solo registrar para depuración
+      logger.w('No se pudo precargar el modelo ML en segundo plano: $e',
+          tag: 'ML');
+    }
+  });
+}
+
 /// Aplicación principal
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
@@ -262,8 +342,12 @@ class MyApp extends StatelessWidget {
               locale: Locale(settingsProvider.settings.language),
               routes: {
                 '/login': (context) => const LoginScreen(),
+                '/onboarding': (context) => const OnboardingScreen(),
                 '/home': (context) => const HomeScreen(),
                 '/settings': (context) => const SettingsScreen(),
+                '/create-activity': (context) => const CreateActivityScreen(),
+                '/create-timeblock': (context) => const CreateTimeBlockScreen(),
+                '/create-habit': (context) => const CreateHabitScreen(),
               },
               builder: (context, child) {
                 return MediaQuery(

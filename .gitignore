@@ -181,3 +181,6 @@ tisasrec_env/
 *.swp
 *.lock
 !pubspec.lock
+
+# Cursor
+.cursor

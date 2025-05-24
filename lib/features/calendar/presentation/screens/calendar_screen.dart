@@ -26,7 +26,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   String? _selectedCategory;
 
   // Lista de categorías disponibles para filtrar
-  final List<String> _categories = ['Trabajo', 'Estudio', 'Ejercicio', 'Ocio', 'Otro'];
+  final List<String> _categories = [
+    'Trabajo',
+    'Estudio',
+    'Ejercicio',
+    'Ocio',
+    'Otro'
+  ];
 
   // Definir un rango de fechas que incluya el día actual
   late final DateTime kFirstDay;
@@ -93,7 +99,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   List<ActivityModel> _getEventsForDay(DateTime day) {
     // Normalizar la fecha eliminando la hora
     final date = DateTime(day.year, day.month, day.day);
-    
+
     // Obtener todas las actividades para la fecha
     final activities = _events.entries
         .where((entry) =>
@@ -102,13 +108,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
             entry.key.day == date.day)
         .expand((entry) => entry.value)
         .toList();
-    
+
     // Filtrar por categoría si hay una seleccionada
     if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
-      return activities.where((activity) => 
-        activity.category == _selectedCategory).toList();
+      return activities
+          .where((activity) => activity.category == _selectedCategory)
+          .toList();
     }
-    
+
     return activities;
   }
 
@@ -125,10 +132,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
       DateTime.now().month,
       DateTime.now().day,
     );
-    
+
     // Asegurarnos de que la fecha seleccionada no sea anterior a hoy
-    final DateTime dateToUse = _selectedDay.isBefore(today) ? today : _selectedDay;
-    
+    final DateTime dateToUse =
+        _selectedDay.isBefore(today) ? today : _selectedDay;
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -137,7 +145,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
       ),
     );
-    
+
     if (result == true) {
       await _loadActivities();
       _toggleCreateForm();
@@ -162,11 +170,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.add, color: theme.colorScheme.onBackground),
-            onPressed: () => _createActivityInline(context),
-          ),
-          IconButton(
-            icon: Icon(Icons.filter_list, color: theme.colorScheme.onBackground),
+            icon:
+                Icon(Icons.filter_list, color: theme.colorScheme.onBackground),
             onPressed: () {
               _showCategoryFilterDialog(context);
             },
@@ -317,7 +322,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               ? l10n.noActivitiesToday
                               : l10n.noActivitiesSelected,
                           style: TextStyle(
-                            color: theme.colorScheme.onBackground.withOpacity(0.7),
+                            color:
+                                theme.colorScheme.onBackground.withOpacity(0.7),
                             fontSize: 16,
                           ),
                         ),
@@ -369,11 +375,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               content: Text(l10n.activityDeleteConfirmation),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.of(context).pop(false),
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
                                   child: Text(l10n.cancel),
                                 ),
                                 TextButton(
-                                  onPressed: () => Navigator.of(context).pop(true),
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
                                   child: Text(l10n.delete),
                                 ),
                               ],

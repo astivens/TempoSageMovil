@@ -22,3 +22,11 @@ export 'hover_scale.dart';
 
 // Componentes interactivos
 export 'expandable_fab.dart';
+
+// Componentes de estado y feedback
+export 'empty_state.dart';
+export 'ml_recommendation_card.dart';
+
+// Componentes de tema y utilidades
+export 'themed_widget_wrapper.dart';
+export 'unified_display_card.dart';

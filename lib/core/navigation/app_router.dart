@@ -3,12 +3,14 @@ import 'package:temposage/features/activities/presentation/screens/activities_sc
 import 'package:temposage/features/habits/presentation/screens/habits_screen.dart';
 import 'package:temposage/features/timeblocks/presentation/screens/time_blocks_screen.dart';
 import 'package:temposage/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:temposage/features/dashboard/presentation/screens/ml_recommendations_test_screen.dart';
 
 class AppRouter {
   static const String activities = '/activities';
   static const String timeBlocks = '/timeblocks';
   static const String habits = '/habits';
   static const String home = '/home';
+  static const String testRecommendation = '/test-recommendation';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -20,6 +22,9 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const TimeBlocksScreen());
       case habits:
         return MaterialPageRoute(builder: (_) => const HabitsScreen());
+      case testRecommendation:
+        return MaterialPageRoute(
+            builder: (_) => const MLRecommendationsTestScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

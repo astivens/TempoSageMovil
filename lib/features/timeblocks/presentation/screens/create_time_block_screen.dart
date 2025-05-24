@@ -93,7 +93,7 @@ class _CreateTimeBlockScreenState extends State<CreateTimeBlockScreen> {
           'TimeBlocks para hoy después de agregar: ${todayBlocks.length}');
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     }
   }
