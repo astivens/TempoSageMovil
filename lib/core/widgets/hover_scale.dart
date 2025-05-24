@@ -52,8 +52,7 @@ class HoverScaleState extends State<HoverScale>
     if (oldWidget.scale != widget.scale ||
         oldWidget.curve != widget.curve ||
         oldWidget.duration != widget.duration) {
-      _controller.dispose();
-      _initializeAnimation();
+      _updateAnimation();
     }
 
     // Actualizar estado de hover si se desactiva
@@ -69,6 +68,19 @@ class HoverScaleState extends State<HoverScale>
       vsync: this,
       duration: widget.duration,
     );
+
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: widget.scale,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: widget.curve,
+    ));
+  }
+
+  /// Actualiza la animación sin crear un nuevo controlador
+  void _updateAnimation() {
+    _controller.duration = widget.duration;
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,

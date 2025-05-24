@@ -6,6 +6,7 @@ import '../../../../core/widgets/accessible_button.dart';
 import '../../../../core/services/speech_service.dart';
 import '../../data/services/auth_service.dart';
 import '../../../../core/services/navigation_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -52,7 +53,17 @@ class _LoginScreenState extends State<LoginScreen> {
           _emailController.text,
           _passwordController.text,
         );
-        NavigationService.replaceTo('/home');
+
+        // Verificar si es la primera vez del usuario
+        final prefs = await SharedPreferences.getInstance();
+        final isFirstTime = prefs.getBool('first_time') ?? true;
+
+        if (isFirstTime) {
+          await prefs.setBool('first_time', false);
+          NavigationService.replaceTo('/onboarding');
+        } else {
+          NavigationService.replaceTo('/home');
+        }
       } catch (e) {
         setState(() {
           _errorMessage = e.toString();

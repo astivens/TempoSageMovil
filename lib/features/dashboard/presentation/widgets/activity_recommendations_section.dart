@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/services/service_locator.dart';
-import '../../../activities/data/models/activity_model.dart';
 import '../../controllers/activity_recommendation_controller.dart';
-import '../widgets/ai_recommendation_card.dart';
 import '../../../../core/constants/app_styles.dart';
-import '../../../../core/services/recommendation_service.dart';
 import '../../../../presentation/pages/task_recommendation_page.dart';
-import '../../../../core/models/productive_block.dart';
 
 class ActivityRecommendationsSection extends StatefulWidget {
   final BuildContext parentContext;
@@ -26,7 +20,6 @@ class ActivityRecommendationsSection extends StatefulWidget {
 class _ActivityRecommendationsSectionState
     extends State<ActivityRecommendationsSection> {
   late final ActivityRecommendationController _controller;
-  final _activityRepository = ServiceLocator.instance.activityRepository;
 
   @override
   void initState() {
@@ -76,27 +69,28 @@ class _ActivityRecommendationsSectionState
   Widget _buildHeader(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.psychology,
-              color: isDarkMode ? AppColors.mocha.sapphire : AppColors.latte.sapphire,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            Text(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Icon(
+            Icons.psychology,
+            color: isDarkMode ? AppColors.mocha.green : AppColors.latte.green,
+            size: 24,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
               'Gestión Inteligente de Tareas',
               style: AppStyles.titleMedium.copyWith(
                 color: isDarkMode ? AppColors.mocha.text : AppColors.latte.text,
                 fontWeight: FontWeight.bold,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -110,8 +104,8 @@ class _ActivityRecommendationsSectionState
         Text(
           'Aprovecha la inteligencia artificial para organizar tus tareas de manera óptima y mejorar tu productividad.',
           style: AppStyles.bodyMedium.copyWith(
-            color: isDarkMode 
-                ? AppColors.mocha.text.withOpacity(0.8) 
+            color: isDarkMode
+                ? AppColors.mocha.text.withOpacity(0.8)
                 : AppColors.latte.text.withOpacity(0.8),
           ),
         ),
@@ -120,7 +114,8 @@ class _ActivityRecommendationsSectionState
           context: context,
           icon: Icons.category,
           title: 'Categorización de Tareas',
-          description: 'Clasifica automáticamente tus tareas y estima su duración',
+          description:
+              'Clasifica automáticamente tus tareas y estima su duración',
           color: colorScheme.primary,
         ),
         const SizedBox(height: 8),
@@ -128,7 +123,8 @@ class _ActivityRecommendationsSectionState
           context: context,
           icon: Icons.schedule,
           title: 'Sugerencia de Horarios',
-          description: 'Encuentra los mejores momentos para realizar cada tipo de tarea',
+          description:
+              'Encuentra los mejores momentos para realizar cada tipo de tarea',
           color: colorScheme.secondary,
         ),
         const SizedBox(height: 16),
@@ -174,8 +170,8 @@ class _ActivityRecommendationsSectionState
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDarkMode 
-            ? AppColors.mocha.crust 
+        color: isDarkMode
+            ? AppColors.mocha.crust
             : AppColors.latte.crust.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -197,7 +193,9 @@ class _ActivityRecommendationsSectionState
                 Text(
                   title,
                   style: AppStyles.titleSmall.copyWith(
-                    color: isDarkMode ? AppColors.mocha.text : AppColors.latte.text,
+                    color: isDarkMode
+                        ? AppColors.mocha.text
+                        : AppColors.latte.text,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -205,8 +203,8 @@ class _ActivityRecommendationsSectionState
                 Text(
                   description,
                   style: AppStyles.bodySmall.copyWith(
-                    color: isDarkMode 
-                        ? AppColors.mocha.text.withOpacity(0.8) 
+                    color: isDarkMode
+                        ? AppColors.mocha.text.withOpacity(0.8)
                         : AppColors.latte.text.withOpacity(0.8),
                   ),
                 ),

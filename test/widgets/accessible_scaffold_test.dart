@@ -93,8 +93,19 @@ void main() {
       );
 
       // Verificar que se aplica el padding
-      final paddingWidget = tester.widget<Padding>(find.byType(Padding).first);
-      expect(paddingWidget.padding, equals(customPadding));
+      final paddingWidgets = tester.widgetList<Padding>(find.byType(Padding));
+
+      // Buscar el padding que contiene el SizedBox (nuestro body)
+      Padding? targetPadding;
+      for (final padding in paddingWidgets) {
+        if (padding.padding == customPadding) {
+          targetPadding = padding;
+          break;
+        }
+      }
+
+      expect(targetPadding, isNotNull);
+      expect(targetPadding!.padding, equals(customPadding));
     });
 
     testWidgets(

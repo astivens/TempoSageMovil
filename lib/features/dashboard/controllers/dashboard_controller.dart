@@ -108,6 +108,10 @@ class DashboardController extends ChangeNotifier {
       final today = DateTime(now.year, now.month, now.day);
       final currentDay = DateTimeHelper.getDayOfWeek(now);
 
+      debugPrint('=== DASHBOARD LOAD DATA DEBUG ===');
+      debugPrint('Fecha de hoy: ${today.toString()}');
+      debugPrint('Día actual: $currentDay');
+
       // Precarga asíncrona de timeblocks de hábitos para que estén listos antes
       _preloadHabitTimeBlocks(today);
 
@@ -125,26 +129,74 @@ class DashboardController extends ChangeNotifier {
       _activities = futures[1] as List<ActivityModel>;
       _timeBlocks = futures[2] as List<TimeBlockModel>;
 
-      debugPrint('Cargando hábitos para hoy: ${today.toString()}');
-      debugPrint('Hábitos cargados: ${_habits.length}');
+      debugPrint('Hábitos cargados para $currentDay: ${_habits.length}');
+      for (final habit in _habits) {
+        debugPrint('  - ${habit.title} (${habit.daysOfWeek.join(', ')})');
+      }
 
-      debugPrint('Cargando actividades para hoy: ${today.toString()}');
-      debugPrint('Actividades cargadas: ${_activities.length}');
+      debugPrint('Actividades cargadas para hoy: ${_activities.length}');
+      for (final activity in _activities) {
+        debugPrint('  - ${activity.title} (${activity.startTime})');
+      }
 
-      debugPrint('Cargando timeblocks para hoy: ${today.toString()}');
-      debugPrint('Timeblocks iniciales cargados: ${_timeBlocks.length}');
+      debugPrint('Timeblocks cargados para hoy: ${_timeBlocks.length}');
+
+      // Si no hay datos para hoy, verificar si hay datos en general
+      if (_habits.isEmpty && _activities.isEmpty) {
+        debugPrint('No hay datos para hoy, verificando datos generales...');
+        await _loadFallbackData();
+      }
 
       // Ordenamos los elementos por hora
       _sortAllLists();
 
       debugPrint(
           'Total de items cargados: ${_activities.length + _habits.length + _timeBlocks.length}');
+      debugPrint('=== FIN DEBUG LOAD DATA ===');
     } catch (e) {
       debugPrint('Error cargando datos: $e');
     }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  /// Carga datos de respaldo si no hay elementos para el día actual
+  Future<void> _loadFallbackData() async {
+    try {
+      // Cargar todos los hábitos y actividades para mostrar algo al usuario
+      final allHabitsEntities = await _habitRepository.getAllHabits();
+      final allActivities = await _activityRepository.getAllActivities();
+
+      debugPrint(
+          'Datos de respaldo - Todos los hábitos: ${allHabitsEntities.length}');
+      debugPrint(
+          'Datos de respaldo - Todas las actividades: ${allActivities.length}');
+
+      // Si hay hábitos en general pero no para hoy, mostrar algunos como ejemplo
+      if (allHabitsEntities.isNotEmpty && _habits.isEmpty) {
+        // Tomar hasta 3 hábitos como ejemplo para mostrar en el dashboard
+        _habits = allHabitsEntities.take(3).map(_mapEntityToModel).toList();
+        debugPrint('Mostrando ${_habits.length} hábitos como ejemplo');
+      }
+
+      // Si hay actividades recientes pero no para hoy, mostrar las más recientes
+      if (allActivities.isNotEmpty && _activities.isEmpty) {
+        final now = DateTime.now();
+        final recentActivities = allActivities.where((activity) {
+          final daysDiff = now.difference(activity.startTime).inDays;
+          return daysDiff <= 7; // Actividades de la última semana
+        }).toList();
+
+        if (recentActivities.isNotEmpty) {
+          _activities = recentActivities.take(3).toList();
+          debugPrint(
+              'Mostrando ${_activities.length} actividades recientes como ejemplo');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando datos de respaldo: $e');
+    }
   }
 
   // Precarga de timeblocks para hábitos sin bloquear la UI
@@ -655,5 +707,18 @@ class DashboardController extends ChangeNotifier {
       _isHabitRecommendationLoading = false;
       notifyListeners();
     }
+  }
+
+  // Método público para refrescar el dashboard después de cambios
+  Future<void> refreshDashboard() async {
+    debugPrint('🔄 Refrescando dashboard manualmente...');
+    await loadData();
+    debugPrint('✅ Dashboard refrescado completamente');
+  }
+
+  // Método para notificar cambios y recargar automáticamente
+  void notifyDataChanged() {
+    debugPrint('🔔 Datos modificados, recargando dashboard...');
+    loadData();
   }
 }

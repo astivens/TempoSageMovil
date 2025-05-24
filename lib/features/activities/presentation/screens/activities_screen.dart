@@ -4,7 +4,6 @@ import '../../../../core/widgets/custom_app_bar.dart';
 import '../../data/models/activity_model.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/add_activity_button.dart';
-import '../widgets/daily_habits.dart';
 import 'create_activity_screen.dart';
 import '../../data/repositories/activity_repository.dart';
 import '../../../../core/services/service_locator.dart';
@@ -57,28 +56,11 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
           fontSize: 20,
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: theme.colorScheme.onBackground),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreateActivityScreen(),
-                ),
-              );
-              if (result == true) {
-                await _loadActivities();
-              }
-            },
-          ),
-        ],
       ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const DailyHabits(),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())

@@ -5,7 +5,7 @@ import '../constants/app_colors.dart';
 ///
 /// Este componente proporciona una barra de navegación inferior con soporte
 /// para elementos dinámicos, etiquetas seleccionables y configuración
-/// de apariencia.
+/// de apariencia basada en las especificaciones de TempoSage.
 ///
 /// Propiedades:
 /// - [currentIndex]: Índice del elemento actualmente seleccionado.
@@ -48,8 +48,8 @@ class BottomNavigation extends StatelessWidget {
     this.iconSize = 24.0,
   });
 
-  /// Crea una barra de navegación predeterminada para la aplicación TempoSage
-  factory BottomNavigation.standard({
+  /// Crea una barra de navegación estándar para TempoSage con las 4 secciones principales
+  factory BottomNavigation.tempoSage({
     Key? key,
     required int currentIndex,
     required Function(int) onTap,
@@ -60,27 +60,34 @@ class BottomNavigation extends StatelessWidget {
       onTap: onTap,
       items: const [
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Time Blocks',
-          tooltip: 'Ver bloques de tiempo',
+          icon: Icon(Icons.dashboard_outlined),
+          activeIcon: Icon(Icons.dashboard),
+          label: 'Dashboard',
+          tooltip: 'Panel principal',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.list),
+          icon: Icon(Icons.assignment_outlined),
+          activeIcon: Icon(Icons.assignment),
           label: 'Actividades',
-          tooltip: 'Ver actividades',
+          tooltip: 'Gestionar actividades',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.auto_awesome),
+          icon: Icon(Icons.auto_awesome_outlined),
+          activeIcon: Icon(Icons.auto_awesome),
           label: 'Hábitos',
-          tooltip: 'Ver hábitos',
+          tooltip: 'Seguimiento de hábitos',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.schedule_outlined),
+          activeIcon: Icon(Icons.schedule),
+          label: 'Bloques',
+          tooltip: 'Bloques de tiempo',
         ),
       ],
-      backgroundColor: AppColors.base,
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.overlay0,
       type: BottomNavigationBarType.fixed,
       showSelectedLabels: true,
       showUnselectedLabels: true,
+      elevation: 2.0, // Reducido según especificaciones
     );
   }
 
@@ -97,30 +104,58 @@ class BottomNavigation extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       items: items,
-      backgroundColor: AppColors.base,
-      selectedItemColor: selectedColor ?? AppColors.primary,
-      unselectedItemColor: AppColors.overlay0,
       type: BottomNavigationBarType.fixed,
       showSelectedLabels: false,
       showUnselectedLabels: false,
       elevation: 0,
+      selectedItemColor: selectedColor,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      items: items,
-      backgroundColor: backgroundColor,
-      selectedItemColor: selectedItemColor,
-      unselectedItemColor: unselectedItemColor,
-      showSelectedLabels: showSelectedLabels,
-      showUnselectedLabels: showUnselectedLabels,
-      type: type,
-      elevation: elevation,
-      iconSize: iconSize,
+    // Usar colores dinámicos de catppuccin según el tema
+    final defaultSelectedColor =
+        AppColors.getCatppuccinColor(context, colorName: 'blue');
+    final defaultUnselectedColor =
+        AppColors.getCatppuccinColor(context, colorName: 'subtext1');
+    final defaultBackgroundColor =
+        AppColors.getCatppuccinColor(context, colorName: 'mantle');
+
+    return Container(
+      decoration: BoxDecoration(
+        // Línea superior sutil para definir la separación
+        border: Border(
+          top: BorderSide(
+            color: AppColors.getCatppuccinColor(context, colorName: 'overlay0'),
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: onTap,
+        items: items,
+        backgroundColor: backgroundColor ?? defaultBackgroundColor,
+        selectedItemColor: selectedItemColor ?? defaultSelectedColor,
+        unselectedItemColor: unselectedItemColor ?? defaultUnselectedColor,
+        showSelectedLabels: showSelectedLabels ?? true,
+        showUnselectedLabels: showUnselectedLabels ?? true,
+        type: type ?? BottomNavigationBarType.fixed,
+        elevation: elevation,
+        iconSize: iconSize,
+        // Agregamos indicador visual más moderno
+        selectedFontSize: 12,
+        unselectedFontSize: 11,
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Noto Sans',
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.normal,
+          fontFamily: 'Noto Sans',
+        ),
+      ),
     );
   }
 }

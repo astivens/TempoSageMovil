@@ -1,0 +1,35 @@
+task_id,user_id,description,category,priority,weekday,hour,duration,completed,productivity_score
+1,1,Reunión de planificación semanal,Trabajo,3,1,9,60,true,0.85
+2,1,Análisis de datos de ventas,Trabajo,4,2,10,90,true,0.82
+3,1,Seguimiento de proyectos,Trabajo,3,3,14,45,true,0.79
+4,1,Finalizar informe trimestral,Trabajo,5,4,11,120,true,0.80
+5,1,Revisar tareas pendientes semanales,Trabajo,2,5,9,30,true,0.75
+6,1,Estudiar nuevos conceptos teóricos,Estudio,4,1,16,90,true,0.90
+7,1,Continuar con lecturas asignadas,Estudio,3,2,17,60,true,0.88
+8,1,Repasar contenido de examen,Estudio,5,3,18,120,true,0.85
+9,1,Investigación para proyecto,Estudio,4,6,10,180,true,0.95
+10,1,Preparación para clases de la semana,Estudio,3,7,11,90,true,0.92
+11,1,Rutina de ejercicio cardiovascular,Salud,4,1,7,45,true,0.92
+12,1,Entrenamiento de fuerza,Salud,3,3,7,60,true,0.90
+13,1,Yoga y estiramiento,Salud,2,5,7,30,true,0.88
+14,1,Entrenamiento completo fin de semana,Salud,4,6,8,90,true,0.95
+15,1,Caminata de recuperación,Salud,2,7,16,60,true,0.85
+16,1,Limpieza de cocina y baño,Hogar,3,2,19,60,true,0.75
+17,1,Organización de armarios,Hogar,2,4,19,45,true,0.78
+18,1,Limpieza general de la casa,Hogar,4,6,15,180,true,0.90
+19,1,Preparación de comidas para la semana,Hogar,3,7,10,120,true,0.85
+20,1,Revisión de gastos semanales,Finanzas,3,1,20,30,true,0.80
+21,1,Pago de facturas mensuales,Finanzas,4,4,20,45,true,0.82
+22,1,Planificación financiera mensual,Finanzas,5,7,17,90,true,0.90
+23,1,Reunión con amigos,Social,2,5,20,120,true,0.85
+24,1,Salida a cenar o evento social,Social,3,6,19,180,true,0.90
+25,1,Visita familiar,Social,4,7,14,240,true,0.80
+26,1,Ver película o serie,Ocio,2,5,21,120,true,0.70
+27,1,Juegos o actividad recreativa,Ocio,2,6,20,120,true,0.85
+28,1,Lectura por placer,Ocio,3,7,19,60,true,0.75
+29,1,Planificación semanal personal,Personal,4,1,21,45,true,0.75
+30,1,Reflexión y balance semanal,Personal,3,4,21,30,true,0.80
+31,1,Preparación para la semana,Personal,4,7,20,60,true,0.85
+32,1,Curso online de desarrollo profesional,Formación,4,2,18,90,true,0.85
+33,1,Continuación de curso profesional,Formación,3,4,18,90,true,0.80
+34,1,Workshop o taller extenso,Formación,5,6,11,180,true,0.90 

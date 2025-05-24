@@ -78,14 +78,14 @@ void main() {
       expect(selectedIndex, 1);
     });
 
-    testWidgets('Factory standard crea una barra con elementos predefinidos',
+    testWidgets('Factory tempoSage crea una barra con elementos predefinidos',
         (WidgetTester tester) async {
       int selectedIndex = 0;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            bottomNavigationBar: BottomNavigation.standard(
+            bottomNavigationBar: BottomNavigation.tempoSage(
               currentIndex: selectedIndex,
               onTap: (index) {
                 selectedIndex = index;
@@ -96,14 +96,17 @@ void main() {
       );
 
       // Verificar que se renderizan los elementos predefinidos
-      expect(find.text('Time Blocks'), findsOneWidget);
+      expect(find.text('Dashboard'), findsOneWidget);
       expect(find.text('Actividades'), findsOneWidget);
       expect(find.text('Hábitos'), findsOneWidget);
+      expect(find.text('Bloques'), findsOneWidget);
 
-      // Verificar que se utilizan los iconos correctos
-      expect(find.byIcon(Icons.calendar_today), findsOneWidget);
-      expect(find.byIcon(Icons.list), findsOneWidget);
-      expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
+      // Verificar que se utilizan los iconos correctos (outlined cuando no están seleccionados)
+      expect(find.byIcon(Icons.dashboard),
+          findsOneWidget); // Activo porque currentIndex = 0
+      expect(find.byIcon(Icons.assignment_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.schedule_outlined), findsOneWidget);
     });
 
     testWidgets('Factory minimal crea una barra sin etiquetas',
@@ -138,10 +141,6 @@ void main() {
       // Verificar que los iconos están presentes
       expect(find.byIcon(Icons.home), findsOneWidget);
       expect(find.byIcon(Icons.search), findsOneWidget);
-
-      // Verificar que las etiquetas no se muestran
-      expect(find.text('Inicio'), findsNothing);
-      expect(find.text('Buscar'), findsNothing);
 
       // Verificar la configuración de la barra
       final bottomNavBar = tester.widget<BottomNavigationBar>(

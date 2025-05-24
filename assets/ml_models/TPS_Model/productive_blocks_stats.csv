@@ -1,2 +1,11 @@
-start_weekday,start_hour,total_tasks,completed_tasks,completion_rate,is_productive
-0,0,32,32,1.0,True
+weekday,hour,completion_rate,category
+6,10,0.95,Estudio
+6,8,0.95,Salud
+6,15,0.90,Hogar
+7,11,0.92,Estudio
+7,17,0.90,Finanzas
+1,7,0.92,Salud
+1,16,0.90,Estudio
+1,9,0.85,Trabajo
+2,18,0.85,Formación
+2,17,0.88,Estudio

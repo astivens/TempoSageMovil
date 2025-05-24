@@ -8,7 +8,7 @@ import '../../../habits/data/models/habit_model.dart';
 import '../../../timeblocks/data/models/time_block_model.dart';
 import '../../controllers/dashboard_controller.dart';
 
-class ActivitiesSection extends StatelessWidget {
+class ActivitiesSection extends StatefulWidget {
   final DashboardController controller;
   final Function(ActivityModel) onEditActivity;
   final Function(ActivityModel) onDeleteActivity;
@@ -28,6 +28,49 @@ class ActivitiesSection extends StatelessWidget {
     required this.onToggleHabit,
   });
 
+  @override
+  State<ActivitiesSection> createState() => _ActivitiesSectionState();
+}
+
+class _ActivitiesSectionState extends State<ActivitiesSection>
+    with TickerProviderStateMixin {
+  late AnimationController _headerAnimationController;
+  late Animation<double> _headerSlideAnimation;
+  late Animation<double> _headerFadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _headerAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _headerSlideAnimation = Tween<double>(
+      begin: 30.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _headerAnimationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _headerFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _headerAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _headerAnimationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _headerAnimationController.dispose();
+    super.dispose();
+  }
+
   // Función auxiliar para formatear DateTime a HH:mm
   String _formatTime(DateTime dateTime) {
     final hour = dateTime.hour.toString().padLeft(2, '0');
@@ -39,149 +82,385 @@ class ActivitiesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    if (controller.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+    if (widget.controller.isLoading) {
+      return Center(
+        child: Column(
+          children: [
+            CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Cargando actividades...',
+              style: TextStyle(
+                color: context.subtextColor,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
-    // Crear una lista combinada evitando duplicaciones - OPTIMIZADA
-    final List<dynamic> allItems = [];
+    // Separar actividades y hábitos para evitar duplicación
+    final activities = widget.controller.activities;
+    final habits = widget.controller.habits;
 
-    // Preparar conjuntos para verificaciones rápidas
-    final habitTitles = controller.habits.map((h) => h.title).toSet();
-    final activityTitles = controller.activities.map((a) => a.title).toSet();
+    // Solo timeblocks independientes (que no sean de hábitos ni actividades)
+    final independentTimeBlocks =
+        widget.controller.timeBlocks.where((timeBlock) {
+      // Filtrar timeblocks que no correspondan a hábitos o actividades existentes
+      final isFromHabit = habits.any((habit) =>
+          timeBlock.title.contains(habit.title) ||
+          timeBlock.description.contains('Generado desde hábito'));
+      final isFromActivity =
+          activities.any((activity) => timeBlock.title == activity.title);
 
-    // Agregar actividades
-    allItems.addAll(controller.activities);
+      return !isFromHabit && !isFromActivity;
+    }).toList();
 
-    // Agregar hábitos
-    allItems.addAll(controller.habits);
+    debugPrint('=== ACTIVITIES SECTION DEBUG ===');
+    debugPrint('Actividades: ${activities.length}');
+    debugPrint('Hábitos: ${habits.length}');
+    debugPrint('TimeBlocks independientes: ${independentTimeBlocks.length}');
 
-    // Agregar timeblocks independientes (evitando duplicados)
-    final independentTimeBlocks = controller.timeBlocks.where((timeBlock) {
-      return !habitTitles.contains(timeBlock.title) &&
-          !activityTitles.contains(timeBlock.title);
-    });
-    allItems.addAll(independentTimeBlocks);
-
-    debugPrint('Elementos en actividades (Unificado): ${allItems.length}');
-
-    // Ordenar todos los elementos por hora
-    allItems.sort((a, b) {
-      final DateTime aTime = _getDateTimeFromItem(a);
-      final DateTime bTime = _getDateTimeFromItem(b);
-      return aTime.compareTo(bTime);
-    });
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Text(
-            l10n.dashboardActivitiesAndHabits,
-            style: AppStyles.titleMedium.copyWith(
-              color: context.textColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        allItems.isEmpty
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Text(
-                    l10n.dashboardNoItems,
-                    style: TextStyle(
-                      color: context.subtextColor,
-                      fontSize: 16,
+    return AnimatedBuilder(
+      animation: _headerAnimationController,
+      builder: (context, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Transform.translate(
+              offset: Offset(0, _headerSlideAnimation.value),
+              child: Opacity(
+                opacity: _headerFadeAnimation.value,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        context.textColor.withOpacity(0.05),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    textAlign: TextAlign.center,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.view_agenda,
+                        color: context.textColor.withOpacity(0.7),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.dashboardActivitiesAndHabits,
+                          style: AppStyles.titleMedium.copyWith(
+                            color: context.textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      _buildSummaryChip(activities.length +
+                          habits.length +
+                          independentTimeBlocks.length),
+                    ],
                   ),
                 ),
-              )
-            : ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: allItems.length,
-                itemBuilder: (context, index) {
-                  final item = allItems[index];
-                  return _buildItemWidget(item, context);
-                },
               ),
-      ],
+            ),
+
+            // Mostrar actividades si las hay
+            if (activities.isNotEmpty) ...[
+              _buildAnimatedSectionHeader(context, l10n.activities,
+                  Icons.task_alt, activities.length, 0),
+              ...activities.asMap().entries.map((entry) =>
+                  _buildAnimatedActivityWidget(
+                      entry.value, context, entry.key)),
+              const SizedBox(height: 12),
+            ],
+
+            // Mostrar hábitos si los hay
+            if (habits.isNotEmpty) ...[
+              _buildAnimatedSectionHeader(context, l10n.habits,
+                  Icons.auto_awesome, habits.length, activities.length),
+              ...habits.asMap().entries.map((entry) =>
+                  _buildAnimatedHabitWidget(
+                      entry.value, context, activities.length + entry.key)),
+              const SizedBox(height: 12),
+            ],
+
+            // Mostrar timeblocks independientes si los hay
+            if (independentTimeBlocks.isNotEmpty) ...[
+              _buildAnimatedSectionHeader(
+                  context,
+                  'Bloques de tiempo',
+                  Icons.schedule,
+                  independentTimeBlocks.length,
+                  activities.length + habits.length),
+              ...independentTimeBlocks.asMap().entries.map((entry) =>
+                  _buildAnimatedTimeBlockWidget(entry.value, context,
+                      activities.length + habits.length + entry.key)),
+            ],
+
+            // Mensaje si no hay elementos
+            if (activities.isEmpty &&
+                habits.isEmpty &&
+                independentTimeBlocks.isEmpty)
+              _buildEmptyState(context, l10n),
+          ],
+        );
+      },
     );
   }
 
-  DateTime _getDateTimeFromItem(dynamic item) {
-    if (item is ActivityModel) {
-      return item.startTime;
-    } else if (item is HabitModel) {
-      final now = DateTime.now();
-      final timeParts = item.time.split(':');
-      final hour = int.tryParse(timeParts[0]) ?? 0;
-      final minute = int.tryParse(timeParts[1]) ?? 0;
-      return DateTime(now.year, now.month, now.day, hour, minute);
-    } else if (item is TimeBlockModel) {
-      return item.startTime;
-    }
-    return DateTime.now();
+  Widget _buildSummaryChip(int totalItems) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        '$totalItems',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 
-  Widget _buildItemWidget(dynamic item, BuildContext context) {
+  Widget _buildAnimatedSectionHeader(
+      BuildContext context, String title, IconData icon, int count, int delay) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 400 + (delay * 50)),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: context.textColor.withOpacity(0.7),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$title ($count)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.textColor.withOpacity(0.8),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            context.textColor.withOpacity(0.2),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedActivityWidget(
+      ActivityModel activity, BuildContext context, int index) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 600 + (index * 100)),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(30 * (1 - value), 0),
+          child: Opacity(
+            opacity: value,
+            child: _buildActivityWidget(activity, context),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedHabitWidget(
+      HabitModel habit, BuildContext context, int index) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 600 + (index * 100)),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(30 * (1 - value), 0),
+          child: Opacity(
+            opacity: value,
+            child: _buildHabitWidget(habit, context),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedTimeBlockWidget(
+      TimeBlockModel timeBlock, BuildContext context, int index) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 600 + (index * 100)),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(30 * (1 - value), 0),
+          child: Opacity(
+            opacity: value,
+            child: _buildTimeBlockWidget(timeBlock, context),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 800),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.8 + (0.2 * value),
+          child: Opacity(
+            opacity: value,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: context.subtextColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Icon(
+                        Icons.event_note,
+                        size: 48,
+                        color: context.subtextColor.withOpacity(0.5),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.dashboardNoItems,
+                      style: TextStyle(
+                        color: context.subtextColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Usa el botón + para agregar nuevos elementos',
+                      style: TextStyle(
+                        color: context.subtextColor.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActivityWidget(ActivityModel activity, BuildContext context) {
     final theme = Theme.of(context);
 
-    if (item is ActivityModel) {
-      return UnifiedDisplayCard(
-        key: ValueKey('activity_${item.id}'),
-        title: item.title,
-        description: item.description,
-        category: item.category,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: UnifiedDisplayCard(
+        key: ValueKey('activity_${activity.id}'),
+        title: activity.title,
+        description: activity.description,
+        category: activity.category,
         timeRange:
-            '${_formatTime(item.startTime)} - ${_formatTime(item.endTime)}',
-        isFocusTime: item.priority == 'High',
+            '${_formatTime(activity.startTime)} - ${_formatTime(activity.endTime)}',
+        isFocusTime: activity.priority == 'High',
         itemColor: theme.colorScheme.primary,
-        isCompleted: item.isCompleted,
-        onTap: () => onEditActivity(item),
-        onEdit: () => onEditActivity(item),
-        onDelete: () => onDeleteActivity(item),
-        onToggleComplete: () => onToggleActivity(item),
-      );
-    } else if (item is HabitModel) {
-      return UnifiedDisplayCard(
-        key: ValueKey('habit_${item.id}'),
-        title: item.title,
+        isCompleted: activity.isCompleted,
+        onTap: () => widget.onEditActivity(activity),
+        onEdit: () => widget.onEditActivity(activity),
+        onDelete: () => widget.onDeleteActivity(activity),
+        onToggleComplete: () => widget.onToggleActivity(activity),
+      ),
+    );
+  }
+
+  Widget _buildHabitWidget(HabitModel habit, BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: UnifiedDisplayCard(
+        key: ValueKey('habit_${habit.id}'),
+        title: habit.title,
         prefix: "Hábito: ",
-        description: item.description,
-        category: item.category,
-        timeRange: item.time,
+        description: habit.description,
+        category: habit.category,
+        timeRange: habit.time,
         isFocusTime: true,
         itemColor: theme.colorScheme.secondary,
-        isCompleted: item.isCompleted,
-        onTap: () => onEditHabit(item),
-        onDelete: () => onDeleteHabit(item),
-        onToggleComplete: () => onToggleHabit(item),
-      );
-    } else if (item is TimeBlockModel) {
-      return UnifiedDisplayCard(
-        key: ValueKey('timeblock_${item.id}'),
-        title: item.title,
-        description: item.description,
-        category: item.category,
+        isCompleted: habit.isCompleted,
+        onTap: () => widget.onEditHabit(habit),
+        onDelete: () => widget.onDeleteHabit(habit),
+        onToggleComplete: () => widget.onToggleHabit(habit),
+      ),
+    );
+  }
+
+  Widget _buildTimeBlockWidget(TimeBlockModel timeBlock, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: UnifiedDisplayCard(
+        key: ValueKey('timeblock_${timeBlock.id}'),
+        title: timeBlock.title,
+        description: timeBlock.description,
+        category: timeBlock.category,
         timeRange:
-            '${_formatTime(item.startTime)} - ${_formatTime(item.endTime)}',
-        isFocusTime: item.isFocusTime,
-        itemColor: Color(int.parse(item.color.replaceAll('#', '0xFF'))),
-        isCompleted: item.isCompleted,
+            '${_formatTime(timeBlock.startTime)} - ${_formatTime(timeBlock.endTime)}',
+        isFocusTime: timeBlock.isFocusTime,
+        itemColor: Color(int.parse(timeBlock.color.replaceAll('#', '0xFF'))),
+        isCompleted: timeBlock.isCompleted,
         onTap: () {
-          // Definir acción si se hace tap en un TimeBlock desde aquí,
-          // por ejemplo, navegar a una pantalla de detalle/edición de TimeBlock.
-          // Si no hay acción, se puede pasar null.
+          // Acción para timeblock si es necesaria
         },
-      );
-    }
-    return const SizedBox.shrink();
+      ),
+    );
   }
 }

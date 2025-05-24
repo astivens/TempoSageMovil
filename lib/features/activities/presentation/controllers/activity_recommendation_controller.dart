@@ -79,25 +79,83 @@ class ActivityRecommendationController extends ChangeNotifier {
         type: 'activity',
       );
 
-      // Convertir recomendaciones a actividades sugeridas
-      _recommendedActivities = recommendations.map((category) {
-        return ActivityModel(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: 'Actividad sugerida en $category',
-          description:
-              'Basado en tu historial, te sugerimos una actividad en esta categoría',
-          startTime: DateTime.now().add(const Duration(hours: 1)),
-          endTime: DateTime.now().add(const Duration(hours: 2)),
-          category: category,
-          priority: 'Media',
-        );
-      }).toList();
+      // Limpiar lista previa de recomendaciones
+      _recommendedActivities = [];
+
+      // Manejar diferentes tipos de respuestas
+      if (recommendations.isNotEmpty) {
+        for (var recommendation in recommendations) {
+          String category;
+
+          // Manejar diferentes formatos de respuesta
+          if (recommendation is String) {
+            category = recommendation;
+          } else if (recommendation is Map<String, dynamic>) {
+            // Extraer categoría del mapa
+            category = recommendation['category'] as String? ?? 'Otro';
+          } else {
+            // Usar valor por defecto para otros casos
+            category = 'Otro';
+          }
+
+          // Crear modelo de actividad recomendada
+          final activityModel = ActivityModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: 'Actividad sugerida en $category',
+            description:
+                'Basado en tu historial, te sugerimos una actividad en esta categoría',
+            startTime: DateTime.now().add(const Duration(hours: 1)),
+            endTime: DateTime.now().add(const Duration(hours: 2)),
+            category: category,
+            priority: 'Media',
+          );
+
+          _recommendedActivities.add(activityModel);
+        }
+      } else {
+        // Si no hay recomendaciones, proporcionar algunas predeterminadas
+        _recommendedActivities = [
+          ActivityModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: 'Actividad sugerida en Estudio',
+            description: 'Te recomendamos planificar una sesión de estudio',
+            startTime: DateTime.now().add(const Duration(hours: 1)),
+            endTime: DateTime.now().add(const Duration(hours: 2)),
+            category: 'Estudio',
+            priority: 'Media',
+          ),
+          ActivityModel(
+            id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+            title: 'Actividad sugerida en Trabajo',
+            description:
+                'Una sesión de trabajo enfocada puede aumentar tu productividad',
+            startTime: DateTime.now().add(const Duration(hours: 3)),
+            endTime: DateTime.now().add(const Duration(hours: 4)),
+            category: 'Trabajo',
+            priority: 'Alta',
+          )
+        ];
+      }
 
       _isLoading = false;
       notifyListeners();
     } catch (e, stackTrace) {
       _logger.e('Error al cargar recomendaciones',
           tag: 'RecommendationController', error: e, stackTrace: stackTrace);
+
+      // En caso de error, proporcionar recomendaciones predeterminadas
+      _recommendedActivities = [
+        ActivityModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: 'Actividad sugerida en Otro',
+          description: 'Recomendación por defecto',
+          startTime: DateTime.now().add(const Duration(hours: 1)),
+          endTime: DateTime.now().add(const Duration(hours: 2)),
+          category: 'Otro',
+          priority: 'Media',
+        ),
+      ];
+
       _error = 'No se pudieron cargar las recomendaciones';
       _isLoading = false;
       notifyListeners();
@@ -166,7 +224,8 @@ class ActivityRecommendationController extends ChangeNotifier {
 
   @override
   void dispose() {
-    _recommendationService.dispose();
+    // No disponer del _recommendationService, ya que es gestionado por ServiceLocator
+    // y podría ser necesario para otras partes de la aplicación
     super.dispose();
   }
 }

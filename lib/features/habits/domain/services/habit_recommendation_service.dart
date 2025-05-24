@@ -37,23 +37,116 @@ class HabitRecommendationService {
         type: 'habit',
       );
 
-      // Convertir recomendaciones a hábitos sugeridos
-      return recommendations.map((rec) {
-        final Map<String, dynamic> recommendation = rec as Map<String, dynamic>;
-        return HabitModel.create(
-          title: recommendation['title'] as String,
-          description: recommendation['description'] as String,
-          daysOfWeek: List<String>.from(recommendation['daysOfWeek'] as List),
-          category: recommendation['category'] as String,
-          reminder: recommendation['reminder'] as String,
-          time: recommendation['time'] as String,
-        );
-      }).toList();
+      // Lista de hábitos recomendados a devolver
+      List<HabitModel> recommendedHabits = [];
+
+      if (recommendations.isEmpty) {
+        // Proporcionar recomendaciones predeterminadas si no hay ninguna
+        return _getDefaultHabitRecommendations();
+      }
+
+      // Procesar cada recomendación, manejando diferentes tipos de respuesta
+      for (var rec in recommendations) {
+        try {
+          if (rec is Map<String, dynamic>) {
+            // Caso 1: La recomendación ya es un mapa
+            recommendedHabits.add(_createHabitFromMap(rec));
+          } else if (rec is String) {
+            // Caso 2: La recomendación es una cadena (probablemente una categoría)
+            recommendedHabits.add(_createHabitFromCategory(rec));
+          } else {
+            // Caso 3: Otro tipo no esperado
+            _logger.w(
+                'Formato de recomendación no reconocido: ${rec.runtimeType}',
+                tag: 'HabitRecommendationService');
+          }
+        } catch (e) {
+          _logger.e('Error al procesar recomendación individual',
+              tag: 'HabitRecommendationService', error: e);
+          // Continuamos con la siguiente recomendación
+        }
+      }
+
+      // Si no se pudo procesar ninguna recomendación, devolver recomendaciones predeterminadas
+      if (recommendedHabits.isEmpty) {
+        return _getDefaultHabitRecommendations();
+      }
+
+      return recommendedHabits;
     } catch (e, stackTrace) {
       _logger.e('Error al obtener recomendaciones de hábitos',
           tag: 'HabitRecommendationService', error: e, stackTrace: stackTrace);
-      rethrow;
+
+      // En caso de error, devolver recomendaciones predeterminadas
+      return _getDefaultHabitRecommendations();
     }
+  }
+
+  // Método auxiliar para crear un hábito a partir de un mapa
+  HabitModel _createHabitFromMap(Map<String, dynamic> recommendation) {
+    return HabitModel.create(
+      title: recommendation['title'] as String? ?? 'Hábito recomendado',
+      description: recommendation['description'] as String? ??
+          'Recomendación basada en tus hábitos existentes',
+      daysOfWeek: recommendation['daysOfWeek'] is List
+          ? List<String>.from(recommendation['daysOfWeek'] as List)
+          : ['Lunes', 'Miércoles', 'Viernes'],
+      category: recommendation['category'] as String? ?? 'General',
+      reminder: recommendation['reminder'] as String? ?? 'Diaria',
+      time: recommendation['time'] as String? ?? '08:00',
+    );
+  }
+
+  // Método auxiliar para crear un hábito a partir de una categoría
+  HabitModel _createHabitFromCategory(String category) {
+    return HabitModel.create(
+      title: 'Nuevo hábito de $category',
+      description: 'Un hábito recomendado basado en tu historial',
+      daysOfWeek: ['Lunes', 'Miércoles', 'Viernes'],
+      category: category,
+      reminder: 'Diaria',
+      time: '08:00',
+    );
+  }
+
+  // Método auxiliar para obtener recomendaciones predeterminadas
+  List<HabitModel> _getDefaultHabitRecommendations() {
+    return [
+      HabitModel.create(
+        title: 'Meditación matutina',
+        description:
+            'Dedica 10 minutos cada mañana a meditar para comenzar el día con calma',
+        daysOfWeek: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+        category: 'Bienestar',
+        reminder: 'Diaria',
+        time: '07:00',
+      ),
+      HabitModel.create(
+        title: 'Ejercicio físico',
+        description:
+            'Realiza 30 minutos de actividad física para mantenerte saludable',
+        daysOfWeek: ['Lunes', 'Miércoles', 'Viernes'],
+        category: 'Salud',
+        reminder: 'Diaria',
+        time: '18:00',
+      ),
+      HabitModel.create(
+        title: 'Lectura diaria',
+        description: 'Lee al menos 20 páginas para mejorar tu conocimiento',
+        daysOfWeek: [
+          'Lunes',
+          'Martes',
+          'Miércoles',
+          'Jueves',
+          'Viernes',
+          'Sábado',
+          'Domingo'
+        ],
+        category: 'Desarrollo personal',
+        reminder: 'Diaria',
+        time: '21:00',
+      ),
+    ];
   }
 
   Future<void> suggestOptimalTime(HabitModel habitModel) async {

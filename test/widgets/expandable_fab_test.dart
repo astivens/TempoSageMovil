@@ -59,6 +59,8 @@ void main() {
       // Tocar el FAB para expandir
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pump(); // Comenzar la animación
+      await tester.pump(
+          const Duration(milliseconds: 50)); // Permitir que progrese un poco
 
       // Verificar que la animación ha comenzado
       for (final fadeTransition
@@ -187,8 +189,8 @@ void main() {
       // Verificar que está abierto
       expect(fabKey.currentState!.isOpen, isTrue);
 
-      // Tocar fuera (en el texto "Fondo")
-      await tester.tap(find.text('Fondo'));
+      // Tocar fuera (en una posición específica que no esté sobre el FAB)
+      await tester.tapAt(const Offset(100, 100));
       await tester.pumpAndSettle();
 
       // Verificar que se cerró
@@ -277,15 +279,22 @@ void main() {
 
       // Verificar el color del material
       final material = tester.widget<Material>(
-        find.descendant(
-          of: find.byType(ActionButton),
-          matching: find.byType(Material),
-        ),
+        find
+            .descendant(
+              of: find.byType(ActionButton),
+              matching: find.byType(Material),
+            )
+            .first,
       );
       expect(material.color, equals(Colors.red));
 
       // Verificar el color del icono
-      final iconButton = tester.widget<IconButton>(find.byType(IconButton));
+      final iconButton = tester.widget<IconButton>(
+        find.descendant(
+          of: find.byType(ActionButton),
+          matching: find.byType(IconButton),
+        ),
+      );
       expect(iconButton.color, equals(Colors.white));
     });
   });
