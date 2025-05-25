@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'dart:async';
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/services/service_locator.dart';
+import '../../../../core/services/event_bus.dart';
 import '../../../../core/widgets/page_transitions.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/utils/error_handler.dart';
@@ -11,7 +13,7 @@ import '../widgets/time_block_timeline.dart';
 import 'create_time_block_screen.dart';
 
 /// Pantalla que muestra los bloques de tiempo organizados en una línea de tiempo.
-/// Permite visualizar, gestionar y sincronizar bloques de tiempo con hábitos.
+/// Permite visualizar, gestionar y sincronizar bloques de tiempo con hábitos y actividades.
 class TimeBlocksScreen extends StatefulWidget {
   const TimeBlocksScreen({super.key});
 
@@ -24,6 +26,8 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
   final _repository = ServiceLocator.instance.timeBlockRepository;
   final _habitToTimeBlockService =
       ServiceLocator.instance.habitToTimeBlockService;
+  final _activityToTimeBlockService =
+      ServiceLocator.instance.activityToTimeBlockService;
 
   // Formato para visualización de tiempo
   final _timeFormat = DateFormat('HH:mm');
@@ -32,11 +36,32 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
   List<TimeBlockModel> _timeBlocks = [];
   bool _isLoading = true;
   String _activeSection = 'today';
+  StreamSubscription<String>? _eventSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadTimeBlocks();
+    _setupEventListener();
+  }
+
+  @override
+  void dispose() {
+    _eventSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupEventListener() {
+    _eventSubscription = EventBus().events.listen((event) {
+      debugPrint('🎧 TimeBlocksScreen recibió evento: $event');
+      if (event == AppEvents.timeBlockCreated ||
+          event == AppEvents.habitCreated ||
+          event == AppEvents.activityCreated ||
+          event == AppEvents.dataChanged) {
+        debugPrint('🔄 Actualizando lista de timeblocks...');
+        _loadTimeBlocks();
+      }
+    });
   }
 
   @override
@@ -49,7 +74,7 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
   }
 
   /// Carga los bloques de tiempo para la sección activa (hoy, mañana, próximos días)
-  /// Sincroniza automáticamente los hábitos como bloques de tiempo
+  /// Sincroniza automáticamente los hábitos y actividades como bloques de tiempo
   Future<void> _loadTimeBlocks() async {
     if (!mounted) return;
 
@@ -68,6 +93,9 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
 
       // Asegurar que los hábitos estén sincronizados como bloques de tiempo
       await _ensureHabitTimeBlocksExist(normalizedDate);
+
+      // Asegurar que las actividades estén sincronizadas como bloques de tiempo
+      await _ensureActivityTimeBlocksExist(normalizedDate);
 
       // Obtener todos los bloques para la fecha seleccionada
       final blocks = await _repository.getTimeBlocksByDate(normalizedDate);
@@ -108,7 +136,7 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
     }
   }
 
-  /// Asegura que los hábitos del usuario estén representados como bloques de tiempo
+  /// Asegurar que los hábitos del usuario estén representados como bloques de tiempo
   /// Solo crea nuevos bloques si aún no existen para la fecha especificada
   Future<void> _ensureHabitTimeBlocksExist(DateTime date) async {
     try {
@@ -148,6 +176,38 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
       if (mounted) {
         ErrorHandler.showErrorSnackBar(
             context, 'No se pudieron sincronizar todos los hábitos');
+      }
+    }
+  }
+
+  /// Asegurar que las actividades del usuario estén representadas como bloques de tiempo
+  /// Solo crea nuevos bloques si aún no existen para la fecha especificada
+  Future<void> _ensureActivityTimeBlocksExist(DateTime date) async {
+    try {
+      debugPrint(
+          'Verificando bloques de tiempo para actividades en ${date.toIso8601String()}');
+
+      // Convertir actividades a bloques de tiempo
+      debugPrint('Creando bloques de tiempo desde actividades');
+      final newBlocks =
+          await _activityToTimeBlockService.convertActivitiesToTimeBlocks(date);
+
+      // Registrar estadísticas
+      if (newBlocks.isNotEmpty) {
+        debugPrint(
+            'Creados ${newBlocks.length} bloques de tiempo desde actividades');
+      } else {
+        debugPrint(
+            'No se crearon bloques de tiempo (no hay actividades para esta fecha)');
+      }
+    } catch (e) {
+      ErrorHandler.logError(
+          'Error sincronizando actividades con timeblocks', e, null);
+      // No propagamos el error para no interrumpir la carga de bloques existentes
+      // pero mostramos una alerta al usuario
+      if (mounted) {
+        ErrorHandler.showErrorSnackBar(
+            context, 'No se pudieron sincronizar todas las actividades');
       }
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/services/service_locator.dart';
+import '../../../../core/services/event_bus.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../activities/presentation/screens/activities_screen.dart';
 import '../../../habits/presentation/screens/habits_screen.dart'
@@ -105,6 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
         debugPrint('📊 Resultado creación actividad: $result');
         // Refrescar dashboard si se creó una actividad
         if (result == true && mounted) {
+          EventBus().emit(AppEvents.activityCreated);
           _refreshDashboardIfNeeded();
         }
         break;
@@ -144,6 +146,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
             debugPrint('✅ Hábito guardado exitosamente en el repositorio');
 
+            // Emitir evento específico de hábito creado
+            EventBus().emit(AppEvents.habitCreated);
+
             // Refrescar dashboard después de crear el hábito
             debugPrint('🔄 Solicitando refresh del dashboard...');
             _refreshDashboardIfNeeded();
@@ -177,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
         debugPrint('⏰ Resultado creación timeblock: $result');
         // Refrescar dashboard si se creó un timeblock
         if (result == true && mounted) {
+          EventBus().emit(AppEvents.timeBlockCreated);
           _refreshDashboardIfNeeded();
         }
         break;
@@ -187,19 +193,20 @@ class _HomeScreenState extends State<HomeScreen> {
   void _refreshDashboardIfNeeded() {
     debugPrint(
         '🔍 Verificando si necesita refresh... índice actual: $_selectedIndex');
-    if (_selectedIndex == 0) {
-      // Dashboard es el índice 0
-      try {
-        debugPrint('📊 Refrescando dashboard desde HomeScreen...');
-        final dashboardController =
-            Provider.of<DashboardController>(context, listen: false);
-        dashboardController.refreshDashboard();
-      } catch (e) {
-        debugPrint('❌ Error al refrescar dashboard: $e');
-      }
-    } else {
-      debugPrint('⏭️ No es necesario refrescar, no estamos en dashboard');
+
+    // Siempre refrescar el dashboard cuando se crea algo nuevo
+    try {
+      debugPrint('📊 Refrescando dashboard desde HomeScreen...');
+      final dashboardController =
+          Provider.of<DashboardController>(context, listen: false);
+      dashboardController.refreshDashboard();
+    } catch (e) {
+      debugPrint('❌ Error al refrescar dashboard: $e');
     }
+
+    // Emitir evento para que todas las pantallas se actualicen
+    EventBus().emit(AppEvents.dataChanged);
+    debugPrint('📡 Evento de cambio de datos emitido');
   }
 
   List<Widget> _getFabActions() {
