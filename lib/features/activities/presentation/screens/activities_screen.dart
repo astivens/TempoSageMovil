@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'dart:async';
 import '../../../../core/widgets/custom_app_bar.dart';
+import '../../../../core/services/event_bus.dart';
 import '../../data/models/activity_model.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/add_activity_button.dart';
@@ -20,11 +22,30 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       ServiceLocator.instance.activityRepository;
   List<ActivityModel> _activities = [];
   bool _isLoading = true;
+  StreamSubscription<String>? _eventSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadActivities();
+    _setupEventListener();
+  }
+
+  @override
+  void dispose() {
+    _eventSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupEventListener() {
+    _eventSubscription = EventBus().events.listen((event) {
+      debugPrint('🎧 ActivitiesScreen recibió evento: $event');
+      if (event == AppEvents.activityCreated ||
+          event == AppEvents.dataChanged) {
+        debugPrint('🔄 Actualizando lista de actividades...');
+        _loadActivities();
+      }
+    });
   }
 
   Future<void> _loadActivities() async {
@@ -35,8 +56,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         _activities = activities;
         _isLoading = false;
       });
+      debugPrint('✅ Actividades cargadas: ${activities.length}');
     } catch (e) {
       setState(() => _isLoading = false);
+      debugPrint('❌ Error cargando actividades: $e');
     }
   }
 

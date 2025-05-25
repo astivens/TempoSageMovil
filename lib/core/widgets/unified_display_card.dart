@@ -197,10 +197,10 @@ class _UnifiedDisplayCardState extends State<UnifiedDisplayCard>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.shadow
-                          .withOpacity(_isHovered ? 0.15 : 0.08),
-                      blurRadius: _isHovered ? 12 : 6,
-                      offset: Offset(0, _isHovered ? 6 : 3),
+                      color: theme.colorScheme.shadow.withOpacity(
+                          _isHovered ? 0.15 : (_isPressed ? 0.05 : 0.08)),
+                      blurRadius: _isHovered ? 12 : (_isPressed ? 4 : 6),
+                      offset: Offset(0, _isHovered ? 6 : (_isPressed ? 1 : 3)),
                     ),
                   ],
                 ),

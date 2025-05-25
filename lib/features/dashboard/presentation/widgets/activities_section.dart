@@ -5,7 +5,6 @@ import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/unified_display_card.dart';
 import '../../../activities/data/models/activity_model.dart';
 import '../../../habits/data/models/habit_model.dart';
-import '../../../timeblocks/data/models/time_block_model.dart';
 import '../../controllers/dashboard_controller.dart';
 
 class ActivitiesSection extends StatefulWidget {
@@ -102,27 +101,13 @@ class _ActivitiesSectionState extends State<ActivitiesSection>
       );
     }
 
-    // Separar actividades y hábitos para evitar duplicación
+    // Separar actividades y hábitos
     final activities = widget.controller.activities;
     final habits = widget.controller.habits;
-
-    // Solo timeblocks independientes (que no sean de hábitos ni actividades)
-    final independentTimeBlocks =
-        widget.controller.timeBlocks.where((timeBlock) {
-      // Filtrar timeblocks que no correspondan a hábitos o actividades existentes
-      final isFromHabit = habits.any((habit) =>
-          timeBlock.title.contains(habit.title) ||
-          timeBlock.description.contains('Generado desde hábito'));
-      final isFromActivity =
-          activities.any((activity) => timeBlock.title == activity.title);
-
-      return !isFromHabit && !isFromActivity;
-    }).toList();
 
     debugPrint('=== ACTIVITIES SECTION DEBUG ===');
     debugPrint('Actividades: ${activities.length}');
     debugPrint('Hábitos: ${habits.length}');
-    debugPrint('TimeBlocks independientes: ${independentTimeBlocks.length}');
 
     return AnimatedBuilder(
       animation: _headerAnimationController,
@@ -165,9 +150,7 @@ class _ActivitiesSectionState extends State<ActivitiesSection>
                           ),
                         ),
                       ),
-                      _buildSummaryChip(activities.length +
-                          habits.length +
-                          independentTimeBlocks.length),
+                      _buildSummaryChip(activities.length + habits.length),
                     ],
                   ),
                 ),
@@ -194,23 +177,8 @@ class _ActivitiesSectionState extends State<ActivitiesSection>
               const SizedBox(height: 12),
             ],
 
-            // Mostrar timeblocks independientes si los hay
-            if (independentTimeBlocks.isNotEmpty) ...[
-              _buildAnimatedSectionHeader(
-                  context,
-                  'Bloques de tiempo',
-                  Icons.schedule,
-                  independentTimeBlocks.length,
-                  activities.length + habits.length),
-              ...independentTimeBlocks.asMap().entries.map((entry) =>
-                  _buildAnimatedTimeBlockWidget(entry.value, context,
-                      activities.length + habits.length + entry.key)),
-            ],
-
             // Mensaje si no hay elementos
-            if (activities.isEmpty &&
-                habits.isEmpty &&
-                independentTimeBlocks.isEmpty)
+            if (activities.isEmpty && habits.isEmpty)
               _buildEmptyState(context, l10n),
           ],
         );
@@ -327,23 +295,6 @@ class _ActivitiesSectionState extends State<ActivitiesSection>
     );
   }
 
-  Widget _buildAnimatedTimeBlockWidget(
-      TimeBlockModel timeBlock, BuildContext context, int index) {
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 600 + (index * 100)),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(30 * (1 - value), 0),
-          child: Opacity(
-            opacity: value,
-            child: _buildTimeBlockWidget(timeBlock, context),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
     return TweenAnimationBuilder<double>(
       duration: const Duration(milliseconds: 800),
@@ -440,26 +391,6 @@ class _ActivitiesSectionState extends State<ActivitiesSection>
         onTap: () => widget.onEditHabit(habit),
         onDelete: () => widget.onDeleteHabit(habit),
         onToggleComplete: () => widget.onToggleHabit(habit),
-      ),
-    );
-  }
-
-  Widget _buildTimeBlockWidget(TimeBlockModel timeBlock, BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      child: UnifiedDisplayCard(
-        key: ValueKey('timeblock_${timeBlock.id}'),
-        title: timeBlock.title,
-        description: timeBlock.description,
-        category: timeBlock.category,
-        timeRange:
-            '${_formatTime(timeBlock.startTime)} - ${_formatTime(timeBlock.endTime)}',
-        isFocusTime: timeBlock.isFocusTime,
-        itemColor: Color(int.parse(timeBlock.color.replaceAll('#', '0xFF'))),
-        isCompleted: timeBlock.isCompleted,
-        onTap: () {
-          // Acción para timeblock si es necesaria
-        },
       ),
     );
   }

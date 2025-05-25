@@ -4,8 +4,6 @@ import '../../activities/data/models/activity_model.dart';
 import '../../habits/data/models/habit_model.dart';
 import '../../activities/data/repositories/activity_repository.dart';
 import '../../habits/domain/repositories/habit_repository.dart';
-import '../../timeblocks/data/repositories/time_block_repository.dart';
-import '../../timeblocks/data/models/time_block_model.dart';
 import '../../habits/domain/services/habit_to_timeblock_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/utils/date_time_helper.dart';
@@ -18,7 +16,6 @@ import '../../activities/domain/entities/activity.dart';
 class DashboardController extends ChangeNotifier {
   final ActivityRepository _activityRepository;
   final HabitRepository _habitRepository;
-  final TimeBlockRepository _timeBlockRepository;
   final HabitToTimeBlockService _habitToTimeBlockService;
   final PredictProductivityUseCase _predictProductivityUseCase;
   final SuggestOptimalTimeUseCase _suggestOptimalTimeUseCase;
@@ -26,7 +23,6 @@ class DashboardController extends ChangeNotifier {
 
   List<ActivityModel> _activities = [];
   List<HabitModel> _habits = [];
-  List<TimeBlockModel> _timeBlocks = [];
   bool _isLoading = false;
 
   // Estados para la API
@@ -60,7 +56,6 @@ class DashboardController extends ChangeNotifier {
     AnalyzePatternsUseCase? analyzePatternsUseCase,
   })  : _activityRepository = activityRepository,
         _habitRepository = habitRepository,
-        _timeBlockRepository = ServiceLocator.instance.timeBlockRepository,
         _habitToTimeBlockService =
             ServiceLocator.instance.habitToTimeBlockService,
         _predictProductivityUseCase =
@@ -72,7 +67,6 @@ class DashboardController extends ChangeNotifier {
 
   List<ActivityModel> get activities => _activities;
   List<HabitModel> get habits => _habits;
-  List<TimeBlockModel> get timeBlocks => _timeBlocks;
   bool get isLoading => _isLoading;
 
   // Nuevos getters para la API
@@ -112,14 +106,10 @@ class DashboardController extends ChangeNotifier {
       debugPrint('Fecha de hoy: ${today.toString()}');
       debugPrint('Día actual: $currentDay');
 
-      // Precarga asíncrona de timeblocks de hábitos para que estén listos antes
-      _preloadHabitTimeBlocks(today);
-
-      // Cargamos todos los datos al mismo tiempo
+      // Cargamos hábitos y actividades al mismo tiempo
       final futures = await Future.wait([
         _habitRepository.getHabitsByDayOfWeek(currentDay),
         _activityRepository.getActivitiesByDate(today),
-        _timeBlockRepository.getTimeBlocksByDate(today),
       ]);
 
       // La lista de entidades Habit debe convertirse a HabitModel para que funcionen los métodos existentes
@@ -127,7 +117,6 @@ class DashboardController extends ChangeNotifier {
       _habits = habitsEntities.map(_mapEntityToModel).toList();
 
       _activities = futures[1] as List<ActivityModel>;
-      _timeBlocks = futures[2] as List<TimeBlockModel>;
 
       debugPrint('Hábitos cargados para $currentDay: ${_habits.length}');
       for (final habit in _habits) {
@@ -139,8 +128,6 @@ class DashboardController extends ChangeNotifier {
         debugPrint('  - ${activity.title} (${activity.startTime})');
       }
 
-      debugPrint('Timeblocks cargados para hoy: ${_timeBlocks.length}');
-
       // Si no hay datos para hoy, verificar si hay datos en general
       if (_habits.isEmpty && _activities.isEmpty) {
         debugPrint('No hay datos para hoy, verificando datos generales...');
@@ -151,7 +138,7 @@ class DashboardController extends ChangeNotifier {
       _sortAllLists();
 
       debugPrint(
-          'Total de items cargados: ${_activities.length + _habits.length + _timeBlocks.length}');
+          'Total de items cargados: ${_activities.length + _habits.length}');
       debugPrint('=== FIN DEBUG LOAD DATA ===');
     } catch (e) {
       debugPrint('Error cargando datos: $e');
@@ -199,42 +186,6 @@ class DashboardController extends ChangeNotifier {
     }
   }
 
-  // Precarga de timeblocks para hábitos sin bloquear la UI
-  Future<void> _preloadHabitTimeBlocks(DateTime date) async {
-    try {
-      // Obtener los hábitos para hoy
-      final now = DateTime.now();
-      final currentDay = DateTimeHelper.getDayOfWeek(now);
-      final habitsEntities =
-          await _habitRepository.getHabitsByDayOfWeek(currentDay);
-
-      // Convertir a modelo
-      final habitsForToday = habitsEntities.map(_mapEntityToModel).toList();
-
-      // Si no hay hábitos, no hacemos nada
-      if (habitsForToday.isEmpty) return;
-
-      // Actualizar timeblocks para estos hábitos en segundo plano
-      // Usando una versión simplificada sin unawaited
-      _createTimeBlocksInBackground(habitsForToday, date).then((_) {
-        debugPrint('Timeblocks precargados completados');
-      });
-    } catch (e) {
-      debugPrint('Error en precarga de timeblocks: $e');
-    }
-  }
-
-  // Método para crear timeblocks en segundo plano sin bloquear la UI
-  Future<void> _createTimeBlocksInBackground(
-      List<HabitModel> habits, DateTime date) async {
-    try {
-      await _habitToTimeBlockService.convertHabitsToTimeBlocks(date);
-      debugPrint('Timeblocks precargados en segundo plano');
-    } catch (e) {
-      debugPrint('Error creando timeblocks en segundo plano: $e');
-    }
-  }
-
   // Método para ordenar todas las listas por hora
   void _sortAllLists() {
     // Ordenar actividades por hora de inicio
@@ -246,9 +197,6 @@ class DashboardController extends ChangeNotifier {
       final timeB = _parseTimeToMinutes(b.time);
       return timeA.compareTo(timeB);
     });
-
-    // Ordenar timeblocks por hora de inicio
-    _timeBlocks.sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
   // Parse time string to minutes for sorting

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'dart:async';
 import 'package:temposage/core/constants/app_colors.dart';
 import 'package:temposage/core/services/service_locator.dart';
+import 'package:temposage/core/services/event_bus.dart';
 import 'package:temposage/features/habits/data/models/habit_model.dart';
 import 'package:temposage/features/habits/domain/entities/habit.dart';
 import 'package:temposage/features/habits/presentation/widgets/habit_card.dart';
@@ -23,12 +25,30 @@ class _HabitsScreenState extends State<HabitsScreen> {
   bool _isLoading = true;
   int _todaysCompletedHabits = 0;
   int _longestStreak = 0;
+  StreamSubscription<String>? _eventSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadHabits();
     _loadRecommendations();
+    _setupEventListener();
+  }
+
+  @override
+  void dispose() {
+    _eventSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupEventListener() {
+    _eventSubscription = EventBus().events.listen((event) {
+      debugPrint('🎧 HabitsScreen recibió evento: $event');
+      if (event == AppEvents.habitCreated || event == AppEvents.dataChanged) {
+        debugPrint('🔄 Actualizando lista de hábitos...');
+        _loadHabits();
+      }
+    });
   }
 
   Future<void> _loadHabits() async {
