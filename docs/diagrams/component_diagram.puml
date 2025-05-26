@@ -1,0 +1,186 @@
+@startuml TempoSage_Component_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 10
+skinparam componentFontSize 10
+skinparam packageFontSize 11
+
+' Colores específicos para diferentes tipos de sistemas
+skinparam cloud {
+    BackgroundColor #FFEBEE
+    BorderColor #C62828
+    FontColor #B71C1C
+}
+
+skinparam node {
+    BackgroundColor #E8F5E8
+    BorderColor #388E3C
+    FontColor #1B5E20
+}
+
+skinparam database {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+' Colores para capas de la aplicación
+skinparam package {
+    BackgroundColor<<Presentation>> #F3E5F5
+    BorderColor<<Presentation>> #7B1FA2
+    FontColor<<Presentation>> #4A148C
+}
+
+skinparam package {
+    BackgroundColor<<Domain>> #E8F5E8
+    BorderColor<<Domain>> #388E3C
+    FontColor<<Domain>> #1B5E20
+}
+
+skinparam package {
+    BackgroundColor<<Data>> #FFF3E0
+    BorderColor<<Data>> #F57C00
+    FontColor<<Data>> #E65100
+}
+
+skinparam package {
+    BackgroundColor<<Core>> #E3F2FD
+    BorderColor<<Core>> #1976D2
+    FontColor<<Core>> #0D47A1
+}
+
+skinparam package {
+    BackgroundColor<<ML>> #FFEBEE
+    BorderColor<<ML>> #C62828
+    FontColor<<ML>> #B71C1C
+}
+
+skinparam component {
+    BackgroundColor #F8F9FA
+    BorderColor #6C757D
+    FontColor #495057
+}
+
+' Layout optimizado para relación 1:1
+skinparam minClassWidth 100
+skinparam maxMessageSize 120
+
+title Diagrama de Componentes - TempoSage\nArquitectura del Sistema con Diferenciación Visual
+
+' ===========================================
+' SISTEMAS EXTERNOS (Superior)
+' ===========================================
+cloud "Sistemas Externos" as external #FFEBEE {
+    component "TempoSage ML API" as mlapi #FFCDD2
+    component "Calendar API" as calendar #FFCDD2
+}
+
+' ===========================================
+' ALMACENAMIENTO LOCAL (Izquierda Superior)
+' ===========================================
+node "Almacenamiento Local" as storage #E8F5E8 {
+    database "Hive Database" as hive #BBDEFB
+    database "SharedPreferences" as prefs #BBDEFB
+}
+
+' ===========================================
+' SISTEMA OPERATIVO (Derecha Superior)
+' ===========================================
+node "Sistema Operativo" as os #E8F5E8 {
+    component "Notifications" as notif #C8E6C9
+    component "Speech-to-Text" as stt #C8E6C9
+}
+
+' ===========================================
+' APLICACIÓN TEMPOSAGE (Centro)
+' ===========================================
+package "TempoSage App" as app {
+    
+    ' PRESENTATION LAYER
+    package "Presentation Layer" <<Presentation>> as presentation {
+        component "Screens" as screens #E1BEE7
+        component "Widgets" as widgets #E1BEE7
+        component "State Management" as state #E1BEE7
+        component "Navigation" as nav #E1BEE7
+    }
+    
+    ' DOMAIN LAYER
+    package "Domain Layer" <<Domain>> as domain {
+        component "Entities" as entities #C8E6C9
+        component "Use Cases" as usecases #C8E6C9
+        component "Repository Interfaces" as repo_int #C8E6C9
+        component "Domain Services" as domain_serv #C8E6C9
+    }
+    
+    ' DATA LAYER
+    package "Data Layer" <<Data>> as data {
+        component "Models" as models #FFE0B2
+        component "Repository Impl" as repo_impl #FFE0B2
+        component "Data Sources" as datasources #FFE0B2
+        component "Type Adapters" as adapters #FFE0B2
+    }
+    
+    ' CORE LAYER
+    package "Core Layer" <<Core>> as core {
+        component "Services" as services #BBDEFB
+        component "Utilities" as utils #BBDEFB
+        component "Constants" as constants #BBDEFB
+        component "Extensions" as extensions #BBDEFB
+        component "Dependency Injection" as di #BBDEFB
+    }
+    
+    ' ML/AI LAYER
+    package "ML/AI Layer" <<ML>> as ml {
+        component "TensorFlow Lite" as tflite #FFCDD2
+        component "Pattern Analysis" as patterns #FFCDD2
+        component "Productivity Prediction" as prediction #FFCDD2
+        component "Recommendation Engine" as recommendations #FFCDD2
+    }
+}
+
+' ===========================================
+' RELACIONES OPTIMIZADAS
+' ===========================================
+
+' Conexiones externas
+app ..> mlapi : "API Calls"
+app ..> calendar : "Calendar Sync"
+app ..> notif : "Schedule Notifications"
+app ..> stt : "Voice Input"
+
+' Almacenamiento
+data --> hive : "Data Persistence"
+core --> prefs : "Settings Storage"
+
+' Flujo interno de capas (de arriba hacia abajo)
+presentation --> domain : "Business Logic"
+domain --> data : "Data Access"
+data --> core : "Core Services"
+
+' Relaciones específicas dentro de la app
+screens --> state : "State Updates"
+widgets --> nav : "Navigation"
+usecases --> repo_int : "Data Operations"
+repo_impl --> models : "Data Mapping"
+repo_impl --> datasources : "Data Access"
+datasources --> adapters : "Type Conversion"
+
+' ML/AI connections
+usecases --> ml : "AI/ML Services"
+ml --> patterns : "Pattern Recognition"
+ml --> prediction : "Productivity Analysis"
+ml --> recommendations : "Smart Suggestions"
+
+' Core services
+di --> services : "Service Location"
+services --> utils : "Utility Functions"
+
+' Layout hints para mejor distribución
+external -[hidden]down- storage
+storage -[hidden]right- os
+presentation -[hidden]down- domain
+domain -[hidden]down- data
+data -[hidden]down- core
+core -[hidden]right- ml
+
+@enduml 

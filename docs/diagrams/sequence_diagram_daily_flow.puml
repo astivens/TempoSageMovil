@@ -1,0 +1,376 @@
+@startuml TempoSage_Daily_Flow_Sequence_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 10
+skinparam participantFontSize 10
+skinparam sequenceMessageAlign center
+
+' Colores para diferentes tipos de componentes
+skinparam actor {
+    BackgroundColor #E8F5E8
+    BorderColor #2E7D32
+    FontColor #1B5E20
+}
+
+skinparam participant {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontColor #E65100
+}
+
+skinparam database {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam control {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+    FontColor #4A148C
+}
+
+skinparam boundary {
+    BackgroundColor #FFEBEE
+    BorderColor #C62828
+    FontColor #B71C1C
+}
+
+' Layout optimizado
+skinparam minClassWidth 85
+skinparam maxMessageSize 110
+
+title Diagrama de Secuencia - TempoSage\nFlujo Diario: Gestion de Tareas y Actividades
+
+' ===========================================
+' PARTICIPANTES CON COLORES
+' ===========================================
+actor "Usuario\nProductivo" as user #E8F5E8
+participant "DashboardScreen" as dashboard #FFF3E0
+participant "TasksScreen" as tasks #FFF3E0
+participant "CalendarView" as calendar #FFF3E0
+participant "TaskCubit" as taskcubit #F3E5F5
+participant "ActivityCubit" as actcubit #F3E5F5
+participant "TaskRepository" as taskrepo #F3E5F5
+participant "ActivityRepository" as actrepo #F3E5F5
+participant "LocalStorage" as storage #E3F2FD
+participant "HiveDatabase" as hive #E3F2FD
+participant "NotificationService" as notif #FFEBEE
+participant "RecommendationService" as recommend #FFEBEE
+
+' ===========================================
+' FLUJO MATUTINO - INICIO DEL DIA
+' ===========================================
+== Inicio del Dia Productivo ==
+
+user -> dashboard : Abrir TempoSage\n(8:00 AM)
+activate dashboard
+
+dashboard -> taskcubit : loadTodayTasks()
+activate taskcubit
+
+taskcubit -> taskrepo : getTodayTasks(userId, today)
+activate taskrepo
+
+taskrepo -> storage : queryTasks(date, userId)
+activate storage
+
+storage -> hive : query("tasks", filters)
+activate hive
+hive --> storage : todayTasks
+deactivate hive
+
+storage --> taskrepo : List<Task>
+deactivate storage
+
+taskrepo --> taskcubit : tasks
+deactivate taskrepo
+
+taskcubit --> dashboard : TaskState.loaded(tasks)
+deactivate taskcubit
+
+dashboard -> actcubit : loadTodayActivities()
+activate actcubit
+
+actcubit -> actrepo : getTodayActivities(userId)
+activate actrepo
+
+actrepo -> storage : queryActivities(today)
+activate storage
+
+storage -> hive : query("activities", today)
+activate hive
+hive --> storage : todayActivities
+deactivate hive
+
+storage --> actrepo : List<Activity>
+deactivate storage
+
+actrepo --> actcubit : activities
+deactivate actrepo
+
+actcubit --> dashboard : ActivityState.loaded(activities)
+deactivate actcubit
+
+dashboard -> recommend : getTodayRecommendations(user)
+activate recommend
+
+recommend -> recommend : analyzeUserPatterns()
+recommend -> recommend : generateDailyInsights()
+
+recommend --> dashboard : DailyRecommendations
+deactivate recommend
+
+dashboard --> user : Dashboard Matutino con resumen
+deactivate dashboard
+
+' ===========================================
+' GESTION DE TAREAS DURANTE EL DIA
+' ===========================================
+== Gestion Activa de Tareas ==
+
+user -> dashboard : Tap "Ver Tareas"
+activate dashboard
+
+dashboard -> tasks : navigateToTasks()
+deactivate dashboard
+activate tasks
+
+tasks --> user : Lista de tareas\ncon prioridades visuales
+deactivate tasks
+
+user -> tasks : Tap "Completar Tarea"
+activate tasks
+
+tasks -> taskcubit : completeTask(taskId)
+activate taskcubit
+
+taskcubit -> taskrepo : updateTaskCompletion(taskId, true)
+activate taskrepo
+
+taskrepo -> storage : updateTask(taskId, changes)
+activate storage
+
+storage -> hive : update("tasks", taskId, data)
+activate hive
+hive --> storage : taskUpdated
+deactivate hive
+
+storage --> taskrepo : success
+deactivate storage
+
+taskrepo --> taskcubit : taskCompleted
+deactivate taskrepo
+
+' Actualizacion automatica de progreso
+taskcubit -> taskcubit : calculateDailyProgress()
+taskcubit -> notif : schedulePositiveReinforcement()
+activate notif
+
+notif -> notif : createCelebrationNotification()
+notif --> taskcubit : reinforcementScheduled
+deactivate notif
+
+taskcubit --> tasks : TaskState.updated(progress: 60%)
+deactivate taskcubit
+
+tasks --> user : Tarea completada con progreso
+deactivate tasks
+
+' ===========================================
+' CREACION DE ACTIVIDAD ESPONTANEA
+' ===========================================
+== Actividad No Planificada ==
+
+user -> dashboard : "Necesito programar\nuna llamada urgente"
+activate dashboard
+
+dashboard -> calendar : showQuickActivityDialog()
+activate calendar
+
+calendar --> user : Formulario rapido para actividad
+deactivate calendar
+
+user -> calendar : Completar y guardar
+activate calendar
+
+calendar -> actcubit : createQuickActivity(activityData)
+activate actcubit
+
+actcubit -> actrepo : addActivity(activity)
+activate actrepo
+
+actrepo -> storage : saveActivity(newActivity)
+activate storage
+
+storage -> hive : put("activities", activity)
+activate hive
+hive --> storage : activitySaved
+deactivate hive
+
+storage --> actrepo : success
+deactivate storage
+
+actrepo --> actcubit : activityCreated
+deactivate actrepo
+
+' Verificacion automatica de conflictos
+actcubit -> actcubit : checkTimeConflicts()
+
+alt Sin conflictos
+    actcubit -> calendar : updateCalendarView()
+    actcubit -> notif : scheduleActivityReminder(activity)
+    activate notif
+    notif --> actcubit : reminderSet
+    deactivate notif
+    
+    actcubit --> calendar : ActivityState.added(activity)
+    deactivate actcubit
+    
+    calendar --> user : "Actividad programada\nRecordatorio en 5 min"
+    deactivate calendar
+
+else Conflicto detectado
+    actcubit -> recommend : suggestAlternativeSlots(activity)
+    activate recommend
+    recommend --> actcubit : alternativeSlots
+    deactivate recommend
+    
+    actcubit --> calendar : ConflictDetected(alternatives)
+    deactivate actcubit
+    
+    calendar --> user : "Conflicto detectado\nSugerencias disponibles"
+    
+    user -> calendar : Seleccionar nueva hora
+    calendar -> actcubit : rescheduleActivity(newTime)
+    activate actcubit
+    actcubit -> actrepo : updateActivity(activityId, newTime)
+    activate actrepo
+    actrepo --> actcubit : updated
+    deactivate actrepo
+    actcubit --> calendar : rescheduled
+    deactivate actcubit
+    calendar --> user : "Actividad reprogramada"
+    deactivate calendar
+end
+
+' ===========================================
+' MONITOREO DE PROGRESO VESPERTINO
+' ===========================================
+== Revision Vespertina (6:00 PM) ==
+
+notif -> user : Notificacion para revisar progreso diario
+
+user -> dashboard : Abrir para revision
+activate dashboard
+
+dashboard -> taskcubit : getDayProgress()
+activate taskcubit
+
+taskcubit -> taskrepo : calculateDayStats(userId, today)
+activate taskrepo
+
+taskrepo -> storage : getCompletionStats(today)
+activate storage
+
+storage -> hive : aggregateStats("tasks", "activities")
+activate hive
+hive --> storage : DayStats
+deactivate hive
+
+storage --> taskrepo : dayStats
+deactivate storage
+
+taskrepo --> taskcubit : progressData
+deactivate taskrepo
+
+taskcubit --> dashboard : DayProgress(80% productive)
+deactivate taskcubit
+
+dashboard -> recommend : generateDayEndInsights(progressData)
+activate recommend
+
+recommend -> recommend : analyzeProductivityPatterns()
+recommend -> recommend : identifyImprovementAreas()
+
+recommend --> dashboard : DayEndInsights
+deactivate recommend
+
+dashboard --> user : Resumen del Dia con insights
+deactivate dashboard
+
+' ===========================================
+' PREPARACION PARA EL DIA SIGUIENTE
+' ===========================================
+== Planificacion del Siguiente Dia ==
+
+user -> dashboard : "Preparar tareas de manana"
+activate dashboard
+
+dashboard -> tasks : showTomorrowPlanning()
+activate tasks
+
+tasks -> taskcubit : loadPendingTasks()
+activate taskcubit
+
+taskcubit -> taskrepo : getIncompleteTasks(userId)
+activate taskrepo
+
+taskrepo -> storage : queryIncompleteTasks()
+activate storage
+
+storage -> hive : query("tasks", status: pending)
+activate hive
+hive --> storage : pendingTasks
+deactivate hive
+
+storage --> taskrepo : List<Task>
+deactivate storage
+
+taskrepo --> taskcubit : pendingTasks
+deactivate taskrepo
+
+taskcubit --> tasks : PendingTasks(2 from today, suggestions)
+deactivate taskcubit
+
+tasks -> recommend : suggestTomorrowSchedule(pendingTasks)
+activate recommend
+
+recommend -> recommend : optimizeNextDaySchedule()
+
+recommend --> tasks : TomorrowSuggestions
+deactivate recommend
+
+tasks --> user : Planificacion Manana con sugerencias
+deactivate tasks
+
+user -> notif : "Si, recordatorio para manana"
+
+notif -> notif : scheduleMorningReminder()
+notif --> user : "Recordatorio programado"
+
+' ===========================================
+' MANEJO DE ERRORES DURANTE EL DIA
+' ===========================================
+== Manejo de Errores ==
+
+alt Error de sincronizacion
+    storage -> storage : handleSyncError()
+    storage --> taskrepo : SyncException
+    taskrepo --> taskcubit : showOfflineMode()
+    taskcubit --> user : "Modo offline activado\nDatos se sincronizaran despues"
+    
+else Error en notificaciones
+    notif -> notif : handleNotificationError()
+    notif --> dashboard : notificationFailed
+    dashboard --> user : "Recordatorios deshabilitados\nRevisa permisos"
+    
+else Error en recomendaciones
+    recommend -> recommend : handleAIError()
+    recommend --> dashboard : recommendationUnavailable
+    dashboard --> user : "Sugerencias no disponibles\nfuncionando normalmente"
+end
+
+' Final del diagrama sin notas problematicas
+
+@enduml 
