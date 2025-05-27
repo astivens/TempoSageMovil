@@ -3,6 +3,7 @@ import '../../data/models/activity_model.dart';
 import '../../data/repositories/activity_repository.dart';
 import '../../../timeblocks/data/models/time_block_model.dart';
 import '../../../timeblocks/data/repositories/time_block_repository.dart';
+import 'package:collection/collection.dart';
 
 class ActivityToTimeBlockService {
   final ActivityRepository _activityRepository;
@@ -33,19 +34,11 @@ class ActivityToTimeBlockService {
     final existingTimeBlocks =
         await _timeBlockRepository.getTimeBlocksByDate(activity.startTime);
 
-    final existingBlock = existingTimeBlocks.firstWhere(
+    final existingBlock = existingTimeBlocks.firstWhereOrNull(
       (block) => _isMatchingActivityTimeBlock(block, activity),
-      orElse: () => TimeBlockModel.create(
-        title: '',
-        description: '',
-        startTime: DateTime.now(),
-        endTime: DateTime.now(),
-        category: '',
-        color: '#9D7CD8',
-      ),
     );
 
-    if (existingBlock.title.isNotEmpty) {
+    if (existingBlock != null && existingBlock.title.isNotEmpty) {
       debugPrint(
           '✅ TimeBlock ya existe para "${activity.title}", actualizando...');
       final updatedTimeBlock = existingBlock.copyWith(
@@ -92,19 +85,11 @@ class ActivityToTimeBlockService {
     for (final activity in activities) {
       try {
         // Verificar si ya existe un timeblock para esta actividad
-        final existingBlock = existingTimeBlocks.firstWhere(
+        final existingBlock = existingTimeBlocks.firstWhereOrNull(
           (block) => _isMatchingActivityTimeBlock(block, activity),
-          orElse: () => TimeBlockModel.create(
-            title: '',
-            description: '',
-            startTime: DateTime.now(),
-            endTime: DateTime.now(),
-            category: '',
-            color: '#9D7CD8',
-          ),
         );
 
-        if (existingBlock.title.isNotEmpty) {
+        if (existingBlock != null && existingBlock.title.isNotEmpty) {
           // Ya existe, verificar si necesita actualización
           if (_needsUpdate(existingBlock, activity)) {
             final updatedBlock = existingBlock.copyWith(

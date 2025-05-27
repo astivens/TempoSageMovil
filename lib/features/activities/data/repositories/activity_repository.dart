@@ -101,15 +101,19 @@ class ActivityRepository {
     try {
       // Guardar en la lista en memoria
       _activities.add(activity);
-      debugPrint('Actividad agregada: ${activity.title}');
+      debugPrint('Actividad agregada: \\${activity.title}');
 
       // Guardar en el almacenamiento local (Hive)
       await LocalStorage.saveData<ActivityModel>(
           _boxName, activity.id, activity);
-      debugPrint('Actividad guardada en almacenamiento local: ${activity.id}');
+      debugPrint(
+          'Actividad guardada en almacenamiento local: \\${activity.id}');
 
       // Sincronizar con bloques de tiempo
+      debugPrint('Sincronizando actividad con time block...');
       await _syncWithTimeBlock(activity);
+      debugPrint(
+          'Sincronización con time block completada para actividad: \\${activity.title}');
 
       // Programar notificación si es necesario
       if (activity.sendReminder) {
@@ -117,7 +121,7 @@ class ActivityRepository {
             .scheduleActivityNotification(activity);
       }
     } catch (e) {
-      debugPrint('Error al agregar actividad: $e');
+      debugPrint('Error al agregar actividad: \\${e}');
       rethrow;
     }
   }

@@ -139,6 +139,14 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
       TimeBlockModel timeBlock, bool isCurrent, bool isPast, ThemeData theme) {
     final l10n = AppLocalizations.of(context)!;
 
+    String getUserDescription(String description) {
+      final lines = description.split('\n');
+      final filtered = lines.where((line) =>
+          !line.contains('[ACTIVITY_GENERATED]') &&
+          !line.trim().startsWith('ID:'));
+      return filtered.join('\n').trim();
+    }
+
     return GestureDetector(
       onTap: () => widget.onTimeBlockTap(timeBlock),
       child: AnimatedContainer(
@@ -214,16 +222,14 @@ class _TimeBlockTimelineState extends State<TimeBlockTimeline>
                     ),
                 ],
               ),
-              ...[
-                const SizedBox(height: 8),
-                Text(
-                  timeBlock.description,
-                  style: TextStyle(
-                    color: theme.colorScheme.onBackground.withOpacity(0.8),
-                    fontSize: 14,
-                  ),
+              const SizedBox(height: 8),
+              Text(
+                getUserDescription(timeBlock.description),
+                style: TextStyle(
+                  color: theme.colorScheme.onBackground.withOpacity(0.8),
+                  fontSize: 14,
                 ),
-              ],
+              ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

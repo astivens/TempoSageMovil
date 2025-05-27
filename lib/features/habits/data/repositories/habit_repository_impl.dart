@@ -151,6 +151,10 @@ class HabitRepositoryImpl implements HabitRepository {
         await ServiceLocator.instance.habitNotificationService
             .scheduleHabitNotification(habit);
       }
+
+      // Planificar bloques de tiempo para los próximos 3 días
+      await ServiceLocator.instance.habitToTimeBlockService
+          .planificarBloquesParaNuevoHabito(habitModel, daysAhead: 3);
     } catch (e) {
       throw HabitRepositoryException('Error al crear hábito: $e');
     }
@@ -170,6 +174,10 @@ class HabitRepositoryImpl implements HabitRepository {
       // Actualizar notificaciones para este hábito
       await ServiceLocator.instance.habitNotificationService
           .updateHabitNotifications(habit);
+
+      // Planificar bloques de tiempo para los próximos 3 días
+      await ServiceLocator.instance.habitToTimeBlockService
+          .planificarBloquesParaNuevoHabito(habitModel, daysAhead: 3);
     } catch (e) {
       throw HabitRepositoryException('Error al actualizar hábito: $e');
     }
