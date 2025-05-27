@@ -6,6 +6,7 @@ import 'core/services/local_storage.dart';
 import 'core/services/navigation_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/service_locator.dart';
+import 'core/services/migration_service.dart';
 import 'core/utils/logger.dart';
 import 'core/theme/theme_manager.dart';
 import 'core/l10n/app_localizations.dart';
@@ -57,6 +58,13 @@ Future<void> _initializeApp() async {
     await ServiceLocator.instance.initializeAll();
     logger.i('Servicios y repositorios inicializados', tag: 'App');
 
+<<<<<<< HEAD
+=======
+    // Ejecutar migraciones automáticas (incluye limpieza de duplicados)
+    await MigrationService.runMigrations();
+    logger.i('Migraciones ejecutadas', tag: 'App');
+
+>>>>>>> main
     // Precargar recomendaciones en segundo plano
     _precargaModeloML();
 

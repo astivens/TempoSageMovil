@@ -101,15 +101,29 @@ class ActivityRepository {
     try {
       // Guardar en la lista en memoria
       _activities.add(activity);
+<<<<<<< HEAD
       debugPrint('Actividad agregada: ${activity.title}');
+=======
+      debugPrint('Actividad agregada: \\${activity.title}');
+>>>>>>> main
 
       // Guardar en el almacenamiento local (Hive)
       await LocalStorage.saveData<ActivityModel>(
           _boxName, activity.id, activity);
+<<<<<<< HEAD
       debugPrint('Actividad guardada en almacenamiento local: ${activity.id}');
 
       // Sincronizar con bloques de tiempo
+=======
+      debugPrint(
+          'Actividad guardada en almacenamiento local: \\${activity.id}');
+
+      // Sincronizar con bloques de tiempo
+      debugPrint('Sincronizando actividad con time block...');
+>>>>>>> main
       await _syncWithTimeBlock(activity);
+      debugPrint(
+          'Sincronización con time block completada para actividad: \\${activity.title}');
 
       // Programar notificación si es necesario
       if (activity.sendReminder) {
@@ -117,7 +131,7 @@ class ActivityRepository {
             .scheduleActivityNotification(activity);
       }
     } catch (e) {
-      debugPrint('Error al agregar actividad: $e');
+      debugPrint('Error al agregar actividad: \\${e}');
       rethrow;
     }
   }
@@ -153,39 +167,81 @@ class ActivityRepository {
   /// Sincroniza una actividad con su correspondiente bloque de tiempo
   Future<void> _syncWithTimeBlock(ActivityModel activity) async {
     try {
+      debugPrint(
+          '🔄 Sincronizando actividad "${activity.title}" con TimeBlock...');
+
       final timeBlocks =
           await _timeBlockRepository.getTimeBlocksByDate(activity.startTime);
-      final matchingTimeBlocks = timeBlocks
-          .where(
-            (block) =>
-                block.title == activity.title &&
-                block.startTime == activity.startTime,
-          )
-          .toList();
+
+      // Buscar timeblock usando criterios mejorados
+      final matchingTimeBlocks = timeBlocks.where((block) {
+        // Verificar por marcador de actividad generada
+        bool hasActivityMarker =
+            block.description.contains('[ACTIVITY_GENERATED]') &&
+                block.description.contains('ID: ${activity.id}');
+
+        // Verificar por coincidencia exacta de datos
+        bool exactMatch = block.title == activity.title &&
+            block.startTime == activity.startTime &&
+            block.endTime == activity.endTime;
+
+        return hasActivityMarker || exactMatch;
+      }).toList();
 
       if (matchingTimeBlocks.isNotEmpty) {
+        debugPrint('✅ TimeBlock existente encontrado, actualizando...');
         final timeBlock = matchingTimeBlocks.first;
-        final updatedTimeBlock = timeBlock.copyWith(
-          isCompleted: activity.isCompleted,
-          title: activity.title,
-          description: activity.description,
-          startTime: activity.startTime,
-          endTime: activity.endTime,
-          category: activity.category,
-        );
-        await _timeBlockRepository.updateTimeBlock(updatedTimeBlock);
-        _logger.d('TimeBlock sincronizado con la actividad',
-            tag: 'ActivityRepo');
+
+        // Solo actualizar si hay cambios reales
+        final needsUpdate = timeBlock.title != activity.title ||
+            timeBlock.startTime != activity.startTime ||
+            timeBlock.endTime != activity.endTime ||
+            timeBlock.category != activity.category ||
+            timeBlock.isCompleted != activity.isCompleted;
+
+        if (needsUpdate) {
+          final updatedTimeBlock = timeBlock.copyWith(
+            isCompleted: activity.isCompleted,
+            title: activity.title,
+            description: _createActivityDescription(activity),
+            startTime: activity.startTime,
+            endTime: activity.endTime,
+            category: activity.category,
+            isFocusTime: activity.priority == 'High',
+          );
+          await _timeBlockRepository.updateTimeBlock(updatedTimeBlock);
+          _logger.d('TimeBlock actualizado para "${activity.title}"',
+              tag: 'ActivityRepo');
+        } else {
+          _logger.d('TimeBlock ya está sincronizado para "${activity.title}"',
+              tag: 'ActivityRepo');
+        }
       } else {
+        debugPrint('🆕 Creando nuevo TimeBlock para "${activity.title}"...');
         await ServiceLocator.instance.activityToTimeBlockService
             .convertSingleActivityToTimeBlock(activity);
-        _logger.d('Nuevo TimeBlock creado para la actividad',
+        _logger.d(
+            'Nuevo TimeBlock creado para la actividad "${activity.title}"',
             tag: 'ActivityRepo');
       }
     } catch (e) {
       _logger.w('Error al sincronizar con TimeBlock: $e', tag: 'ActivityRepo');
       // No lanzamos la excepción aquí para no interrumpir la operación principal
     }
+  }
+
+  /// Crea una descripción que incluye un identificador de la actividad
+  String _createActivityDescription(ActivityModel activity) {
+    String description = activity.description;
+    const activityMarker = '[ACTIVITY_GENERATED]';
+
+    if (!description.contains(activityMarker)) {
+      description = description.isEmpty
+          ? '$activityMarker ID: ${activity.id}'
+          : '$description\n\n$activityMarker ID: ${activity.id}';
+    }
+
+    return description;
   }
 
   /// Cambia el estado de completado de una actividad

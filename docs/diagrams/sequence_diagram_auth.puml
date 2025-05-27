@@ -1,0 +1,266 @@
+@startuml TempoSage_Auth_Sequence_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 10
+skinparam participantFontSize 10
+skinparam sequenceMessageAlign center
+
+' Colores para diferentes tipos de componentes
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam participant {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+    FontColor #4A148C
+}
+
+skinparam database {
+    BackgroundColor #E8F5E8
+    BorderColor #388E3C
+    FontColor #1B5E20
+}
+
+skinparam control {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontColor #E65100
+}
+
+' Layout optimizado
+skinparam minClassWidth 90
+skinparam maxMessageSize 120
+
+title Diagrama de Secuencia - TempoSage\nFlujo de Autenticacion (Login y Registro)
+
+' ===========================================
+' PARTICIPANTES CON COLORES
+' ===========================================
+actor "Usuario" as user #E3F2FD
+participant "SplashScreen" as splash #F3E5F5
+participant "AuthScreen" as auth #F3E5F5
+participant "LoginForm" as login #F3E5F5
+participant "RegisterForm" as register #F3E5F5
+participant "AuthCubit" as cubit #FFF3E0
+participant "AuthRepository" as repo #FFF3E0
+participant "LocalStorage" as storage #E8F5E8
+participant "HiveDatabase" as hive #E8F5E8
+participant "ValidationService" as validator #FFEBEE
+participant "DashboardController" as dashboard #F3E5F5
+
+' ===========================================
+' FLUJO INICIAL - SPLASH Y VERIFICACIÓN
+' ===========================================
+== Inicio de Aplicacion ==
+
+user -> splash : Abrir TempoSage
+activate splash
+
+splash -> cubit : checkAuthStatus()
+activate cubit
+
+cubit -> repo : getCurrentUser()
+activate repo
+
+repo -> storage : getUserData()
+activate storage
+
+storage -> hive : get("current_user")
+activate hive
+
+alt Usuario autenticado
+    hive --> storage : userData
+    deactivate hive
+    storage --> repo : User
+    deactivate storage
+    repo --> cubit : AuthState.authenticated(user)
+    deactivate repo
+    
+    cubit -> dashboard : initializeDashboard(user)
+    activate dashboard
+    dashboard --> cubit : dashboardReady
+    deactivate dashboard
+    
+    cubit --> splash : navigateToHome()
+    deactivate cubit
+    splash --> user : Mostrar Dashboard
+    deactivate splash
+
+else Usuario no autenticado
+    hive --> storage : null
+    deactivate hive
+    storage --> repo : null
+    deactivate storage
+    repo --> cubit : AuthState.unauthenticated
+    deactivate repo
+    
+    cubit --> splash : navigateToAuth()
+    deactivate cubit
+    
+    splash -> auth : Mostrar pantalla autenticacion
+    deactivate splash
+    activate auth
+    
+    auth --> user : Opciones: Login / Registro
+    deactivate auth
+end
+
+' ===========================================
+' FLUJO DE REGISTRO
+' ===========================================
+== Proceso de Registro ==
+
+user -> auth : Seleccionar "Registrarse"
+activate auth
+
+auth -> register : Mostrar formulario registro
+activate register
+
+user -> register : Completar datos
+register -> validator : validateRegistrationData()
+activate validator
+
+alt Datos validos
+    validator --> register : validationSuccess
+    deactivate validator
+    
+    register -> cubit : register(userData)
+    activate cubit
+    
+    cubit -> repo : createUser(userData)
+    activate repo
+    
+    repo -> repo : hashPassword(password)
+    repo -> storage : saveUser(newUser)
+    activate storage
+    
+    storage -> hive : put("users", newUser)
+    activate hive
+    hive --> storage : success
+    deactivate hive
+    
+    storage -> hive : put("current_user", newUser)
+    activate hive
+    hive --> storage : success
+    deactivate hive
+    
+    storage --> repo : userCreated
+    deactivate storage
+    
+    repo --> cubit : AuthState.authenticated(user)
+    deactivate repo
+    
+    cubit -> dashboard : initializeDashboard(user)
+    activate dashboard
+    dashboard --> cubit : dashboardInitialized
+    deactivate dashboard
+    
+    cubit --> register : registrationSuccess
+    deactivate cubit
+    
+    register --> auth : navigateToHome()
+    deactivate register
+    
+    auth --> user : Bienvenida y Dashboard
+    deactivate auth
+
+else Datos invalidos
+    validator --> register : ValidationError(errores)
+    deactivate validator
+    register --> user : Mostrar errores
+end
+
+' ===========================================
+' FLUJO DE LOGIN - SIMPLIFICADO
+' ===========================================
+== Proceso de Login ==
+
+user -> auth : Seleccionar "Iniciar Sesion"
+activate auth
+
+auth -> login : Mostrar formulario login
+activate login
+
+user -> login : Ingresar credenciales
+login -> validator : validateLoginData()
+activate validator
+
+alt Datos validos
+    validator --> login : validationSuccess
+    deactivate validator
+    
+    login -> cubit : login(credentials)
+    activate cubit
+    
+    cubit -> repo : authenticateUser(credentials)
+    activate repo
+    
+    repo -> storage : getUserByEmail(email)
+    activate storage
+    
+    storage -> hive : query("users", email)
+    activate hive
+    hive --> storage : userData
+    deactivate hive
+    
+    storage --> repo : User
+    deactivate storage
+    
+    repo -> repo : verifyPassword(password, hash)
+    
+    repo -> storage : setCurrentUser(user)
+    activate storage
+    
+    storage -> hive : put("current_user", user)
+    activate hive
+    hive --> storage : success
+    deactivate hive
+    
+    storage --> repo : loginSuccess
+    deactivate storage
+    
+    repo --> cubit : AuthState.authenticated(user)
+    deactivate repo
+    
+    cubit -> dashboard : initializeDashboard(user)
+    activate dashboard
+    dashboard --> cubit : dashboardReady
+    deactivate dashboard
+    
+    cubit --> login : loginSuccess
+    deactivate cubit
+    
+    login --> auth : navigateToHome()
+    deactivate login
+    
+    auth --> user : Dashboard Principal
+    deactivate auth
+
+else Datos invalidos o error
+    validator --> login : ValidationError(errores)
+    deactivate validator
+    login --> user : Credenciales invalidas
+end
+
+' ===========================================
+' MANEJO DE ERRORES GLOBALES
+' ===========================================
+== Manejo de Errores ==
+
+alt Error de almacenamiento
+    storage -> storage : handleStorageError()
+    storage --> repo : StorageException
+    repo --> cubit : AuthError("Error de almacenamiento")
+    cubit --> auth : showErrorDialog()
+    auth --> user : "Error interno. Intenta de nuevo"
+    
+else Error de validacion severo
+    validator -> validator : handleValidationError()
+    validator --> register : CriticalValidationError
+    register --> user : "Datos no validos. Revisa la informacion"
+end
+
+@enduml

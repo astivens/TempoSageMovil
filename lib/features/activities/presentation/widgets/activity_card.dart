@@ -28,7 +28,8 @@ class ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return AnimatedListItem(
       index: index,
@@ -39,16 +40,14 @@ class ActivityCard extends StatelessWidget {
             children: [
               SlidableAction(
                 onPressed: (_) => onEdit(),
-                backgroundColor:
-                    isDarkMode ? AppColors.mocha.blue : AppColors.latte.blue,
+                backgroundColor: colorScheme.primary,
                 foregroundColor: Colors.white,
                 icon: Icons.edit,
                 label: 'Editar',
               ),
               SlidableAction(
                 onPressed: (_) => onDelete(),
-                backgroundColor:
-                    isDarkMode ? AppColors.mocha.red : AppColors.latte.red,
+                backgroundColor: colorScheme.error,
                 foregroundColor: Colors.white,
                 icon: Icons.delete,
                 label: 'Eliminar',
@@ -60,18 +59,16 @@ class ActivityCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surface0,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isDarkMode
-                      ? AppColors.mocha.surface2
-                      : AppColors.latte.surface2,
+                  color: theme.dividerColor,
                   width: 1,
                 ),
               ),
               child: Row(
                 children: [
-                  _buildCheckbox(),
+                  _buildCheckbox(theme, colorScheme),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -83,7 +80,7 @@ class ActivityCard extends StatelessWidget {
                               child: Text(
                                 activity.title,
                                 style: AppStyles.titleSmall.copyWith(
-                                  color: AppColors.text,
+                                  color: colorScheme.onSurface,
                                   decoration: activity.isCompleted
                                       ? TextDecoration.lineThrough
                                       : null,
@@ -93,10 +90,7 @@ class ActivityCard extends StatelessWidget {
                             if (isHabit)
                               Icon(
                                 Icons.repeat,
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? AppColors.mocha.mauve
-                                    : AppColors.latte.mauve,
+                                color: colorScheme.secondary,
                                 size: 20,
                               ),
                           ],
@@ -106,10 +100,7 @@ class ActivityCard extends StatelessWidget {
                           Text(
                             activity.description,
                             style: AppStyles.bodySmall.copyWith(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? AppColors.mocha.subtext0
-                                  : AppColors.latte.subtext0,
+                              color: colorScheme.onSurface.withOpacity(0.7),
                               decoration: activity.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
@@ -122,7 +113,7 @@ class ActivityCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _buildCategoryChip(context),
+                  _buildCategoryChip(theme, colorScheme),
                 ],
               ),
             ),
@@ -132,7 +123,7 @@ class ActivityCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCheckbox() {
+  Widget _buildCheckbox(ThemeData theme, ColorScheme colorScheme) {
     return InkWell(
       onTap: onToggleComplete,
       child: AnimatedContainer(
@@ -140,9 +131,12 @@ class ActivityCard extends StatelessWidget {
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          color: activity.isCompleted ? AppColors.green : Colors.transparent,
+          color:
+              activity.isCompleted ? colorScheme.primary : Colors.transparent,
           border: Border.all(
-            color: activity.isCompleted ? AppColors.green : AppColors.overlay0,
+            color: activity.isCompleted
+                ? colorScheme.primary
+                : colorScheme.outline,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(6),
@@ -158,20 +152,17 @@ class ActivityCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryChip(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
+  Widget _buildCategoryChip(ThemeData theme, ColorScheme colorScheme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surface1,
+        color: theme.cardColor.withOpacity(0.8),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         activity.category,
         style: AppStyles.bodySmall.copyWith(
-          color:
-              isDarkMode ? AppColors.mocha.subtext0 : AppColors.latte.subtext0,
+          color: colorScheme.onSurface.withOpacity(0.8),
         ),
       ),
     );

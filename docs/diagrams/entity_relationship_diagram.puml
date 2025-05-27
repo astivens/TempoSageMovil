@@ -1,0 +1,250 @@
+@startuml TempoSage_Entity_Relationship_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 10
+skinparam entityFontSize 10
+
+' Colores específicos para diferentes tipos de entidades
+' Entidades centrales - Azul
+skinparam entity {
+    BackgroundColor<<Central>> #E3F2FD
+    BorderColor<<Central>> #1976D2
+    FontColor<<Central>> #0D47A1
+}
+
+' Entidades del dominio principal - Verde
+skinparam entity {
+    BackgroundColor<<Domain>> #E8F5E8
+    BorderColor<<Domain>> #388E3C
+    FontColor<<Domain>> #1B5E20
+}
+
+' Entidades de datos y estructura - Naranja
+skinparam entity {
+    BackgroundColor<<Data>> #FFF3E0
+    BorderColor<<Data>> #F57C00
+    FontColor<<Data>> #E65100
+}
+
+' Entidades de configuración y UI - Púrpura
+skinparam entity {
+    BackgroundColor<<Config>> #F3E5F5
+    BorderColor<<Config>> #7B1FA2
+    FontColor<<Config>> #4A148C
+}
+
+' Entidades de análisis y ML - Rojo
+skinparam entity {
+    BackgroundColor<<Analytics>> #FFEBEE
+    BorderColor<<Analytics>> #C62828
+    FontColor<<Analytics>> #B71C1C
+}
+
+' Layout optimizado para relación 1:1
+skinparam minClassWidth 100
+skinparam maxMessageSize 120
+
+title Diagrama Entidad-Relación - TempoSage\nModelo de Datos del Dominio con Diferenciación Visual
+
+' ===========================================
+' ENTIDADES PRINCIPALES (Centro)
+' ===========================================
+
+entity "User" <<Central>> as user {
+    * **id** : String <<PK>>
+    --
+    email : String
+    name : String
+    passwordHash : String
+    createdAt : DateTime
+    lastLoginAt : DateTime?
+    preferences : Map<String, dynamic>
+}
+
+entity "Habit" <<Domain>> as habit {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    --
+    title : String
+    description : String
+    daysOfWeek : List<String>
+    category : String
+    time : String
+    isActive : bool
+    createdAt : DateTime
+    streak : int
+}
+
+entity "Activity" <<Domain>> as activity {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    --
+    title : String
+    description : String
+    category : String
+    startTime : DateTime
+    endTime : DateTime
+    priority : String
+    isCompleted : bool
+    estimatedDuration : int
+}
+
+entity "Task" <<Domain>> as task {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    --
+    title : String
+    description : String
+    isCompleted : bool
+    priority : String
+    dueDate : DateTime?
+    createdAt : DateTime
+    completedAt : DateTime?
+}
+
+' ===========================================
+' ENTIDADES RELACIONADAS (Alrededor)
+' ===========================================
+
+entity "TimeBlock" <<Data>> as timeblock {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    habitId : String? <<FK>>
+    activityId : String? <<FK>>
+    --
+    title : String
+    startTime : DateTime
+    endTime : DateTime
+    category : String
+    isFocusTime : bool
+    isCompleted : bool
+    color : String
+}
+
+entity "Subtask" <<Data>> as subtask {
+    * **id** : String <<PK>>
+    * **taskId** : String <<FK>>
+    --
+    title : String
+    isCompleted : bool
+    order : int
+    createdAt : DateTime
+}
+
+entity "Category" <<Data>> as category {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    --
+    name : String
+    color : String
+    icon : String
+    isDefault : bool
+}
+
+entity "Notification" <<Config>> as notification {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    habitId : String? <<FK>>
+    activityId : String? <<FK>>
+    --
+    title : String
+    body : String
+    scheduledTime : DateTime
+    isDelivered : bool
+    type : String
+}
+
+' ===========================================
+' ENTIDADES DE CONFIGURACIÓN
+' ===========================================
+
+entity "Settings" <<Config>> as settings {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    --
+    theme : String
+    language : String
+    notificationsEnabled : bool
+    soundEnabled : bool
+    defaultFocusTime : int
+    weekStartDay : String
+}
+
+entity "Goal" <<Domain>> as goal {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    habitId : String? <<FK>>
+    --
+    title : String
+    description : String
+    targetValue : int
+    currentValue : int
+    deadline : DateTime
+    isAchieved : bool
+}
+
+' ===========================================
+' ENTIDADES DE ANÁLISIS Y ML
+' ===========================================
+
+entity "Productivity_Metric" <<Analytics>> as metric {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    --
+    date : DateTime
+    completedHabits : int
+    completedTasks : int
+    focusTime : int
+    productivityScore : double
+    mood : String?
+}
+
+entity "User_Interaction" <<Analytics>> as interaction {
+    * **id** : String <<PK>>
+    * **userId** : String <<FK>>
+    --
+    action : String
+    targetType : String
+    targetId : String
+    timestamp : DateTime
+    context : Map<String, dynamic>
+}
+
+' ===========================================
+' RELACIONES PRINCIPALES
+' ===========================================
+
+' Usuario como entidad central
+user ||--o{ habit : "tiene"
+user ||--o{ activity : "planifica"
+user ||--o{ task : "gestiona"
+user ||--o{ timeblock : "organiza"
+user ||--o{ category : "define"
+user ||--o{ notification : "recibe"
+user ||--|| settings : "configura"
+user ||--o{ goal : "establece"
+user ||--o{ metric : "genera"
+user ||--o{ interaction : "realiza"
+
+' Relaciones específicas
+task ||--o{ subtask : "contiene"
+habit ||--o{ timeblock : "genera"
+activity ||--o| timeblock : "convierte a"
+habit ||--o{ goal : "asocia con"
+habit ||--o{ notification : "programa"
+activity ||--o{ notification : "programa"
+
+' Relaciones de categorización
+category ||--o{ habit : "categoriza"
+category ||--o{ activity : "categoriza"
+category ||--o{ task : "categoriza"
+
+note top of user : Entidad central del sistema.\nTodos los datos están asociados\na un usuario específico.
+
+note bottom of habit : Ejecuta en días específicos.\nGenera TimeBlocks automáticamente.
+
+note right of timeblock : Puede originarse de Habit\no Activity. Representa tiempo\nasignado en el calendario.
+
+note left of metric : Datos agregados diarios\npara análisis de productividad\ny machine learning.
+
+@enduml 

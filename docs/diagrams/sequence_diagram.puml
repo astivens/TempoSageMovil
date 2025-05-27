@@ -1,0 +1,300 @@
+@startuml TempoSage_Sequence_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 10
+skinparam participantFontSize 10
+skinparam sequenceMessageAlign center
+
+' Colores para diferentes tipos de componentes
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam participant {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+    FontColor #4A148C
+}
+
+skinparam database {
+    BackgroundColor #E8F5E8
+    BorderColor #388E3C
+    FontColor #1B5E20
+}
+
+skinparam control {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontColor #E65100
+}
+
+skinparam boundary {
+    BackgroundColor #FFEBEE
+    BorderColor #C62828
+    FontColor #B71C1C
+}
+
+' Layout optimizado para relacion 1:1
+skinparam minClassWidth 80
+skinparam maxMessageSize 100
+
+title Diagrama de Secuencia - TempoSage\nFlujo Completo: Creacion de Habito y Generacion de Bloques de Tiempo
+
+' ===========================================
+' PARTICIPANTES CON COLORES
+' ===========================================
+actor "Usuario\nAutenticado" as user #E3F2FD
+participant "DashboardScreen" as dashboard #F3E5F5
+participant "HabitsScreen" as screen #F3E5F5
+participant "AddHabitDialog" as dialog #F3E5F5
+participant "HabitCubit" as cubit #FFF3E0
+participant "HabitRepository" as repo #FFF3E0
+participant "LocalStorage" as storage #E8F5E8
+participant "HiveDatabase" as hive #E8F5E8
+participant "HabitToTimeBlockService" as service #FFF3E0
+participant "TimeBlockRepository" as blockrepo #FFF3E0
+participant "NotificationService" as notif #FFEBEE
+participant "TempoSageAPI" as api #FFEBEE
+
+' ===========================================
+' FLUJO INICIAL - NAVEGACION DESDE DASHBOARD
+' ===========================================
+== Navegacion desde Dashboard ==
+
+user -> dashboard : Usuario ya autenticado\nve Dashboard
+activate dashboard
+
+dashboard -> dashboard : cargarDatosUsuario()
+dashboard --> user : Mostrar Dashboard\ncon resumen de habitos
+deactivate dashboard
+
+user -> dashboard : Tap "Gestionar Habitos"
+activate dashboard
+
+dashboard -> screen : navigateToHabits()
+deactivate dashboard
+activate screen
+
+screen -> cubit : loadExistingHabits()
+activate cubit
+
+cubit -> repo : getAllHabits()
+activate repo
+
+repo -> storage : getHabitsForUser(userId)
+activate storage
+
+storage -> hive : query("habits", userId)
+activate hive
+hive --> storage : existingHabits
+deactivate hive
+
+storage --> repo : List<Habit>
+deactivate storage
+
+repo --> cubit : habitsList
+deactivate repo
+
+cubit --> screen : HabitState.loaded(habits)
+deactivate cubit
+
+screen --> user : Mostrar lista de habitos\ny boton "Agregar Habito"
+deactivate screen
+
+' ===========================================
+' FLUJO PRINCIPAL - CREACION DE HABITO
+' ===========================================
+== Creacion de Nuevo Habito ==
+
+user -> screen : Tap "Agregar Habito"
+activate screen
+
+screen -> dialog : Mostrar dialogo creacion
+activate dialog
+
+dialog --> user : Formulario con campos basicos
+deactivate dialog
+
+user -> dialog : Completar formulario\ny tap "Guardar"
+activate dialog
+
+dialog -> dialog : validateFormData()
+
+alt Datos validos
+    dialog -> cubit : createHabit(habitData)
+    activate cubit
+    
+    cubit -> cubit : prepareHabitModel()
+    cubit -> repo : addHabit(habit)
+    activate repo
+    
+    repo -> storage : saveHabit(habitModel)
+    activate storage
+    
+    storage -> hive : put("habits", habitModel)
+    activate hive
+    hive --> storage : habitSaved
+    deactivate hive
+    
+    storage --> repo : success
+    deactivate storage
+    
+    repo --> cubit : habitCreated
+    deactivate repo
+    
+    == Generacion Automatica de Bloques de Tiempo ==
+    
+    cubit -> service : planificarBloquesParaNuevoHabito(habit)
+    activate service
+    
+    service -> service : calcularHorariosOptimos()
+    
+    loop Para cada dia de la semana del habito
+        service -> service : generarTimeBlock(dia, hora)
+        service -> blockrepo : addTimeBlock(timeBlock)
+        activate blockrepo
+        
+        blockrepo -> storage : saveTimeBlock(timeBlock)
+        activate storage
+        
+        storage -> hive : put("timeblocks", timeBlock)
+        activate hive
+        hive --> storage : success
+        deactivate hive
+        
+        storage --> blockrepo : timeBlockSaved
+        deactivate storage
+        
+        blockrepo --> service : blockCreated
+        deactivate blockrepo
+    end
+    
+    service --> cubit : timeBlocksGenerated(count)
+    deactivate service
+    
+    == Programacion de Notificaciones ==
+    
+    cubit -> notif : scheduleHabitReminders(habit)
+    activate notif
+    
+    loop Para cada dia programado
+        notif -> notif : createNotification(day, time)
+        notif -> notif : scheduleLocalNotification()
+    end
+    
+    notif --> cubit : notificationsScheduled
+    deactivate notif
+    
+    == Actualizacion del Dashboard ==
+    
+    cubit -> dashboard : refreshDashboardData()
+    activate dashboard
+    dashboard -> dashboard : updateHabitsCount()
+    dashboard -> dashboard : updateWeeklySchedule()
+    dashboard --> cubit : dashboardUpdated
+    deactivate dashboard
+    
+    cubit --> dialog : habitCreated(success)
+    deactivate cubit
+    
+    dialog -> screen : closeDialog()
+    deactivate dialog
+    
+    screen -> screen : refreshHabitsList()
+    screen --> user : Mostrar confirmacion:\n"Habito creado exitosamente\ncon X bloques de tiempo"
+    deactivate screen
+
+else Datos invalidos
+    dialog --> user : Mostrar errores de validacion
+    
+end
+
+' ===========================================
+' FLUJO ALTERNATIVO - ANALISIS IA (OPCIONAL)
+' ===========================================
+== Analisis de Productividad con IA (Opcional) ==
+
+opt Usuario habilito analisis IA
+    cubit -> api : analyzeHabitProductivity(habitData)
+    activate api
+    
+    api -> api : processHabitPatterns()
+    api -> api : generateRecommendations()
+    
+    alt API responde exitosamente
+        api --> cubit : ProductivityAnalysis
+        deactivate api
+        
+        cubit -> dashboard : updateProductivityScore(analysis)
+        activate dashboard
+        dashboard --> cubit : scoreUpdated
+        deactivate dashboard
+        
+        cubit -> cubit : generateSmartSuggestions()
+        cubit --> user : Mostrar recomendaciones
+        
+    else API no disponible
+        api --> cubit : APIUnavailableError
+        deactivate api
+        note right of cubit : El habito se guarda\ncorrectamente sin analisis IA
+        cubit --> user : "Habito creado\n(analisis no disponible)"
+    end
+end
+
+' ===========================================
+' FLUJO DE CONFIRMACION Y NAVEGACION
+' ===========================================
+== Confirmacion y Retorno ==
+
+user -> screen : Ver habito en lista
+activate screen
+
+screen --> user : Habito visible con informacion basica
+deactivate screen
+
+user -> screen : Tap "Volver al Dashboard"
+activate screen
+
+screen -> dashboard : navigateBack()
+deactivate screen
+activate dashboard
+
+dashboard -> dashboard : refreshWithNewData()
+dashboard --> user : Dashboard actualizado\ncon nuevo habito visible
+deactivate dashboard
+
+' ===========================================
+' MANEJO DE ERRORES DETALLADO
+' ===========================================
+== Manejo de Errores ==
+
+alt Error en almacenamiento local
+    storage -> storage : handleHiveError()
+    storage --> repo : HiveException("Error de base de datos")
+    repo --> cubit : RepositoryException
+    cubit --> dialog : showErrorMessage()
+    dialog --> user : "Error al guardar.\nVerifica el almacenamiento"
+    
+else Error en generacion de bloques
+    service -> service : handleTimeBlockError()
+    service --> cubit : ServiceException("Error en planificacion")
+    cubit --> dialog : showPartialSuccess()
+    dialog --> user : "Habito guardado pero sin\nbloques de tiempo automaticos"
+    
+else Error en notificaciones
+    notif -> notif : handleNotificationError()
+    notif --> cubit : NotificationException
+    note right of cubit : El habito funciona\nsin recordatorios
+    cubit --> dialog : showWarning()
+    dialog --> user : "Habito creado sin\nnotificaciones automaticas"
+    
+else Error de validacion critica
+    dialog -> dialog : handleCriticalError()
+    dialog --> user : "Datos invalidos.\nRevisa la informacion"
+end
+
+' Final del diagrama sin notas problematicas
+
+@enduml 
