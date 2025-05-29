@@ -62,6 +62,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -77,6 +79,7 @@ dev_dependencies:
   injectable_generator: ^2.5.0
   flutter_launcher_icons: ^0.13.1
   image: ^4.0.15  # Versión específica requerida por flutter_launcher_icons
+  mocktail: ^1.0.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -92,6 +95,7 @@ flutter:
     - assets/ml_models/
     - assets/ml_models/metadata/
     - assets/ml_models/TPS_Model/
+    - assets/ml_models/tisasrec/item_mapping.json
 
   fonts:
     - family: Noto Sans

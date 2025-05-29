@@ -9,17 +9,18 @@ class BusySlot {
 }
 
 class ScheduleRuleService {
-  final DeviceCalendarPlugin _calendarPlugin = DeviceCalendarPlugin();
+  final DeviceCalendarPlugin _calendarPlugin;
   final List<ProductiveBlock> top3Blocks;
   final List<String> calendarIds;
 
   ScheduleRuleService({
     required this.top3Blocks,
     required this.calendarIds,
-  });
+    DeviceCalendarPlugin? calendarPlugin,
+  }) : _calendarPlugin = calendarPlugin ?? DeviceCalendarPlugin();
 
   /// Obtiene los rangos de tiempo ocupados para [day] en los calendarios seleccionados.
-  Future<List<BusySlot>> _getBusySlots(DateTime day) async {
+  Future<List<BusySlot>> getBusySlots(DateTime day) async {
     // Solicitar permisos si hace falta
     final perm = await _calendarPlugin.hasPermissions();
     if (!(perm.isSuccess && perm.data == true)) {
@@ -73,7 +74,7 @@ class ScheduleRuleService {
     required double moodLevel,
     required String predictedCategory,
   }) async {
-    final busySlots = await _getBusySlots(referenceDate);
+    final busySlots = await getBusySlots(referenceDate);
     for (final block in top3Blocks) {
       final candidateDay = _nextDateForWeekday(referenceDate, block.weekday);
       if (candidateDay.isBefore(referenceDate)) continue;
