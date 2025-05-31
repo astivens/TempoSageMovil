@@ -36,78 +36,53 @@ lib/
 
 ## Pruebas
 
-El proyecto implementa una estrategia completa de pruebas con los siguientes niveles:
+El proyecto TempoSage cuenta con una estrategia completa de testing para garantizar la calidad del código:
 
-### 1. Pruebas Unitarias
+### Pruebas Unitarias
+- Ubicadas en `test/unit/`
+- Prueban componentes individuales aislados
+- Ejemplos: DateTimeHelper, TimeBlockRepository
 
-Las pruebas unitarias verifican componentes individuales como controladores, servicios y utilidades.
+### Pruebas de Widget
+- Ubicadas en `test/widget/`
+- Verifican que los componentes visuales se rendericen correctamente
+- Utilizan el paquete flutter_test
 
+### Pruebas de Integración
+- Ubicadas en `integration_test/`
+- Verifican la interacción entre múltiples componentes
+- Comprueban flujos completos de la aplicación
+
+### Pruebas de Sistema
+- Ubicadas en `test/system/`
+- Evalúan el sistema completo en un entorno similar a producción
+
+### Pruebas de Rendimiento
+- Ubicadas en `test/performance/` e `integration_test/performance/`
+- Miden tiempos de respuesta, uso de memoria y fluidez de la UI
+- Incluyen benchmarks de repositorios y pruebas de rendimiento de UI
+- Se ejecutan con `./run_tests.sh --performance`
+
+### Estrategia de Mocking
+- Utilizamos mockito y mocktail para simular dependencias
+- Creamos dobles de prueba para aislar componentes
+- Implementamos pruebas con datos y con base de datos vacía
+
+### Ejecución de Pruebas
+Para ejecutar todas las pruebas:
 ```bash
-# Ejecutar pruebas unitarias
-flutter test test/unit/
+./run_tests.sh
 ```
 
-#### Cobertura de pruebas unitarias
-
-- **DateTimeHelper**: 100% de cobertura. Todas las utilidades de fechas y horas.
-- **DateTimeUtils**: 100% de cobertura. Funciones adicionales para manipulación de fechas.
-- **TimeBlockRepository**: 100% de cobertura. Repositorio para gestión de bloques de tiempo.
-- **MigrationService**: 100% de cobertura. Servicio para migraciones de datos.
-- **RecommendationService**: 100% de cobertura. Servicio para generar recomendaciones.
-
-Para ver la cobertura de pruebas detallada:
-
+Para ejecutar pruebas específicas:
 ```bash
-# Generar reporte de cobertura
-flutter test --coverage
-# Convertir a formato HTML
-genhtml coverage/lcov.info -o coverage/html
-# Abrir en el navegador
-open coverage/html/index.html
+./run_tests.sh test/unit/utils/date_time_helper_full_test.dart
 ```
 
-### 2. Pruebas de Widgets
-
-Las pruebas de widgets verifican componentes de UI individuales.
-
+Para generar informe de cobertura:
 ```bash
-# Ejecutar pruebas de widgets
-flutter test test/widget/
+./run_tests.sh --coverage
 ```
-
-### 3. Pruebas de Integración
-
-Las pruebas de integración verifican la correcta interacción entre diferentes componentes.
-
-```bash
-# Ejecutar pruebas de integración
-flutter test test/integration/
-```
-
-### 4. Pruebas de Sistema
-
-Las pruebas de sistema evalúan aspectos como rendimiento, portabilidad y usabilidad.
-
-```bash
-# Ejecutar pruebas de sistema
-flutter test test/system/
-```
-
-### Ejecutar todas las pruebas
-
-Para ejecutar todas las pruebas y generar informes, use el script:
-
-```bash
-# Ejecutar todas las pruebas
-flutter test
-```
-
-### Estrategia de mocking
-
-Para las pruebas de repositorios y servicios, utilizamos:
-- **Mocktail**: Para crear mocks de dependencias (Box de Hive, servicios, etc.)
-- **FakeClasses**: Para proporcionar valores de respaldo para tipos complejos
-- **Mock de clases abstractas**: Para aislar componentes y probar comportamientos específicos
 
 ## Análisis de Calidad con SonarQube
 

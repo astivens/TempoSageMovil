@@ -11,6 +11,16 @@ echo -e "${BLUE}=======================================${NC}"
 echo -e "${BLUE}   Ejecutando pruebas de TempoSage    ${NC}"
 echo -e "${BLUE}=======================================${NC}"
 
+# Verificar si se requieren pruebas de rendimiento
+RUN_PERFORMANCE=false
+if [[ "$*" == *"--performance"* ]]; then
+  RUN_PERFORMANCE=true
+  # Eliminar el flag de performance para evitar pasarlo a flutter test
+  args=$(echo "$@" | sed 's/--performance//')
+else
+  args="$@"
+fi
+
 # Crear archivos temporales para guardar la salida completa y resultados JSON
 TEMP_OUTPUT=$(mktemp)
 JSON_OUTPUT=$(mktemp)
@@ -19,8 +29,8 @@ JSON_OUTPUT=$(mktemp)
 echo -e "${YELLOW}Ejecutando pruebas... (puede tomar un momento)${NC}"
 
 # Ejecutar las pruebas mostrando todos los logs
-{ flutter test --reporter expanded $@ 2>&1 | tee $TEMP_OUTPUT; } &
-{ flutter test --reporter json $@ > $JSON_OUTPUT; } &
+{ flutter test --reporter expanded $args 2>&1 | tee $TEMP_OUTPUT; } &
+{ flutter test --reporter json $args > $JSON_OUTPUT; } &
 wait
 
 # Obtener código de salida
@@ -118,6 +128,24 @@ if [ -f "$TEMP_OUTPUT" ]; then
       echo -e "${BLUE}Tiempo de ejecución:${NC} ${SECONDS}s"
     fi
   fi
+fi
+
+# Ejecutar pruebas de rendimiento si se especificó
+if [ "$RUN_PERFORMANCE" = true ]; then
+  echo -e "\n${BLUE}=======================================${NC}"
+  echo -e "${BLUE}    Pruebas de Rendimiento    ${NC}"
+  echo -e "${BLUE}=======================================${NC}"
+  
+  echo -e "${YELLOW}Ejecutando pruebas de rendimiento del repositorio...${NC}"
+  flutter test test/performance/repository_benchmark_test.dart
+  
+  echo -e "\n${YELLOW}Ejecutando pruebas de memoria...${NC}"
+  flutter test test/performance/memory_test.dart
+  
+  echo -e "\n${YELLOW}Ejecutando pruebas de rendimiento de UI...${NC}"
+  flutter test integration_test/performance/ui_performance_test.dart
+  
+  echo -e "\n${GREEN}Pruebas de rendimiento completadas.${NC}"
 fi
 
 # Limpiar
