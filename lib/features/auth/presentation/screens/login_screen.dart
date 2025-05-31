@@ -3,7 +3,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/validators/form_validators.dart';
 import '../../../../core/widgets/accessible_button.dart';
-import '../../../../core/services/speech_service.dart';
 import '../../data/services/auth_service.dart';
 import '../../../../core/services/navigation_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _speechService = SpeechService();
   final _authService = AuthService();
   bool _isLoading = false;
   String? _errorMessage;
@@ -72,29 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-      }
-    }
-  }
-
-  Future<void> _startVoiceCommand() async {
-    final result = await _speechService.startListening();
-    if (result != null) {
-      // Procesar comandos como "login test@example.com password123"
-      final parts = result.toLowerCase().split(' ');
-      if (parts.isNotEmpty) {
-        switch (parts[0]) {
-          case 'login':
-            if (parts.length >= 3) {
-              _emailController.text = parts[1];
-              _passwordController.text = parts[2];
-              await _handleLogin();
-            }
-            break;
-          case 'clear':
-            _emailController.clear();
-            _passwordController.clear();
-            break;
-        }
       }
     }
   }
@@ -264,29 +239,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         isLoading: _isLoading,
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Voice Commands
-                Text(
-                  'Try voice commands',
-                  style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.mocha.subtext0
-                        : AppColors.latte.subtext0,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                IconButton(
-                  onPressed: _startVoiceCommand,
-                  icon: Icon(Icons.mic,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.mocha.mauve
-                          : AppColors.latte.mauve),
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.surface0,
-                    padding: const EdgeInsets.all(16),
                   ),
                 ),
               ],

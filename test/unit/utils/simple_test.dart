@@ -1,0 +1,1 @@
+import "package:flutter_test/flutter_test.dart"; import "package:temposage/core/utils/date_time_helper.dart"; void main() { test("getShortMonth works", () { expect(DateTimeHelper.getShortMonth(DateTime(2023, 1, 1)), "Ene"); }); }

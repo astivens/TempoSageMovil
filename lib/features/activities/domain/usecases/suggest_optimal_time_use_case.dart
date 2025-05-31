@@ -1,22 +1,17 @@
-import 'package:flutter/foundation.dart';
 import '../../../../core/services/service_locator.dart';
-import '../../../../core/services/tempo_sage_api_service.dart';
 import '../entities/activity.dart';
 import '../../../timeblocks/data/repositories/time_block_repository.dart';
 import '../../data/repositories/activity_repository.dart';
 
 /// Caso de uso para sugerir horarios óptimos para actividades
 class SuggestOptimalTimeUseCase {
-  final TempoSageApiService _apiService;
   final ActivityRepository _activityRepository;
   final TimeBlockRepository _timeBlockRepository;
 
   SuggestOptimalTimeUseCase({
-    TempoSageApiService? apiService,
     ActivityRepository? activityRepository,
     TimeBlockRepository? timeBlockRepository,
-  })  : _apiService = apiService ?? ServiceLocator.instance.tempoSageApiService,
-        _activityRepository =
+  })  : _activityRepository =
             activityRepository ?? ServiceLocator.instance.activityRepository,
         _timeBlockRepository =
             timeBlockRepository ?? ServiceLocator.instance.timeBlockRepository;
@@ -28,22 +23,7 @@ class SuggestOptimalTimeUseCase {
     required DateTime targetDate,
   }) async {
     try {
-      // Primero intentamos usar la API
-      try {
-        final result = await _apiService.suggestOptimalTime(
-          activityCategory: activityCategory,
-          pastActivities: pastActivities,
-          targetDate: targetDate,
-        );
-
-        // Extraer y devolver solo las sugerencias
-        return List<Map<String, dynamic>>.from(result['suggestions']);
-      } catch (e) {
-        debugPrint(
-            'Error al usar API para sugerencias: $e. Usando enfoque local.');
-        // Si la API falla, usamos un enfoque local
-        return _getLocalSuggestions(activityCategory, targetDate);
-      }
+      return _getLocalSuggestions(activityCategory, targetDate);
     } catch (e) {
       throw Exception('Error al sugerir horarios óptimos: $e');
     }

@@ -14,4 +14,15 @@ class Activity {
     required this.description,
     required this.isCompleted,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'date': date.toIso8601String(),
+      'category': category,
+      'description': description,
+      'isCompleted': isCompleted,
+    };
+  }
 }

@@ -8,7 +8,6 @@ import '../../features/habits/domain/services/habit_to_timeblock_service.dart';
 import '../../features/habits/domain/services/habit_notification_service.dart';
 import '../../features/habits/domain/usecases/get_habits_use_case.dart';
 import '../utils/logger.dart';
-import 'tempo_sage_api_service.dart';
 import 'notification_service.dart';
 import 'recommendation_service.dart';
 import '../../features/activities/domain/usecases/suggest_optimal_time_use_case.dart';
@@ -38,7 +37,6 @@ class ServiceLocator {
   // Servicios (lógica de dominio) - inicialización perezosa
   ActivityToTimeBlockService? _activityToTimeBlockService;
   HabitToTimeBlockService? _habitToTimeBlockService;
-  TempoSageApiService? _tempoSageApiService;
   NotificationService? _notificationService;
   ActivityNotificationService? _activityNotificationService;
   HabitNotificationService? _habitNotificationService;
@@ -145,13 +143,6 @@ class ServiceLocator {
     return _getHabitsUseCase!;
   }
 
-  /// Obtiene el servicio de API de TempoSage.
-  /// Se crea bajo demanda (lazy initialization).
-  TempoSageApiService get tempoSageApiService {
-    _tempoSageApiService ??= TempoSageApiService();
-    return _tempoSageApiService!;
-  }
-
   /// Obtiene el servicio de notificaciones.
   /// Se crea bajo demanda (lazy initialization).
   NotificationService get notificationService {
@@ -195,7 +186,6 @@ class ServiceLocator {
     _activityToTimeBlockService = null;
     _habitToTimeBlockService = null;
     _getHabitsUseCase = null;
-    _tempoSageApiService = null;
     _notificationService = null;
     _activityNotificationService = null;
     _habitNotificationService = null;

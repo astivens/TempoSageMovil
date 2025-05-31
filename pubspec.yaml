@@ -64,6 +64,14 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  mocktail: ^1.0.0
+  bloc_test: ^9.1.5
+  # flutter_gherkin: ^3.0.0
+  # gherkin: ^3.0.0
+  network_image_mock: ^2.1.1
+  golden_toolkit: ^0.15.0
+  flutter_driver:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -79,7 +87,6 @@ dev_dependencies:
   injectable_generator: ^2.5.0
   flutter_launcher_icons: ^0.13.1
   image: ^4.0.15  # Versión específica requerida por flutter_launcher_icons
-  mocktail: ^1.0.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

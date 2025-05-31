@@ -7,9 +7,15 @@ class LocalStorage {
   static final Logger _logger = Logger.instance;
 
   /// Inicializa Hive para almacenamiento local
-  static Future<void> init() async {
-    await Hive.initFlutter();
-    _logger.i('Hive inicializado', tag: 'LocalStorage');
+  static Future<void> init({String? path}) async {
+    if (path != null) {
+      Hive.init(path);
+      _logger.i('Hive inicializado con ruta personalizada',
+          tag: 'LocalStorage');
+    } else {
+      await Hive.initFlutter();
+      _logger.i('Hive inicializado', tag: 'LocalStorage');
+    }
   }
 
   /// Obtiene una caja (box) de Hive, cacheando el resultado para mejorar rendimiento

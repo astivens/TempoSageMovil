@@ -557,17 +557,11 @@ class DashboardController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final activities = _activities.map(_mapActivityModelToEntity).toList();
-      final habits = _habits.map(_mapModelToEntity).toList();
-      final api = ServiceLocator.instance.tempoSageApiService;
-
-      final result = await api.predictGoalAchievement(
-        goalDescription: goalDescription,
-        targetDeadline: targetDeadline.toIso8601String(),
-        currentActivities: activities,
-        currentHabits: habits,
-      );
-      _goalPredictionResult = result;
+      // Implementación pendiente
+      _goalPredictionResult = {
+        'prediction': 0.0,
+        'explanation': 'Funcionalidad en desarrollo'
+      };
     } catch (e) {
       _goalPredictionError = e.toString();
       debugPrint('Error al predecir logro de meta: $e');
@@ -586,32 +580,12 @@ class DashboardController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final activities = _activities
-          .map(_mapActivityModelToEntity)
-          .map((a) => {
-                'startTime': a.date.toIso8601String(),
-                'endTime':
-                    a.date.add(const Duration(hours: 1)).toIso8601String(),
-                'category': a.category,
-                'isCompleted': a.isCompleted,
-              })
-          .toList();
-      final habits = _habits
-          .map(_mapModelToEntity)
-          .map((h) => {
-                'category': h.category,
-                'date': h.dateCreation.toIso8601String().split('T')[0],
-                'completed': h.isDone,
-              })
-          .toList();
-      final api = ServiceLocator.instance.tempoSageApiService;
-
-      final result = await api.predictEnergyLevels(
-        activitiesHistory: activities,
-        habitsHistory: habits,
-        selfAssessment: selfAssessment,
-      );
-      _energyPredictionResult = result;
+      // Implementación pendiente
+      _energyPredictionResult = {
+        'energyLevel': 0.0,
+        'burnoutRisk': 0.0,
+        'explanation': 'Funcionalidad en desarrollo'
+      };
     } catch (e) {
       _energyPredictionError = e.toString();
       debugPrint('Error al predecir niveles de energía: $e');
@@ -629,25 +603,11 @@ class DashboardController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Patrón de actividades actuales (puede ser vacío o usar activityPatterns)
-      final activitiesPattern = _activityPatterns ?? [];
-      // Hábitos existentes
-      final habits = _habits
-          .map(_mapModelToEntity)
-          .map((h) => {
-                'category': h.category,
-                'date': h.dateCreation.toIso8601String().split('T')[0],
-                'completed': h.isDone,
-              })
-          .toList();
-      final api = ServiceLocator.instance.tempoSageApiService;
-
-      final result = await api.recommendHabits(
-        userGoals: userGoals,
-        currentActivitiesPattern: activitiesPattern,
-        existingHabits: habits,
-      );
-      _habitRecommendationResult = result;
+      // Implementación pendiente
+      _habitRecommendationResult = {
+        'recommendations': [],
+        'explanation': 'Funcionalidad en desarrollo'
+      };
     } catch (e) {
       _habitRecommendationError = e.toString();
       debugPrint('Error al recomendar hábitos: $e');

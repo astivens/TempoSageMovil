@@ -13,6 +13,9 @@ import '../utils/logger.dart';
 class MlModelAdapter {
   final Logger _logger = Logger('MlModelAdapter');
 
+  // Nuevo: path personalizado para modelos
+  final String? modelDirectoryPath;
+
   // Intérprete TFLite
   Interpreter? _interpreter;
 
@@ -20,6 +23,8 @@ class MlModelAdapter {
   Map<String, dynamic> _modelInfo = {};
   List<Map<String, dynamic>> _inputInfo = [];
   List<Map<String, dynamic>> _outputInfo = [];
+
+  MlModelAdapter({this.modelDirectoryPath});
 
   /// Inicializa el adaptador cargando el modelo especificado
   Future<bool> initialize(String modelFileName, {String? modelBasePath}) async {
@@ -47,9 +52,15 @@ class MlModelAdapter {
   /// Obtiene el archivo del modelo desde assets o almacenamiento local
   Future<File> _getModelFile(String modelFileName, String modelBasePath) async {
     try {
-      // Primero verificar si ya está en almacenamiento local
-      final appDir = await getApplicationDocumentsDirectory();
-      final modelFile = File('${appDir.path}/$modelFileName');
+      // Usar path personalizado si está presente
+      String dirPath;
+      if (modelDirectoryPath != null) {
+        dirPath = modelDirectoryPath!;
+      } else {
+        final appDir = await getApplicationDocumentsDirectory();
+        dirPath = appDir.path;
+      }
+      final modelFile = File('${dirPath}/$modelFileName');
 
       if (await modelFile.exists()) {
         return modelFile;

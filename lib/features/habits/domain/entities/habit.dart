@@ -19,3 +19,17 @@ class Habit with _$Habit {
 
   factory Habit.fromJson(Map<String, dynamic> json) => _$HabitFromJson(json);
 }
+
+extension HabitX on Habit {
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'description': description,
+        'daysOfWeek': daysOfWeek,
+        'category': category,
+        'reminder': reminder,
+        'time': time,
+        'isDone': isDone,
+        'dateCreation': dateCreation.toIso8601String(),
+      };
+}

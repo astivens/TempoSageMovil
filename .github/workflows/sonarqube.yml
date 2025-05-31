@@ -1,0 +1,71 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  # Permite ejecutar manualmente desde la pestaña Actions
+  workflow_dispatch:
+
+jobs:
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        # Es importante clonar todo el historial para que SonarQube pueda generar informes precisos
+        fetch-depth: 0
+    
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.x'
+        channel: 'stable'
+    
+    - name: Install dependencies
+      run: |
+        flutter pub get
+        
+    - name: Run tests with coverage
+      run: |
+        mkdir -p coverage
+        mkdir -p test-reports
+        flutter test --coverage
+    
+    - name: Convert coverage format
+      run: |
+        # Si es necesario, aquí podríamos añadir pasos para convertir
+        # el formato de cobertura a uno que SonarQube entienda mejor
+        ls -la coverage/
+    
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      with:
+        # Opciones adicionales para el scanner
+        args: >
+          -Dsonar.projectKey=temposage-movil
+          -Dsonar.projectName=TempoSage Movil
+          -Dsonar.sourceEncoding=UTF-8
+          -Dsonar.sources=lib
+          -Dsonar.tests=test
+          -Dsonar.flutter.coverage.reportPath=coverage/lcov.info
+          -Dsonar.exclusions=**/*.g.dart,**/*.freezed.dart,**/*.config.dart,**/*.gen.dart,**/l10n/**/*,**/generated/**/*
+    
+    - name: SonarQube Quality Gate check
+      uses: SonarSource/sonarqube-quality-gate-action@master
+      # Esta acción es idempotente, espera a que el análisis se complete
+      # y comprueba si se ha pasado el Quality Gate
+      with:
+        scanMetadataReportFile: .scannerwork/report-task.txt
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      # Permite que el flujo de trabajo continúe incluso si el Quality Gate falla
+      # Puedes cambiar a 'true' si quieres que el flujo falle cuando no se pase el Quality Gate
+      continue-on-error: false 

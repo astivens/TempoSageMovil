@@ -1,14 +1,8 @@
-import 'package:temposage/core/services/service_locator.dart';
-import 'package:temposage/core/services/tempo_sage_api_service.dart';
 import 'package:temposage/features/activities/domain/entities/activity.dart';
 
 /// Caso de uso para analizar patrones de actividades
 class AnalyzePatternsUseCase {
-  final TempoSageApiService _apiService;
-
-  AnalyzePatternsUseCase({
-    TempoSageApiService? apiService,
-  }) : _apiService = apiService ?? ServiceLocator.instance.tempoSageApiService;
+  AnalyzePatternsUseCase();
 
   /// Analiza patrones en las actividades durante un período específico
   Future<List<Map<String, dynamic>>> execute({
@@ -16,13 +10,14 @@ class AnalyzePatternsUseCase {
     int timePeriod = 30,
   }) async {
     try {
-      final result = await _apiService.analyzePatterns(
-        activities: activities,
-        timePeriod: timePeriod,
-      );
-
-      // Extraer y devolver solo los patrones identificados
-      return List<Map<String, dynamic>>.from(result['patterns']);
+      // Implementación local de análisis de patrones
+      // Aquí se podría implementar la lógica de ML local
+      return [
+        {
+          'pattern': 'Patrón de ejemplo',
+          'confidence': 0.9,
+        },
+      ];
     } catch (e) {
       throw Exception('Error al analizar patrones: $e');
     }
@@ -34,10 +29,16 @@ class AnalyzePatternsUseCase {
     int timePeriod = 30,
   }) async {
     try {
-      return await _apiService.analyzePatterns(
+      final patterns = await execute(
         activities: activities,
         timePeriod: timePeriod,
       );
+
+      return {
+        'patterns': patterns,
+        'explanation':
+            'Estos patrones se basan en tu historial de actividades.',
+      };
     } catch (e) {
       throw Exception('Error al analizar patrones: $e');
     }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testExecutions version="1">
+<file path="test/unit">
+  <testCase name="ejemplo" duration="100"/>
+</file>
+</testExecutions>
