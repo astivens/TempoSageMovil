@@ -1,0 +1,60 @@
+Load: 16.99 / 17.08 / 16.53
+CPU usage from 7038ms to 1912ms ago (2025-05-31 09:03:13.385 to 2025-05-31 09:03:18.512) with 99% awake:
+  34% 1370/system_server: 28% user + 5.8% kernel / faults: 12015 minor 100 major
+  8% 12995/com.whatsapp: 4.4% user + 3.5% kernel / faults: 531 minor 3 major
+  7.4% 17240/com.facebook.appmanager: 5.8% user + 1.5% kernel / faults: 6395 minor 50 major
+  7.2% 15035/com.example.temposage: 5.8% user + 1.3% kernel / faults: 9471 minor 52 major
+  5.4% 3518/com.sec.android.sdhms: 3.5% user + 1.9% kernel / faults: 2405 minor 158 major
+  4.8% 749/surfaceflinger: 1.3% user + 3.5% kernel / faults: 843 minor
+  4.1% 1815/com.android.networkstack.process: 3.1% user + 0.9% kernel / faults: 2913 minor
+  0.4% 515/android.system.suspend@1.0-service: 0% user + 0.3% kernel / faults: 73 minor
+  3.1% 153/kswapd0: 0% user + 3.1% kernel
+  2.9% 32627/adbd: 0.7% user + 2.1% kernel / faults: 572 minor 4 major
+  2.3% 277/exe_cq/0: 0% user + 2.3% kernel
+  1.5% 32268/com.android.systemui: 0.9% user + 0.5% kernel / faults: 1806 minor
+  1.1% 440/logd: 0.1% user + 0.9% kernel / faults: 20 minor
+  1.1% 1637/main_thread: 0% user + 1.1% kernel
+  1.1% 1638/hif_thread: 0% user + 1.1% kernel
+  1.1% 1648/com.android.phone: 0.7% user + 0.3% kernel / faults: 623 minor 1 major
+  1.1% 16483/com.instagram.android: 0.5% user + 0.5% kernel / faults: 944 minor 1 major
+  0.9% 17283/com.facebook.system: 0.7% user + 0.1% kernel / faults: 1781 minor
+  0.7% 930/android.hardware.sensors@2.0-service-mediatek: 0.1% user + 0.5% kernel / faults: 39 minor
+  0.7% 9087/com.google.android.gms.persistent: 0.5% user + 0.1% kernel / faults: 1211 minor 7 major
+  0.7% 14584/kworker/u16:2-pvr_fce_status: 0% user + 0.7% kernel / faults: 24 minor 6 major
+  0.7% 14858/logcat: 0.3% user + 0.3% kernel / faults: 6 minor
+  0.7% 32601/kworker/u16:1-kverityd: 0% user + 0.7% kernel / faults: 4 minor 6 major
+  0.3% 1/init: 0.1% user + 0.1% kernel / faults: 49 minor
+  0.3% 10/rcu_preempt: 0% user + 0.3% kernel
+  0.3% 209/pbm: 0% user + 0.3% kernel
+  0.3% 329/ipi_cpu_dvfs_rt: 0% user + 0.3% kernel
+  0.3% 683/statsd: 0.1% user + 0.1% kernel / faults: 39 minor
+  0.3% 707/android.hardware.graphics.composer@2.1-service: 0% user + 0.3% kernel / faults: 88 minor
+  0.3% 921/wificond: 0% user + 0.3% kernel / faults: 31 minor
+  0.3% 961/rild: 0.1% user + 0.1% kernel / faults: 32 minor
+  0.3% 1639/rx_thread: 0% user + 0.3% kernel
+  0.3% 3905/kworker/u16:7-adb: 0% user + 0.3% kernel / faults: 5 minor 3 major
+  0.3% 7451/com.samsung.android.honeyboard: 0.1% user + 0.1% kernel / faults: 639 minor
+  0.3% 14362/kworker/4:2H: 0% user + 0.3% kernel
+  0.3% 16409/kworker/7:2H-kblockd: 0% user + 0.3% kernel
+  0.1% 29409/com.samsung.android.app.spage: 0% user + 0% kernel / faults: 691 minor
+  0% 42/ksoftirqd/6: 0% user + 0% kernel
+  0.1% 212/chre_kthread: 0% user + 0.1% kernel
+  0% 221/disp_check: 0% user + 0% kernel
+  0.1% 442/servicemanager: 0.1% user + 0% kernel / faults: 19 minor
+  0.1% 504/iod: 0% user + 0.1% kernel
+  0.1% 675/emservice: 0.1% user + 0% kernel / faults: 1 minor
+  0% 684/netd: 0% user + 0% kernel / faults: 357 minor
+  0% 716/android.hardware.memtrack@1.0-service: 0% user + 0% kernel / faults: 89 minor 1 major
+  0.1% 1678/com.sec.imsservice: 0.1% user + 0% kernel / faults: 378 minor
+  0% 3456/com.sec.android.diagmonagent: 0% user + 0% kernel / faults: 789 minor
+  0% 4104/kworker/4:2-mm_percpu_wq: 0% user + 0% kernel
+  0% 4822/kworker/u17:2-ib_unbound_high_wq: 0% user + 0% kernel
+  0% 7158/kworker/0:0-mm_percpu_wq: 0% user + 0% kernel
+  0% 7998/kworker/1:2H-kblockd: 0% user + 0% kernel
+  0% 9191/kworker/3:0H-kblockd: 0% user + 0% kernel
+  0.1% 14479/kworker/6:0H: 0% user + 0.1% kernel
+  0.1% 14492/kworker/5:1H: 0% user + 0.1% kernel
+  0% 17089/kworker/7:2-mm_percpu_wq: 0% user + 0% kernel
+  0% 23056/kworker/6:3: 0% user + 0% kernel
+ +0% 17333/kworker/4:0H: 0% user + 0% kernel
+13% TOTAL: 7.4% user + 6.1% kernel + 0.2% iowait + 0.1% softirq
