@@ -47,6 +47,25 @@ Las pruebas unitarias verifican componentes individuales como controladores, ser
 flutter test test/unit/
 ```
 
+#### Cobertura de pruebas unitarias
+
+- **DateTimeHelper**: 100% de cobertura. Todas las utilidades de fechas y horas.
+- **DateTimeUtils**: 100% de cobertura. Funciones adicionales para manipulación de fechas.
+- **TimeBlockRepository**: 100% de cobertura. Repositorio para gestión de bloques de tiempo.
+- **MigrationService**: 100% de cobertura. Servicio para migraciones de datos.
+- **RecommendationService**: 100% de cobertura. Servicio para generar recomendaciones.
+
+Para ver la cobertura de pruebas detallada:
+
+```bash
+# Generar reporte de cobertura
+flutter test --coverage
+# Convertir a formato HTML
+genhtml coverage/lcov.info -o coverage/html
+# Abrir en el navegador
+open coverage/html/index.html
+```
+
 ### 2. Pruebas de Widgets
 
 Las pruebas de widgets verifican componentes de UI individuales.
@@ -80,8 +99,15 @@ Para ejecutar todas las pruebas y generar informes, use el script:
 
 ```bash
 # Ejecutar todas las pruebas
-./scripts/run_tests.sh
+flutter test
 ```
+
+### Estrategia de mocking
+
+Para las pruebas de repositorios y servicios, utilizamos:
+- **Mocktail**: Para crear mocks de dependencias (Box de Hive, servicios, etc.)
+- **FakeClasses**: Para proporcionar valores de respaldo para tipos complejos
+- **Mock de clases abstractas**: Para aislar componentes y probar comportamientos específicos
 
 ## Análisis de Calidad con SonarQube
 
@@ -136,6 +162,13 @@ Para más información sobre la estrategia de pruebas y otros aspectos técnicos
 
 - [Estrategia de Pruebas](docs/ESTRATEGIA_PRUEBAS.md)
 - [Integración con SonarQube](docs/INTEGRACION_SONARQUBE.md)
+
+## Contribución
+
+1. Realizar pruebas para nuevas funcionalidades
+2. Mantener o mejorar la cobertura de pruebas existente
+3. Seguir el estilo de código establecido
+4. Revisar el código antes de enviar un PR
 
 ## Licencia
 
