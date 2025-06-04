@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/models/interaction_event.dart';
-import './recommendation_service.dart';
+import '../core/services/recommendation_service.dart';
 import '../features/activities/data/models/activity_model.dart';
 import '../core/services/service_locator.dart';
 
@@ -8,32 +7,26 @@ class ActivityRecommendationController extends ChangeNotifier {
   final RecommendationService _recommendationService = RecommendationService();
   bool _isLoading = true;
   String _resultMessage = "Inicializando...";
-  List<String> _recommendations = [];
+  List<dynamic> _recommendations = [];
   Map<String, dynamic>? _activityDetails = {};
   bool _isModelInitialized = false;
   final List<String> _recentlyCreatedActivities = [];
 
   bool get isLoading => _isLoading;
   String get resultMessage => _resultMessage;
-  List<String> get recommendations => _recommendations;
+  List<dynamic> get recommendations => _recommendations;
   Map<String, dynamic>? get activityDetails => _activityDetails;
   bool get isModelInitialized => _isModelInitialized;
   List<String> get recentlyCreatedActivities => _recentlyCreatedActivities;
 
   Future<void> initialize() async {
     if (_isModelInitialized) return;
-
     try {
       _isLoading = true;
-      _resultMessage = "Cargando modelo TiSASRec...";
+      _resultMessage = "Cargando modelo de recomendaciones...";
       notifyListeners();
-
-      // 1. Cargar el servicio
-      await _recommendationService.loadModelAndPreprocessor();
-
-      // 2. Cargar detalles de actividades
+      await _recommendationService.initialize();
       await _loadActivityMapping();
-
       _isModelInitialized = true;
       _isLoading = false;
       _resultMessage = "Modelo cargado correctamente";
@@ -117,25 +110,16 @@ class ActivityRecommendationController extends ChangeNotifier {
       _isLoading = true;
       _resultMessage = "Generando recomendaciones...";
       notifyListeners();
-
       if (!_isModelInitialized) {
         await initialize();
       }
-
-      // Generar historial de usuario basado en actividades reales
       final List<InteractionEvent> userHistory = await _generateUserHistory();
-
-      // Obtener recomendaciones
       final recommendations = await _recommendationService.getRecommendations(
-        userHistory,
-        topK: 5,
+        interactionEvents: userHistory,
       );
-
-      // Filtrar recomendaciones para no mostrar las que ya se crearon recientemente
       _recommendations = recommendations
-          .where((r) => !_recentlyCreatedActivities.contains(r))
+          .where((r) => !_recentlyCreatedActivities.contains(r['title'] ?? r))
           .toList();
-
       _isLoading = false;
       _resultMessage = "Recomendaciones generadas exitosamente";
       notifyListeners();
@@ -148,47 +132,34 @@ class ActivityRecommendationController extends ChangeNotifier {
   }
 
   Future<List<InteractionEvent>> _generateUserHistory() async {
-    // En producción, obtendríamos un historial real de las actividades del usuario
     final List<InteractionEvent> history = [];
-
     try {
-      // Intentar obtener actividades recientes del usuario
       final activityRepo = ServiceLocator.instance.activityRepository;
-      // Obtener actividades del día actual
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final List<ActivityModel> recentActivities =
           await activityRepo.getActivitiesByDate(today);
-
       if (recentActivities.isNotEmpty) {
-        // Convertir actividades a eventos de interacción
         for (int i = 0; i < recentActivities.length; i++) {
           final activity = recentActivities[i];
-
-          // Mapear la categoría de actividad a un ID del modelo
-          // En un escenario real, necesitaríamos un mapeo más sofisticado
           final String itemId = _mapActivityToModelId(activity.category);
-
           history.add(InteractionEvent(
             itemId: itemId,
             timestamp: activity.startTime.millisecondsSinceEpoch ~/ 1000,
+            eventType: 'activity',
           ));
         }
       } else {
-        // Si no hay actividades, usar datos de prueba
         return _generateTestHistory();
       }
     } catch (e) {
       debugPrint('Error al obtener historial de actividades: $e');
       return _generateTestHistory();
     }
-
     return history;
   }
 
   String _mapActivityToModelId(String category) {
-    // Mapear categorías de actividades a IDs del modelo
-    // Esto es simplificado, en producción necesitarías un mapeo más robusto
     final Map<String, String> categoryToId = {
       'Trabajo': '4',
       'Estudio': '6',
@@ -200,24 +171,20 @@ class ActivityRecommendationController extends ChangeNotifier {
       'Bienestar': '2',
       'Productividad': '9',
     };
-
-    return categoryToId[category] ?? '1'; // Default a ejercicio si no hay match
+    return categoryToId[category] ?? '1';
   }
 
   List<InteractionEvent> _generateTestHistory() {
-    // Generar datos de prueba si no hay historial real
     final List<String> activityIds = ['1', '2', '3', '4', '5'];
     final int now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final List<InteractionEvent> history = [];
-
     for (int i = 0; i < 5; i++) {
       history.add(InteractionEvent(
         itemId: activityIds[i % activityIds.length],
-        timestamp:
-            now - (50 - i) * 86400, // Un evento cada día, últimos 50 días
+        timestamp: now - (50 - i) * 86400,
+        eventType: 'test',
       ));
     }
-
     return history;
   }
 

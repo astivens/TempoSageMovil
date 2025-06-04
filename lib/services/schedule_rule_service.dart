@@ -1,5 +1,5 @@
 import 'package:device_calendar/device_calendar.dart';
-import '../data/models/productive_block.dart';
+import '../core/models/productive_block.dart';
 
 /// Representa un rango ocupado en el calendario.
 class BusySlot {
@@ -82,7 +82,7 @@ class ScheduleRuleService {
       // Reglas adicionales
       if (priority >= 4) return block;
       if (predictedCategory == 'Formacion' && moodLevel < 0.4) continue;
-      if (energyLevel < 0.3 && block.rate < 0.8) continue;
+      if (energyLevel < 0.3 && block.completionRate < 0.8) continue;
       return block;
     }
     return null;

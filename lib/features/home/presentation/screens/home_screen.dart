@@ -12,6 +12,7 @@ import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/domain/entities/habit.dart';
 import '../../../timeblocks/presentation/screens/time_blocks_screen.dart';
 import '../../../dashboard/controllers/dashboard_controller.dart';
+import '../../../chat/presentation/pages/chat_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ActivitiesScreen(),
     HabitsScreen(),
     TimeBlocksScreen(),
+    ChatAIPage(),
   ];
 
   final List<String> _screenTitles = const [
@@ -35,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Actividades',
     'Hábitos',
     'Bloques de Tiempo',
+    'Chat con IA',
   ];
 
   void _onItemTapped(int index) {
@@ -66,30 +69,32 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _selectedIndex,
         children: _screens,
       ),
-      floatingActionButton: _selectedIndex == 0
-          ? ExpandableFab(
-              icon: const Icon(Icons.add),
-              closeIcon: const Icon(Icons.close),
-              openFabTooltip: 'Crear nuevo',
-              closeFabTooltip: 'Cerrar menú',
-              children: _getFabActions(),
-            )
-          : FloatingActionButton(
-              onPressed: () {
-                switch (_selectedIndex) {
-                  case 1: // Actividades
-                    _navigateToCreate('activity');
-                    break;
-                  case 2: // Hábitos
-                    _navigateToCreate('habit');
-                    break;
-                  case 3: // Bloques de Tiempo
-                    _navigateToCreate('timeblock');
-                    break;
-                }
-              },
-              child: const Icon(Icons.add),
-            ),
+      floatingActionButton: _selectedIndex == 4
+          ? null // No mostrar FAB en la pantalla de Chat IA
+          : _selectedIndex == 0
+              ? ExpandableFab(
+                  icon: const Icon(Icons.add),
+                  closeIcon: const Icon(Icons.close),
+                  openFabTooltip: 'Crear nuevo',
+                  closeFabTooltip: 'Cerrar menú',
+                  children: _getFabActions(),
+                )
+              : FloatingActionButton(
+                  onPressed: () {
+                    switch (_selectedIndex) {
+                      case 1: // Actividades
+                        _navigateToCreate('activity');
+                        break;
+                      case 2: // Hábitos
+                        _navigateToCreate('habit');
+                        break;
+                      case 3: // Bloques de Tiempo
+                        _navigateToCreate('timeblock');
+                        break;
+                    }
+                  },
+                  child: const Icon(Icons.add),
+                ),
       bottomNavigationBar: BottomNavigation.tempoSage(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

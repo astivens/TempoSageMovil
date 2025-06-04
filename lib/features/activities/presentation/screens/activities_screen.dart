@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'dart:async';
-import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/services/event_bus.dart';
 import '../../data/models/activity_model.dart';
 import '../widgets/activity_card.dart';
@@ -69,17 +68,6 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: CustomAppBar(
-        title: l10n.activities,
-        showBackButton: false,
-        titleStyle: TextStyle(
-          color: theme.colorScheme.onBackground,
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
-        ),
-        centerTitle: true,
-      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

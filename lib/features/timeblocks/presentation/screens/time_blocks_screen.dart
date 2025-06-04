@@ -6,11 +6,9 @@ import '../../../../core/constants/app_styles.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/event_bus.dart';
 import '../../../../core/widgets/page_transitions.dart';
-import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../data/models/time_block_model.dart';
 import '../widgets/time_block_timeline.dart';
-import 'create_time_block_screen.dart';
 
 /// Pantalla que muestra los bloques de tiempo organizados en una línea de tiempo.
 /// Permite visualizar, gestionar y sincronizar bloques de tiempo con hábitos y actividades.
@@ -380,30 +378,6 @@ class _TimeBlocksScreenState extends State<TimeBlocksScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: CustomAppBar(
-        title: l10n.timeBlocks,
-        showBackButton: false,
-        titleStyle: TextStyle(
-          color: theme.colorScheme.onBackground,
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: theme.colorScheme.onBackground),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreateTimeBlockScreen(),
-                ),
-              );
-              _loadTimeBlocks();
-            },
-          ),
-        ],
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(

@@ -6,6 +6,10 @@ import '../../features/habits/domain/usecases/get_habits_use_case.dart';
 import '../../features/habits/domain/services/habit_to_timeblock_service.dart';
 import '../../features/timeblocks/data/repositories/time_block_repository.dart';
 import '../../features/activities/data/repositories/activity_repository.dart';
+import '../../services/google_ai_service.dart';
+import '../../services/tflite_service.dart';
+import '../../core/services/recommendation_service.dart';
+import '../../features/chat/services/ml_data_processor.dart';
 
 /// Singleton instance of GetIt
 final getIt = GetIt.instance;
@@ -21,6 +25,26 @@ Future<void> setupDependencies() async {
 /// Configura servicios del core como logging, conexiones, etc.
 Future<void> _setupCoreServices() async {
   // Registra servicios centrales aquí
+
+  // TFLite Service - Se registra primero ya que otros servicios dependen de él
+  getIt.registerSingleton<TFLiteService>(TFLiteService());
+  await getIt<TFLiteService>().init();
+
+  // Recommendation Service
+  getIt.registerSingleton<RecommendationService>(RecommendationService());
+  await getIt<RecommendationService>().initialize();
+
+  // GoogleAIService - Reemplaza 'TU_API_KEY' con la clave real en producción
+  getIt.registerSingleton<GoogleAIService>(
+    GoogleAIService(
+        apiKey: const String.fromEnvironment('GOOGLE_AI_API_KEY',
+            defaultValue: 'TU_API_KEY')),
+  );
+
+  // MLDataProcessor
+  getIt.registerFactory<MLDataProcessor>(() => MLDataProcessor(
+      tfliteService: getIt<TFLiteService>(),
+      recommendationService: getIt<RecommendationService>()));
 }
 
 /// Configura repositorios

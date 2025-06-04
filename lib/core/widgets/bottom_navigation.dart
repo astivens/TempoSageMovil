@@ -83,6 +83,12 @@ class BottomNavigation extends StatelessWidget {
           label: 'Bloques',
           tooltip: 'Bloques de tiempo',
         ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.chat_outlined),
+          activeIcon: Icon(Icons.chat),
+          label: 'Chat IA',
+          tooltip: 'Asistente de IA',
+        ),
       ],
       type: BottomNavigationBarType.fixed,
       showSelectedLabels: true,

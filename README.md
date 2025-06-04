@@ -84,6 +84,39 @@ Para generar informe de cobertura:
 ./run_tests.sh --coverage
 ```
 
+### Ejecutor de Pruebas Interactivo
+TempoSage incluye una aplicación de consola interactiva para facilitar la ejecución de pruebas:
+
+```bash
+# Ejecutar en modo interactivo (menú)
+./scripts/ejecutar_pruebas.sh
+
+# Ejecutar pruebas específicas directamente
+./scripts/ejecutar_pruebas.sh 3 2  # Ejecuta pruebas de rendimiento de repositorio
+```
+
+Alternativamente, puedes usar directamente Dart:
+
+```bash
+dart run scripts/test_runner.dart
+```
+
+Beneficios de la herramienta:
+- Interfaz fácil de usar con categorías de pruebas
+- Resultados en tiempo real con formateo de colores
+- Verificación automática de dispositivos para pruebas de integración
+- Soporte para línea de comandos y modo interactivo
+
+La herramienta permite ejecutar fácilmente:
+- Pruebas unitarias
+- Pruebas de widgets
+- Pruebas de rendimiento
+- Pruebas de integración
+- Pruebas completas
+- Utilidades para pruebas
+
+Para más información, consulta la [documentación de la herramienta](scripts/README.md).
+
 ## Análisis de Calidad con SonarQube
 
 El proyecto está configurado para análisis de calidad con SonarQube, siguiendo la estrategia "Clean as You Code".

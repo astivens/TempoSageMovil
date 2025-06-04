@@ -7,7 +7,6 @@ import 'package:temposage/core/services/event_bus.dart';
 import 'package:temposage/features/habits/data/models/habit_model.dart';
 import 'package:temposage/features/habits/domain/entities/habit.dart';
 import 'package:temposage/features/habits/presentation/widgets/habit_card.dart';
-import 'package:temposage/core/widgets/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:temposage/features/dashboard/controllers/dashboard_controller.dart';
 
@@ -290,17 +289,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: CustomAppBar(
-        title: l10n.habits,
-        showBackButton: false,
-        titleStyle: TextStyle(
-          color: theme.colorScheme.onBackground,
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
-        ),
-        centerTitle: true,
-      ),
       body: _isLoading
           ? Center(
               child:

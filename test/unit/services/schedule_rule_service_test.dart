@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:temposage/services/schedule_rule_service.dart';
-import 'package:temposage/data/models/productive_block.dart';
+import 'package:temposage/core/models/productive_block.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'dart:collection';
@@ -16,8 +16,8 @@ void main() {
   setUp(() {
     mockCalendar = MockDeviceCalendarPlugin();
     top3Blocks = [
-      ProductiveBlock(weekday: 1, hour: 8, rate: 0.9),
-      ProductiveBlock(weekday: 2, hour: 9, rate: 0.8),
+      ProductiveBlock(weekday: 1, hour: 8, completionRate: 0.9),
+      ProductiveBlock(weekday: 2, hour: 9, completionRate: 0.8),
     ];
     calendarIds = ['cal1', 'cal2'];
 
