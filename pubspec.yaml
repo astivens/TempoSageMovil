@@ -50,6 +50,7 @@ dependencies:
   bloc: ^8.1.4
   http: ^1.1.2
   injectable: ^2.5.0
+  google_generative_ai: ^0.4.4
   # Added dependencies for improved DI
   get_it: ^7.6.7
   catppuccin_flutter: ^1.0.0
@@ -81,7 +82,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
   hive_generator: ^2.0.1
-  build_runner: ^2.4.15
+  build_runner: ^2.4.13
   freezed: ^2.4.7
   json_serializable: ^6.7.1
   mockito: ^5.4.3
