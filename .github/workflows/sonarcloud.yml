@@ -1,11 +1,14 @@
 name: SonarCloud Analysis
 
+# DISABLED: Using build.yml workflow instead
+# on:
+#   push:
+#     branches: [ main, develop, master ]
+#   pull_request:
+#     branches: [ main, develop, master ]
+#   workflow_dispatch:  # Permite ejecutar manualmente
 on:
-  push:
-    branches: [ main, develop, master ]
-  pull_request:
-    branches: [ main, develop, master ]
-  workflow_dispatch:  # Permite ejecutar manualmente
+  workflow_dispatch:  # Only manual execution
 
 jobs:
   sonarcloud:

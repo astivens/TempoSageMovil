@@ -1,12 +1,15 @@
 name: SonarQube Analysis
 
+# DISABLED: Using SonarCloud instead of self-hosted SonarQube
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
+#   # Permite ejecutar manualmente desde la pestaña Actions
+#   workflow_dispatch:
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  # Permite ejecutar manualmente desde la pestaña Actions
-  workflow_dispatch:
+  workflow_dispatch:  # Only manual execution
 
 jobs:
   sonarqube:
