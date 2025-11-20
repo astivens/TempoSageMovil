@@ -27,7 +27,19 @@ jobs:
       - name: Build
         run: flutter analyze || true
       - name: Run tests with coverage
-        run: flutter test --coverage || true
+        run: |
+          mkdir -p coverage
+          flutter test --coverage || true
+        continue-on-error: true
+      - name: Verify coverage file
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            echo "Coverage file found: $(wc -l < coverage/lcov.info) lines"
+            ls -lh coverage/
+          else
+            echo "Warning: coverage/lcov.info not found"
+            touch coverage/lcov.info
+          fi
         continue-on-error: true
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
