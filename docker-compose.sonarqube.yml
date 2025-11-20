@@ -1,7 +1,14 @@
-version: '3'
 services:
   sonarqube:
-    image: sonarqube:lts
+    # Actualizado a versión 10.7+ para soporte oficial de Dart/Flutter
+    # NOTA: El soporte oficial completo requiere Developer Edition o superior
+    # Community Edition puede tener limitaciones - considera usar SonarCloud para soporte completo
+    # 
+    # Versiones disponibles:
+    # - sonarqube:10.7-community (Community Edition - funcionalidades básicas)
+    # - sonarqube:10.7-developer (Developer Edition - requiere licencia, soporte completo)
+    # - sonarqube:latest (última versión disponible)
+    image: sonarqube:10.7-community
     ports:
       - "9000:9000"
     volumes:
@@ -12,8 +19,18 @@ services:
       - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
       - SONAR_JDBC_USERNAME=sonar
       - SONAR_JDBC_PASSWORD=sonar
+      # Habilitar soporte para Dart/Flutter (incluido desde 10.7)
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
     depends_on:
       - db
+    # Requisitos de memoria para SonarQube
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
   
   db:
     image: postgres:13

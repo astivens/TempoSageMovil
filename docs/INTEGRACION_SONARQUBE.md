@@ -2,9 +2,12 @@
 
 Esta guía describe el proceso de configuración e integración de SonarQube con el proyecto TempoSage Movil para análisis de calidad de código.
 
+> **✨ Nuevo en 2024:** SonarQube 10.7+ incluye **soporte oficial nativo** para Dart y Flutter. Ya no es necesario usar plugins externos.
+
 ## Requisitos previos
 
-1. Tener acceso a un servidor SonarQube (local o remoto)
+1. Tener acceso a un servidor SonarQube 10.7 o superior (local o remoto)
+   - **Importante:** El soporte oficial para Dart/Flutter requiere SonarQube 10.7+
 2. Tener instalado SonarQube Scanner en la máquina de desarrollo
 3. Haber configurado las pruebas del proyecto
 
@@ -42,8 +45,11 @@ sonar.projectKey=temposage-movil
 sonar.projectName=TempoSage Movil
 sonar.sources=lib
 sonar.tests=test
-sonar.flutter.coverage.reportPath=coverage/lcov.info
-sonar.testExecutionReportPaths=test-reports/test-report.xml
+sonar.language=dart
+sonar.sourceEncoding=UTF-8
+# Configuración de cobertura para Dart/Flutter (soporte oficial)
+sonar.dart.coverage.reportPaths=coverage/lcov.info
+sonar.coverage.exclusions=**/*.g.dart,**/*.freezed.dart,**/*.mocks.dart
 ```
 
 ### 2. Configurar variables de entorno

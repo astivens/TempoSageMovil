@@ -1,11 +1,34 @@
 #!/bin/bash
 
+# ⚠️ ADVERTENCIA IMPORTANTE ⚠️
+# Este script instala un plugin externo para Flutter/Dart.
+# 
+# Desde 2024, SonarQube 10.7+ incluye soporte OFICIAL nativo para Dart/Flutter.
+# Si estás usando SonarQube 10.7 o superior, NO necesitas este plugin.
+# 
+# Este script solo es necesario si:
+# - Estás usando una versión de SonarQube anterior a 10.7
+# - O necesitas funcionalidades específicas del plugin externo
+#
+# Para usar el soporte oficial, simplemente actualiza a SonarQube 10.7+
+# y configura sonar-project.properties con sonar.language=dart
+
 # Colores para salida en terminal
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+echo -e "${YELLOW}⚠️  ADVERTENCIA: Este script instala un plugin externo.${NC}"
+echo -e "${YELLOW}Si usas SonarQube 10.7+, el soporte oficial ya está incluido.${NC}"
+echo -e "${YELLOW}¿Deseas continuar? (y/N)${NC}"
+read -r response
+if [[ ! "$response" =~ ^[Yy]$ ]]; then
+    echo -e "${BLUE}Instalación cancelada.${NC}"
+    echo -e "${BLUE}Si usas SonarQube 10.7+, no necesitas este plugin.${NC}"
+    exit 0
+fi
 
 echo -e "${BLUE}================================${NC}"
 echo -e "${BLUE}= INSTALACIÓN PLUGIN SONARQUBE =${NC}"

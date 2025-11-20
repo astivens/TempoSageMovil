@@ -1,23 +1,31 @@
 # Configuración de SonarQube con Docker para proyectos Flutter
 
-Este documento describe los pasos para configurar SonarQube con Docker e integrar el plugin de Flutter para el análisis de calidad de código.
+Este documento describe los pasos para configurar SonarQube con Docker para el análisis de calidad de código en proyectos Flutter.
+
+> **⚠️ IMPORTANTE:** Desde 2024, SonarQube 10.7+ incluye **soporte oficial nativo** para Dart y Flutter. **Ya no es necesario instalar plugins externos.**
 
 ## Prerrequisitos
 
 - Docker y Docker Compose instalados
 - Git
 - Flutter SDK
+- SonarQube 10.7 o superior (incluye soporte nativo para Dart/Flutter)
 
 ## Pasos para configurar SonarQube con Docker
 
-### 1. Crear archivo docker-compose.yml
+### 1. Usar el archivo docker-compose.sonarqube.yml
 
-Crea un archivo `docker-compose.yml` con el siguiente contenido:
+El proyecto incluye un archivo `docker-compose.sonarqube.yml` configurado para usar SonarQube:
+
+> **⚠️ IMPORTANTE:** El soporte oficial para Dart/Flutter requiere **Developer Edition o superior**. 
+> La Community Edition no incluye soporte oficial, pero puedes usar SonarCloud (gratis para open source) 
+> o el plugin externo para desarrollo local.
 
 ```yaml
 version: '3'
 services:
   sonarqube:
+    # Usar LTS - para soporte oficial completo se requiere Developer Edition
     image: sonarqube:lts
     ports:
       - "9000:9000"
@@ -29,6 +37,7 @@ services:
       - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
       - SONAR_JDBC_USERNAME=sonar
       - SONAR_JDBC_PASSWORD=sonar
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
     depends_on:
       - db
   
@@ -51,28 +60,22 @@ volumes:
 ### 2. Iniciar los contenedores
 
 ```bash
-docker-compose up -d
+docker-compose -f docker-compose.sonarqube.yml up -d
 ```
 
-### 3. Instalar el plugin de Flutter para SonarQube
+### 3. Verificar que SonarQube está funcionando
 
-Descarga el plugin de Flutter para SonarQube:
+Espera unos momentos y verifica que SonarQube esté operativo:
 
 ```bash
-curl -L https://github.com/insideapp-oss/sonar-flutter/releases/download/0.5.2/sonar-flutter-plugin-0.5.2.jar -o sonar-flutter-plugin.jar
+# Esperar hasta que SonarQube esté listo
+timeout 300 bash -c 'until curl -f http://localhost:9000/api/system/status; do sleep 5; done'
 ```
 
-Copia el plugin al directorio de plugins de SonarQube en Docker:
-
-```bash
-docker cp sonar-flutter-plugin.jar sonarqube:/opt/sonarqube/extensions/plugins/
-```
-
-Reinicia el contenedor de SonarQube:
-
-```bash
-docker restart sonarqube
-```
+> **Nota:** 
+> - Si usas **Developer Edition o superior**, el soporte para Dart/Flutter está incluido nativamente
+> - Si usas **Community Edition**, necesitarás el plugin externo o usar SonarCloud
+> - **SonarCloud** (gratis para proyectos open source) incluye soporte oficial completo
 
 ### 4. Acceder a SonarQube y configurar un proyecto
 
@@ -105,11 +108,11 @@ export SONAR_TOKEN="tu_token_generado"
 
 ## Verificación de la instalación
 
-Para verificar que el plugin está instalado correctamente:
+Para verificar que SonarQube está funcionando correctamente:
 
-1. Inicia sesión en SonarQube
-2. Ve a "Administration" > "Marketplace" > "Installed"
-3. Deberías ver "SonarQube plugin for Flutter / Dart" en la lista
+1. Abre http://localhost:9000 en tu navegador
+2. Inicia sesión con las credenciales por defecto (admin/admin)
+3. El soporte para Dart/Flutter está incluido nativamente - no necesitas verificar plugins
 
 ## Ejecución del análisis
 
@@ -135,12 +138,12 @@ docker logs sonarqube
 
 Asegúrate de que tienes suficiente memoria disponible para Docker. SonarQube requiere al menos 2GB de RAM.
 
-### Plugin no detectado
+### Verificar versión de SonarQube
 
-Si el plugin no aparece en la lista de plugins instalados:
-1. Verifica que el archivo JAR se copió correctamente
-2. Asegúrate de que el contenedor de SonarQube se reinició completamente
-3. Comprueba los permisos del archivo JAR dentro del contenedor
+Si tienes problemas con el análisis de Dart/Flutter:
+1. Verifica que estás usando SonarQube 10.7 o superior
+2. Puedes verificar la versión en "Administration" > "System" > "Information"
+3. Si usas una versión anterior, actualiza a 10.7+ para obtener soporte oficial
 
 ### Errores en el análisis
 
