@@ -188,8 +188,9 @@ class HabitToTimeBlockService {
       List<HabitModel> habits, Set<String> existingHabitIds, String dateKey) {
     return habits.where((habit) {
       // Verificar si ya fue convertido según la caché
+      // Inicializar la caché si no existe para evitar null check error
       final alreadyConverted =
-          _convertedHabitsCache[dateKey]!.contains(habit.id);
+          _convertedHabitsCache[dateKey]?.contains(habit.id) ?? false;
 
       // Verificar si ya existe un timeblock para este hábito
       final hasExistingTimeBlock = existingHabitIds.contains(habit.id);
@@ -248,6 +249,8 @@ class HabitToTimeBlockService {
     _timeBlockCache[cacheKey] = timeBlock;
 
     // Marcar hábito como convertido para esta fecha
+    // Inicializar la caché si no existe para evitar null check error
+    _convertedHabitsCache[dateKey] ??= {};
     _convertedHabitsCache[dateKey]!.add(habit.id);
   }
 
@@ -319,22 +322,20 @@ class HabitToTimeBlockService {
     final timeBlocks = await _timeBlockRepository.getTimeBlocksByDate(date);
 
     // Encontrar bloque por título o ID en descripción
-    final existingBlock = timeBlocks.firstWhere(
-      (block) =>
-          block.title == habit.title ||
-          (block.title == '$_habitBlockPrefix${habit.title}' &&
-              block.description.contains('ID del hábito: ${habit.id}')),
-      orElse: () => TimeBlockModel.create(
-        title: '',
-        description: '',
-        startTime: DateTime.now(),
-        endTime: DateTime.now(),
-        category: '',
-        color: '',
-      ),
-    );
+    TimeBlockModel? existingBlock;
+    try {
+      existingBlock = timeBlocks.firstWhere(
+        (block) =>
+            block.title == habit.title ||
+            (block.title == '$_habitBlockPrefix${habit.title}' &&
+                block.description.contains('ID del hábito: ${habit.id}')),
+      );
+    } catch (e) {
+      // No se encontró ningún bloque, existingBlock queda como null
+      existingBlock = null;
+    }
 
-    if (existingBlock.title.isNotEmpty) {
+    if (existingBlock != null) {
       await _timeBlockRepository.deleteTimeBlock(existingBlock.id);
       debugPrint('Eliminado timeblock para hábito ${habit.id}');
     }
@@ -346,22 +347,20 @@ class HabitToTimeBlockService {
     final timeBlocks = await _timeBlockRepository.getTimeBlocksByDate(date);
 
     // Buscar si ya existe un timeblock para este hábito
-    final existingBlock = timeBlocks.firstWhere(
-      (block) =>
-          block.title == '$_habitBlockPrefix${habit.title}' ||
-          (block.description.contains('ID del hábito: ${habit.id}')),
-      orElse: () => TimeBlockModel.create(
-        title: '',
-        description: '',
-        startTime: DateTime.now(),
-        endTime: DateTime.now(),
-        category: '',
-        color: '',
-      ),
-    );
+    TimeBlockModel? existingBlock;
+    try {
+      existingBlock = timeBlocks.firstWhere(
+        (block) =>
+            block.title == '$_habitBlockPrefix${habit.title}' ||
+            (block.description.contains('ID del hábito: ${habit.id}')),
+      );
+    } catch (e) {
+      // No se encontró ningún bloque, existingBlock queda como null
+      existingBlock = null;
+    }
 
     // Eliminar el existente si lo hay
-    if (existingBlock.title.isNotEmpty) {
+    if (existingBlock != null) {
       await _timeBlockRepository.deleteTimeBlock(existingBlock.id);
     }
 
