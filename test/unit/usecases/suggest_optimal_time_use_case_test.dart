@@ -138,8 +138,8 @@ void main() {
       when(() => mockActivityRepository.getActivitiesByDate(targetDate))
           .thenThrow(Exception('Database error'));
 
-      expect(
-        () => useCase.execute(
+      expectLater(
+        useCase.execute(
           activityCategory: 'Work',
           pastActivities: [],
           targetDate: targetDate,
@@ -174,8 +174,8 @@ void main() {
       when(() => mockActivityRepository.getActivitiesByDate(targetDate))
           .thenThrow(Exception('Database error'));
 
-      expect(
-        () => useCase.executeWithExplanation(
+      expectLater(
+        useCase.executeWithExplanation(
           activityCategory: 'Work',
           pastActivities: [],
           targetDate: targetDate,

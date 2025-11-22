@@ -138,15 +138,15 @@ void main() {
     });
 
     test('getHabitById debería lanzar excepción si el ID está vacío', () async {
-      expect(
-        () => repository.getHabitById(''),
+      expectLater(
+        repository.getHabitById(''),
         throwsA(isA<HabitRepositoryException>()),
       );
     });
 
     test('getHabitById debería lanzar excepción si el hábito no existe', () async {
-      expect(
-        () => repository.getHabitById('non-existent-id'),
+      expectLater(
+        repository.getHabitById('non-existent-id'),
         throwsA(isA<HabitRepositoryException>()),
       );
     });
@@ -315,8 +315,8 @@ void main() {
     test('addHabit debería lanzar excepción si el nombre está vacío', () async {
       final habitWithEmptyName = testHabit1.copyWith(name: '');
 
-      expect(
-        () => repository.addHabit(habitWithEmptyName),
+      expectLater(
+        repository.addHabit(habitWithEmptyName),
         throwsA(isA<HabitRepositoryException>()),
       );
     });
@@ -386,8 +386,8 @@ void main() {
 
       final habitWithEmptyName = testHabit1.copyWith(name: '');
 
-      expect(
-        () => repository.updateHabit(habitWithEmptyName),
+      expectLater(
+        repository.updateHabit(habitWithEmptyName),
         throwsA(isA<HabitRepositoryException>()),
       );
     });
@@ -424,15 +424,15 @@ void main() {
 
       await repository.deleteHabit('habit-1');
 
-      expect(
-        () => repository.getHabitById('habit-1'),
+      expectLater(
+        repository.getHabitById('habit-1'),
         throwsA(isA<HabitRepositoryException>()),
       );
     });
 
     test('deleteHabit debería lanzar excepción si el ID está vacío', () async {
-      expect(
-        () => repository.deleteHabit(''),
+      expectLater(
+        repository.deleteHabit(''),
         throwsA(isA<HabitRepositoryException>()),
       );
     });

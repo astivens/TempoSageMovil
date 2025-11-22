@@ -64,8 +64,8 @@ void main() {
         );
 
         // Act & Assert
-        expect(
-          () => serviceWithInvalidUrl.sendMessage('test'),
+        expectLater(
+          serviceWithInvalidUrl.sendMessage('test'),
           throwsA(isA<Exception>()),
         );
       });
@@ -78,8 +78,8 @@ void main() {
         );
 
         // Act & Assert
-        expect(
-          () => serviceWithInvalidUrl.sendMessage('test'),
+        expectLater(
+          serviceWithInvalidUrl.sendMessage('test'),
           throwsA(isA<Exception>()),
         );
       });

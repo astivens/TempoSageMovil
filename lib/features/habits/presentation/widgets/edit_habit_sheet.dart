@@ -264,8 +264,8 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                     });
                   },
                   selectedColor: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.mocha.blue.withValues(alpha: 128)
-                      : AppColors.latte.blue.withValues(alpha: 128),
+                      ? AppColors.mocha.blue.withAlpha(128)
+                      : AppColors.latte.blue.withAlpha(128),
                   checkmarkColor: AppColors.text,
                 );
               }).toList(),

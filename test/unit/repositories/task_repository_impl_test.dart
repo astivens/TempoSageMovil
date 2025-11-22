@@ -75,8 +75,8 @@ void main() {
 
       test('debería lanzar excepción cuando no existe', () async {
         // Act & Assert
-        expect(
-          () => repository.getTaskById('non-existent'),
+        expectLater(
+          repository.getTaskById('non-existent'),
           throwsA(isA<StateError>()),
         );
       });

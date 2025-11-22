@@ -124,8 +124,8 @@ void main() {
       when(() => mockHabitRepository.getHabitsByDayOfWeek(any()))
           .thenThrow(Exception('Database error'));
 
-      expect(
-        () => service.convertHabitsToTimeBlocks(date),
+      expectLater(
+        service.convertHabitsToTimeBlocks(date),
         throwsA(isA<RepositoryException>()),
       );
     });
@@ -389,8 +389,8 @@ void main() {
       when(() => mockTimeBlockRepository.getTimeBlocksByDate(any()))
           .thenThrow(Exception('Error'));
 
-      expect(
-        () => service.syncTimeBlocksForHabit(habit),
+      expectLater(
+        service.syncTimeBlocksForHabit(habit),
         throwsA(isA<RepositoryException>()),
       );
     });

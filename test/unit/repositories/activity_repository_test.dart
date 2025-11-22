@@ -176,8 +176,8 @@ void main() {
     });
 
     test('getActivity debería lanzar excepción si el ID está vacío', () async {
-      expect(
-        () => repository.getActivity(''),
+      expectLater(
+        repository.getActivity(''),
         throwsA(isA<ActivityRepositoryException>()),
       );
     });
@@ -279,16 +279,16 @@ void main() {
 
     test('toggleActivityCompletion debería lanzar excepción si el ID está vacío',
         () async {
-      expect(
-        () => repository.toggleActivityCompletion(''),
+      expectLater(
+        repository.toggleActivityCompletion(''),
         throwsA(isA<ActivityRepositoryException>()),
       );
     });
 
     test('toggleActivityCompletion debería lanzar excepción si la actividad no existe',
         () async {
-      expect(
-        () => repository.toggleActivityCompletion('non-existent-id'),
+      expectLater(
+        repository.toggleActivityCompletion('non-existent-id'),
         throwsA(isA<ActivityRepositoryException>()),
       );
     });
@@ -305,8 +305,8 @@ void main() {
     });
 
     test('deleteActivity debería lanzar excepción si el ID está vacío', () async {
-      expect(
-        () => repository.deleteActivity(''),
+      expectLater(
+        repository.deleteActivity(''),
         throwsA(isA<ActivityRepositoryException>()),
       );
     });

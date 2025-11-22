@@ -66,8 +66,8 @@ void main() {
       // Act
       await tester.pumpAndSettle();
 
-      // Assert
-      expect(find.text('Categoría de prueba'), findsOneWidget);
+      // Assert - La categoría se muestra en un chip con texto en mayúsculas
+      expect(find.text('CATEGORÍA DE PRUEBA'), findsOneWidget);
     });
 
     testWidgets('Debe mostrar rango de tiempo cuando se proporciona',
@@ -111,10 +111,14 @@ void main() {
         ),
       );
 
-      // Act
+      // Act - Tocar el texto del título que está dentro del GestureDetector
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(UnifiedDisplayCard));
-      await tester.pump();
+      // Buscar el GestureDetector que contiene el contenido, no el del Slidable
+      final titleFinder = find.text('Título');
+      expect(titleFinder, findsOneWidget);
+      // Tocar el título que está dentro del GestureDetector con onTap
+      await tester.tap(titleFinder);
+      await tester.pumpAndSettle();
 
       // Assert
       expect(wasTapped, isTrue);

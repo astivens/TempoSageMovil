@@ -84,8 +84,8 @@ void main() {
   group('MlModelAdapter - runInference', () {
     test('runInference debería lanzar excepción cuando no está inicializado',
         () async {
-      expect(
-        () => adapter.runInference(
+      expectLater(
+        adapter.runInference(
           text: 'Test text',
           estimatedDuration: 60.0,
         ),

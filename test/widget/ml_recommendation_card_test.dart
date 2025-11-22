@@ -97,9 +97,17 @@ void main() {
       );
 
       // Act
+      await tester.pumpAndSettle(); // Esperar animaciones iniciales
       await tester.tap(find.byType(GestureDetector));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Aceptar'));
+      await tester.pumpAndSettle(); // Esperar expansión
+      
+      // Buscar el botón Aceptar después de la expansión
+      final acceptButton = find.text('Aceptar');
+      expect(acceptButton, findsOneWidget);
+      await tester.tap(acceptButton);
+      
+      // Esperar a que se complete la animación de aceptación (2 segundos)
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       // Assert
@@ -128,8 +136,9 @@ void main() {
       );
 
       // Act
+      await tester.pumpAndSettle(); // Esperar animaciones iniciales
       await tester.tap(find.byType(GestureDetector));
-      await tester.pumpAndSettle();
+      await tester.pumpAndSettle(); // Esperar expansión
       await tester.tap(find.text('Descartar'));
       await tester.pumpAndSettle();
 

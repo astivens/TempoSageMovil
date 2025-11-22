@@ -80,8 +80,8 @@ void main() {
             .thenThrow(Exception('Repository error'));
 
         // Act & Assert
-        expect(
-          () => useCase.getAllHabits(),
+        expectLater(
+          useCase.getAllHabits(),
           throwsA(isA<ServiceException>()),
         );
       });
@@ -137,8 +137,8 @@ void main() {
             .thenThrow(Exception('Repository error'));
 
         // Act & Assert
-        expect(
-          () => useCase.getHabitsByDay('Lunes'),
+        expectLater(
+          useCase.getHabitsByDay('Lunes'),
           throwsA(isA<ServiceException>()),
         );
       });
@@ -195,8 +195,8 @@ void main() {
             .thenThrow(Exception('Habit not found'));
 
         // Act & Assert
-        expect(
-          () => useCase.getHabitById('non-existent'),
+        expectLater(
+          useCase.getHabitById('non-existent'),
           throwsA(isA<ServiceException>()),
         );
       });
@@ -207,8 +207,8 @@ void main() {
             .thenThrow(Exception('Repository error'));
 
         // Act & Assert
-        expect(
-          () => useCase.getHabitById('habit-1'),
+        expectLater(
+          useCase.getHabitById('habit-1'),
           throwsA(isA<ServiceException>()),
         );
       });

@@ -103,11 +103,13 @@ void main() {
 
       // Act
       final state = tester.state<HoverScaleState>(find.byType(HoverScale));
+      final initialScale = tester.getSize(find.byType(HoverScale))!.width;
       state.handleHover(true);
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      // Assert
-      expect(state._isHovered, isFalse);
+      // Assert - Cuando está deshabilitado, el hover no debería cambiar el tamaño
+      final finalScale = tester.getSize(find.byType(HoverScale))!.width;
+      expect(finalScale, equals(initialScale));
     });
   });
 }

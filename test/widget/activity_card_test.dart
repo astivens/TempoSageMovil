@@ -50,7 +50,8 @@ void main() {
         ),
       );
 
-      // Act - No se requiere acción adicional para verificar renderizado
+      // Act - Esperar a que todas las animaciones y timers se completen
+      await tester.pumpAndSettle();
 
       // Assert
       expect(find.byType(ActivityCard), findsOneWidget);
@@ -80,9 +81,10 @@ void main() {
         ),
       );
 
-      // Act
+      // Act - Esperar a que las animaciones se completen antes de interactuar
+      await tester.pumpAndSettle();
       await tester.tap(find.byType(InkWell).first);
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Assert
       expect(wasTapped, isTrue);
@@ -107,7 +109,8 @@ void main() {
         ),
       );
 
-      // Act - No se requiere acción adicional
+      // Act - Esperar a que todas las animaciones y timers se completen
+      await tester.pumpAndSettle();
 
       // Assert
       final textWidget = tester.widget<Text>(find.text('Test Activity'));
@@ -132,7 +135,8 @@ void main() {
         ),
       );
 
-      // Act - No se requiere acción adicional
+      // Act - Esperar a que todas las animaciones y timers se completen
+      await tester.pumpAndSettle();
 
       // Assert
       expect(find.byIcon(Icons.repeat), findsOneWidget);
@@ -156,7 +160,8 @@ void main() {
         ),
       );
 
-      // Act - No se requiere acción adicional
+      // Act - Esperar a que todas las animaciones y timers se completen
+      await tester.pumpAndSettle();
 
       // Assert
       expect(find.byIcon(Icons.repeat), findsNothing);
@@ -183,10 +188,11 @@ void main() {
         ),
       );
 
-      // Act
-      final checkboxes = find.byType(InkWell);
-      await tester.tap(checkboxes.last);
-      await tester.pump();
+      // Act - Buscar el InkWell que contiene el checkbox (el primero es el del card, el segundo es el del checkbox)
+      await tester.pumpAndSettle();
+      final checkboxInkWell = find.byType(InkWell).at(1); // El segundo InkWell es el del checkbox
+      await tester.tap(checkboxInkWell);
+      await tester.pumpAndSettle();
 
       // Assert
       expect(wasToggled, isTrue);
@@ -211,7 +217,8 @@ void main() {
         ),
       );
 
-      // Act - No se requiere acción adicional
+      // Act - Esperar a que todas las animaciones y timers se completen
+      await tester.pumpAndSettle();
 
       // Assert
       expect(find.byIcon(Icons.check), findsOneWidget);

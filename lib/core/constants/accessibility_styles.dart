@@ -43,7 +43,7 @@ class AccessibilityStyles {
   // Sombras para mejorar la percepción de profundidad
   static final List<BoxShadow> accessibleShadow = [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 26), // 0.1 * 255 ≈ 26
+      color: Colors.black.withAlpha(26), // 0.1 * 255 ≈ 26
       blurRadius: 10,
       offset: const Offset(0, 4),
     ),
