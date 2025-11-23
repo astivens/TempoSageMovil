@@ -21,7 +21,11 @@ void main() {
 
     test('debería leer TimeOfDay correctamente', () {
       final reader = MockBinaryReader();
-      when(() => reader.readByte()).thenReturn(9, 30);
+      var callCount = 0;
+      when(() => reader.readByte()).thenAnswer((_) {
+        callCount++;
+        return callCount == 1 ? 9 : 30;
+      });
 
       final timeOfDay = adapter.read(reader);
 

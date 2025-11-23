@@ -7,6 +7,10 @@ import 'package:temposage/features/settings/data/models/settings_model.dart';
 class MockSettingsService extends Mock implements SettingsService {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(const SettingsModel());
+  });
+
   group('SettingsProvider Tests', () {
     late MockSettingsService mockSettingsService;
     late SettingsProvider settingsProvider;

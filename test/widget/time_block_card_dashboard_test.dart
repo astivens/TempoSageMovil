@@ -84,7 +84,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(
         isLoading: true,
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });

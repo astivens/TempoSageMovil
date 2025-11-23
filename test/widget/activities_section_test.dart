@@ -76,7 +76,7 @@ void main() {
       when(() => controller.habits).thenReturn([]);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('Cargando actividades...'), findsOneWidget);
@@ -88,7 +88,7 @@ void main() {
       when(() => controller.habits).thenReturn([]);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle(const Duration(seconds: 1));
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(ActivitiesSection), findsOneWidget);
     });
@@ -110,7 +110,7 @@ void main() {
       when(() => controller.habits).thenReturn([]);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle(const Duration(seconds: 1));
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(ActivitiesSection), findsOneWidget);
     });
@@ -130,7 +130,7 @@ void main() {
       when(() => controller.habits).thenReturn([habit]);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle(const Duration(seconds: 1));
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(ActivitiesSection), findsOneWidget);
     });
@@ -141,9 +141,13 @@ void main() {
       when(() => controller.habits).thenReturn([]);
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(ActivitiesSection), findsOneWidget);
+      
+      // Limpiar el widget
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 100));
     });
   });
 }
