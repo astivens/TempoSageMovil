@@ -48,6 +48,32 @@ void main() {
   });
 
   setUp(() async {
+    // Close boxes if they are open before deleting
+    try {
+      final usersBox = Hive.box('users');
+      if (usersBox.isOpen) {
+        await usersBox.close();
+      }
+    } catch (e) {
+      // Box might not exist or be open
+    }
+    try {
+      final authBox = Hive.box('auth');
+      if (authBox.isOpen) {
+        await authBox.close();
+      }
+    } catch (e) {
+      // Box might not exist or be open
+    }
+    try {
+      final productiveBlocksBox = Hive.box('productive_blocks');
+      if (productiveBlocksBox.isOpen) {
+        await productiveBlocksBox.close();
+      }
+    } catch (e) {
+      // Box might not exist or be open
+    }
+    
     // Clean up previous test data
     await Hive.deleteBoxFromDisk('users');
     await Hive.deleteBoxFromDisk('auth');
@@ -60,6 +86,32 @@ void main() {
   });
 
   tearDown(() async {
+    // Close boxes if they are open before deleting
+    try {
+      final usersBox = Hive.box('users');
+      if (usersBox.isOpen) {
+        await usersBox.close();
+      }
+    } catch (e) {
+      // Box might not exist or be open
+    }
+    try {
+      final authBox = Hive.box('auth');
+      if (authBox.isOpen) {
+        await authBox.close();
+      }
+    } catch (e) {
+      // Box might not exist or be open
+    }
+    try {
+      final productiveBlocksBox = Hive.box('productive_blocks');
+      if (productiveBlocksBox.isOpen) {
+        await productiveBlocksBox.close();
+      }
+    } catch (e) {
+      // Box might not exist or be open
+    }
+    
     // Clean up test data after each test
     await Hive.deleteBoxFromDisk('users');
     await Hive.deleteBoxFromDisk('auth');
@@ -176,32 +228,59 @@ void main() {
         group('Level 3: Module Integration (B-C, B-D, B-E)', () {
           test('B-C: User Management + AuthService Integration', () async {
             // Test user management module integration with auth service
+            // Use unique emails to avoid conflicts
+            final timestamp = DateTime.now().millisecondsSinceEpoch;
+            final user1Email = 'user1$timestamp@example.com';
+            final user2Email = 'user2$timestamp@example.com';
+            
             final user1 = await authService.register(
-              'user1@example.com',
+              user1Email,
               'User One',
               'password123',
             );
+            expect(user1.email, equals(user1Email));
             
             final user2 = await authService.register(
-              'user2@example.com',
+              user2Email,
               'User Two',
               'password456',
             );
+            expect(user2.email, equals(user2Email));
+            
+            // Wait a bit to ensure Hive operations are complete
+            await Future.delayed(const Duration(milliseconds: 100));
             
             // Test first user login
-            await authService.login('user1@example.com', 'password123');
+            final login1Result = await authService.login(user1Email, 'password123');
+            expect(login1Result, isTrue);
             var currentUser = await authService.getCurrentUser();
-            expect(currentUser!.email, equals('user1@example.com'));
+            expect(currentUser, isNotNull);
+            expect(currentUser!.email, equals(user1Email));
             
             // Test logout
             await authService.logout();
             currentUser = await authService.getCurrentUser();
             expect(currentUser, isNull);
             
+            // Wait a bit after logout to ensure operations are complete
+            await Future.delayed(const Duration(milliseconds: 100));
+            
+            // Verify user2 is still in the database before attempting login
+            Box<UserModel> usersBox;
+            try {
+              usersBox = Hive.box<UserModel>('users');
+            } catch (e) {
+              usersBox = await Hive.openBox<UserModel>('users');
+            }
+            final user2Exists = usersBox.values.any((u) => u.email == user2Email);
+            expect(user2Exists, isTrue, reason: 'User2 should exist in database before login');
+            
             // Test second user login
-            await authService.login('user2@example.com', 'password456');
+            final login2Result = await authService.login(user2Email, 'password456');
+            expect(login2Result, isTrue);
             currentUser = await authService.getCurrentUser();
-            expect(currentUser!.email, equals('user2@example.com'));
+            expect(currentUser, isNotNull);
+            expect(currentUser!.email, equals(user2Email));
           });
 
           test('B-D: Data Management + ProductiveBlock Integration', () async {
