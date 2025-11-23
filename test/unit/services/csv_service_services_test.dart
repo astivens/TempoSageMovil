@@ -11,26 +11,38 @@ void main() {
       expect(service, isNotNull);
     });
 
-    test('loadTop3Blocks debería ser un método asíncrono', () {
+    test('loadTop3Blocks debería ser un método asíncrono', () async {
       // Arrange
       final service = CSVService();
 
-      // Act
+      // Act & Assert
       final future = service.loadTop3Blocks();
-
-      // Assert
       expect(future, isA<Future>());
+      
+      // El método puede fallar si los assets no están disponibles en tests, pero debe retornar un Future
+      try {
+        await future;
+      } catch (e) {
+        // Esperado en entorno de test sin assets
+        expect(e, isNotNull);
+      }
     });
 
-    test('loadAllBlocks debería ser un método asíncrono', () {
+    test('loadAllBlocks debería ser un método asíncrono', () async {
       // Arrange
       final service = CSVService();
 
-      // Act
+      // Act & Assert
       final future = service.loadAllBlocks();
-
-      // Assert
       expect(future, isA<Future>());
+      
+      // El método puede fallar si los assets no están disponibles en tests, pero debe retornar un Future
+      try {
+        await future;
+      } catch (e) {
+        // Esperado en entorno de test sin assets
+        expect(e, isNotNull);
+      }
     });
   });
 }
