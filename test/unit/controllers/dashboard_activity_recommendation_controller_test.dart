@@ -4,18 +4,39 @@ import 'package:temposage/features/dashboard/controllers/activity_recommendation
 import 'package:temposage/core/services/recommendation_service.dart';
 import 'package:temposage/features/activities/data/models/activity_model.dart';
 import 'package:temposage/core/services/service_locator.dart';
+import 'package:hive/hive.dart';
+import 'dart:io';
 
 class MockRecommendationService extends Mock implements RecommendationService {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   
+  late Directory tempDir;
+  
+  setUpAll(() async {
+    // Initialize Hive before ServiceLocator
+    tempDir = await Directory.systemTemp.createTemp();
+    Hive.init(tempDir.path);
+  });
+  
+  tearDownAll(() async {
+    await Hive.close();
+    await tempDir.delete(recursive: true);
+  });
+  
   group('ActivityRecommendationController (dashboard) Tests', () {
     late ActivityRecommendationController controller;
 
-    setUp(() {
-      // Nota: ServiceLocator es un singleton real, así que los tests
-      // verifican el comportamiento con el servicio real o manejan errores
+    setUp(() async {
+      // Initialize ServiceLocator before creating controller
+      // Note: ServiceLocator uses real services, which will use fallback mode in tests
+      try {
+        await ServiceLocator.instance.initializeAll();
+      } catch (e) {
+        // ServiceLocator may already be initialized or may fail
+        // This is expected in test environment
+      }
     });
 
     tearDown(() {
