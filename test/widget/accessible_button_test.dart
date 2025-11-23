@@ -219,6 +219,11 @@ void main() {
       // Assert
       expect(find.byType(AccessibleButton), findsOneWidget);
       expect(find.text('Ancho personalizado'), findsOneWidget);
+      
+      // Verificar que el widget se renderiza correctamente con el ancho personalizado
+      // El ancho se aplica a través del SizedBox interno del AccessibleButton
+      final accessibleButton = tester.widget<AccessibleButton>(find.byType(AccessibleButton));
+      expect(accessibleButton.width, equals(customWidth));
     });
 
     testWidgets('Debe usar la altura personalizada cuando se proporciona',
@@ -243,6 +248,11 @@ void main() {
       // Assert
       expect(find.byType(AccessibleButton), findsOneWidget);
       expect(find.text('Altura personalizada'), findsOneWidget);
+      
+      // Verificar que el widget se renderiza correctamente con la altura personalizada
+      // La altura se aplica a través del SizedBox interno del AccessibleButton
+      final accessibleButton = tester.widget<AccessibleButton>(find.byType(AccessibleButton));
+      expect(accessibleButton.height, equals(customHeight));
     });
   });
 }

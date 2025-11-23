@@ -32,7 +32,10 @@ void main() {
       const MethodChannel('plugins.flutter.io/path_provider'),
       null,
     );
-    await tempDir.delete(recursive: true);
+    // Verificar si el directorio existe antes de eliminarlo
+    if (await tempDir.exists()) {
+      await tempDir.delete(recursive: true);
+    }
   });
 
   setUp(() async {

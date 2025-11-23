@@ -80,7 +80,7 @@ void main() {
         (WidgetTester tester) async {
       // Arrange
       final controller = AnimationController(
-        vsync: const TestVSync(),
+        vsync: TestVSync(),
         duration: const Duration(seconds: 1),
       );
       final animation = Tween<double>(begin: 0.0, end: 1.0).animate(controller);

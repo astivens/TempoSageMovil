@@ -168,16 +168,27 @@ void main() {
         ),
       ];
 
+      // Simular que no hay TimeBlocks existentes
       when(() => mockActivityRepository.getActivitiesByDate(date))
           .thenAnswer((_) async => activities);
-      when(() => mockTimeBlockRepository.getTimeBlocksByDate(date))
+      // El servicio llama a getTimeBlocksByDate con activity.startTime, no con date
+      // Por lo tanto, necesitamos mockear para cualquier fecha
+      when(() => mockTimeBlockRepository.getTimeBlocksByDate(any()))
           .thenAnswer((_) async => []);
+      
+      // Capturar los TimeBlocks que se agregan
+      final addedTimeBlocks = <TimeBlockModel>[];
       when(() => mockTimeBlockRepository.addTimeBlock(any()))
-          .thenAnswer((_) async {});
+          .thenAnswer((invocation) async {
+        final timeBlock = invocation.positionalArguments[0] as TimeBlockModel;
+        addedTimeBlocks.add(timeBlock);
+      });
 
       final result = await service.convertActivitiesToTimeBlocks(date);
 
-      expect(result.length, 2);
+      // El servicio debería retornar los TimeBlocks creados
+      expect(result.length, equals(2));
+      expect(addedTimeBlocks.length, equals(2));
       verify(() => mockTimeBlockRepository.addTimeBlock(any())).called(2);
     });
 
