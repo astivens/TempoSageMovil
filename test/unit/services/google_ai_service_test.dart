@@ -109,7 +109,7 @@ void main() {
 
       // Assert
       expect(response.text, text);
-      expect(response.role, 'assistant');
+        expect(response.role, 'assistant');
     });
 
     test('ChatResponse.error debería crear respuesta de error', () {
@@ -122,8 +122,8 @@ void main() {
       // Assert
       expect(response.text, errorMessage);
       expect(response.role, 'error');
+      });
     });
-  });
 
   group('GoogleAIService Tests', () {
     test('debería inicializar con API key', () {
@@ -135,7 +135,7 @@ void main() {
 
       // Assert
       expect(service.apiKey, apiKey);
-    });
+      });
 
     test('sendMessage debería retornar mensaje mock cuando API key es mock_key_for_development',
         () async {
@@ -149,7 +149,7 @@ void main() {
       // Assert
       expect(response.role, 'assistant');
       expect(response.text, contains('no está configurado'));
-    });
+      });
 
     test('clearConversation debería limpiar la sesión de chat', () {
       // Arrange
@@ -162,7 +162,7 @@ void main() {
       // Assert
       // Verificamos que el método se ejecuta sin errores
       expect(service, isNotNull);
-    });
+      });
 
     test('dispose debería ejecutarse sin errores', () {
       // Arrange
