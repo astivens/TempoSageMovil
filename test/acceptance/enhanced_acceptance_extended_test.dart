@@ -45,11 +45,14 @@ void main() {
       Hive.init(tempDir.path);
       
       // Register adapters
-      if (!Hive.isAdapterRegistered(6)) {
-        Hive.registerAdapter(TimeBlockModelAdapter());
+      if (!Hive.isAdapterRegistered(1)) {
+        Hive.registerAdapter(UserModelAdapter());
       }
       if (!Hive.isAdapterRegistered(3)) {
         Hive.registerAdapter(HabitModelAdapter());
+      }
+      if (!Hive.isAdapterRegistered(6)) {
+        Hive.registerAdapter(TimeBlockModelAdapter());
       }
     });
 
@@ -68,7 +71,7 @@ void main() {
     });
 
     tearDown(() async {
-      await timeBlockRepository.close();
+      // No need to close repository, Hive boxes are managed separately
       await Hive.deleteBoxFromDisk('users');
       await Hive.deleteBoxFromDisk('auth');
       await Hive.deleteBoxFromDisk('time_blocks');
@@ -149,7 +152,7 @@ void main() {
             category: 'Work',
             color: '#2196F3',
           );
-          await timeBlockRepository.createTimeBlock(timeBlock);
+          await timeBlockRepository.addTimeBlock(timeBlock);
 
           // Then: The time block is created and stored
           final allBlocks = await timeBlockRepository.getAllTimeBlocks();
@@ -176,7 +179,7 @@ void main() {
             category: 'Work',
             color: '#2196F3',
           );
-          await timeBlockRepository.createTimeBlock(timeBlock);
+          await timeBlockRepository.addTimeBlock(timeBlock);
 
           // When: The user updates the time block
           final updatedBlock = timeBlock.copyWith(
@@ -219,8 +222,8 @@ void main() {
             color: '#4CAF50',
           );
 
-          await timeBlockRepository.createTimeBlock(timeBlock1);
-          await timeBlockRepository.createTimeBlock(timeBlock2);
+          await timeBlockRepository.addTimeBlock(timeBlock1);
+          await timeBlockRepository.addTimeBlock(timeBlock2);
 
           var allBlocks = await timeBlockRepository.getAllTimeBlocks();
           expect(allBlocks.length, equals(2));
@@ -442,7 +445,7 @@ void main() {
           ];
 
           for (final block in timeBlocks) {
-            await timeBlockRepository.createTimeBlock(block);
+            await timeBlockRepository.addTimeBlock(block);
           }
 
           // When: The user views their productivity statistics
@@ -490,7 +493,7 @@ void main() {
           ];
 
           for (final block in timeBlocks) {
-            await timeBlockRepository.createTimeBlock(block);
+            await timeBlockRepository.addTimeBlock(block);
           }
 
           // When: The user exports their data
@@ -537,7 +540,7 @@ void main() {
             category: 'Work',
             color: '#2196F3',
           );
-          await timeBlockRepository.createTimeBlock(timeBlock);
+          await timeBlockRepository.addTimeBlock(timeBlock);
 
           // When: The user logs out and logs back in
           await authService.logout();
@@ -573,7 +576,7 @@ void main() {
               color: '#2196F3',
             );
             timeBlockPromises.add(
-              timeBlockRepository.createTimeBlock(timeBlock).then((_) => timeBlock)
+              timeBlockRepository.addTimeBlock(timeBlock).then((_) => timeBlock)
             );
           }
 
@@ -615,7 +618,7 @@ void main() {
             category: 'Work',
             color: '#2196F3',
           );
-          await timeBlockRepository.createTimeBlock(timeBlock);
+          await timeBlockRepository.addTimeBlock(timeBlock);
           final createTime = DateTime.now().difference(createStartTime);
 
           final retrieveStartTime = DateTime.now();
@@ -652,7 +655,7 @@ void main() {
           // When: The system processes the large dataset
           final createStartTime = DateTime.now();
           for (final block in largeDataset) {
-            await timeBlockRepository.createTimeBlock(block);
+            await timeBlockRepository.addTimeBlock(block);
           }
           final createTime = DateTime.now().difference(createStartTime);
 
@@ -690,7 +693,7 @@ void main() {
               color: '#2196F3',
             );
             timeBlocks.add(timeBlock);
-            await timeBlockRepository.createTimeBlock(timeBlock);
+            await timeBlockRepository.addTimeBlock(timeBlock);
           }
 
           // When: The user performs various operations
@@ -746,7 +749,7 @@ void main() {
             category: 'Work',
             color: '#2196F3',
           );
-          await timeBlockRepository.createTimeBlock(validTimeBlock);
+          await timeBlockRepository.addTimeBlock(validTimeBlock);
 
           // Then: The valid data is accepted
           final allBlocks = await timeBlockRepository.getAllTimeBlocks();
@@ -764,7 +767,7 @@ void main() {
               category: 'Work',
               color: '#2196F3',
             );
-            await timeBlockRepository.createTimeBlock(invalidTimeBlock);
+            await timeBlockRepository.addTimeBlock(invalidTimeBlock);
           } catch (e) {
             // Then: Invalid data is rejected
             expect(e, isA<Exception>());
@@ -870,7 +873,7 @@ void main() {
 
         // Create all time blocks
         for (final block in timeBlocks) {
-          await timeBlockRepository.createTimeBlock(block);
+          await timeBlockRepository.addTimeBlock(block);
         }
 
         // Step 6: Data Analysis
