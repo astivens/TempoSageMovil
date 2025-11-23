@@ -77,14 +77,16 @@ void main() {
       // Assert
       expect(AppStyles.lightTheme, isA<ThemeData>());
       expect(AppStyles.lightTheme.brightness, Brightness.light);
-      expect(AppStyles.lightTheme.fontFamily, 'Noto Sans');
+      // fontFamily is accessed via textTheme, not directly on ThemeData
+      expect(AppStyles.lightTheme.textTheme.bodyLarge?.fontFamily, 'Noto Sans');
     });
 
     test('debería tener darkTheme definido correctamente', () {
       // Assert
       expect(AppStyles.darkTheme, isA<ThemeData>());
       expect(AppStyles.darkTheme.brightness, Brightness.dark);
-      expect(AppStyles.darkTheme.fontFamily, 'Noto Sans');
+      // fontFamily is accessed via textTheme, not directly on ThemeData
+      expect(AppStyles.darkTheme.textTheme.bodyLarge?.fontFamily, 'Noto Sans');
     });
   });
 }

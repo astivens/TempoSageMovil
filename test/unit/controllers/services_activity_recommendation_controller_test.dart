@@ -12,6 +12,8 @@ class MockRecommendationService extends Mock implements RecommendationService {}
 class MockActivityRepository extends Mock implements ActivityRepository {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   group('ActivityRecommendationController (services) Tests', () {
     late ActivityRecommendationController controller;
     late MockRecommendationService mockRecommendationService;

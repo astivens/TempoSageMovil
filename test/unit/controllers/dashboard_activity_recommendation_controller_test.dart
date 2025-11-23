@@ -8,6 +8,8 @@ import 'package:temposage/core/services/service_locator.dart';
 class MockRecommendationService extends Mock implements RecommendationService {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   group('ActivityRecommendationController (dashboard) Tests', () {
     late ActivityRecommendationController controller;
 

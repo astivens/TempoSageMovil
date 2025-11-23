@@ -68,7 +68,7 @@ void main() {
     });
 
     tearDown(() async {
-      await timeBlockRepository.close();
+      // No need to close repository, Hive boxes are managed separately
       await Hive.deleteBoxFromDisk('users');
       await Hive.deleteBoxFromDisk('auth');
       await Hive.deleteBoxFromDisk('time_blocks');
