@@ -317,6 +317,11 @@ void main() {
           ).toList();
           expect(testDateBlocks.length, equals(1),
               reason: 'Should have exactly 1 block for the test date after deletion');
+          
+          // Verify the remaining block is timeBlock2
+          final remainingBlock = testDateBlocks.first;
+          expect(remainingBlock.id, equals(timeBlock2.id));
+          expect(remainingBlock.title, equals('Task 2'));
           expect(allBlocks.first.id, equals(timeBlock2.id));
         });
       });
@@ -759,13 +764,15 @@ void main() {
           await authService.register('large@example.com', 'Large Dataset User', 'password123');
           await authService.login('large@example.com', 'password123');
 
+          // Use unique date for this test to avoid conflicts
+          final testDate = DateTime(2023, 1, 9, 9, 0);
           final largeDataset = <TimeBlockModel>[];
           for (int i = 0; i < 50; i++) {
             final timeBlock = TimeBlockModel.create(
               title: 'Large Dataset Task $i',
               description: 'Task $i in large dataset',
-              startTime: DateTime(2023, 1, 2, 9 + (i % 12), 0),
-              endTime: DateTime(2023, 1, 2, 10 + (i % 12), 0),
+              startTime: testDate.add(Duration(hours: i % 12)),
+              endTime: testDate.add(Duration(hours: (i % 12) + 1)),
               category: i % 2 == 0 ? 'Work' : 'Personal',
               color: i % 2 == 0 ? '#2196F3' : '#4CAF50',
             );
@@ -789,7 +796,6 @@ void main() {
 
           // Then: The system handles the large dataset efficiently
           // Filter by test date to avoid counting blocks from other tests
-          final testDate = DateTime(2023, 1, 3);
           final testDateBlocks = allBlocks.where((block) => 
             block.startTime.year == testDate.year &&
             block.startTime.month == testDate.month &&
@@ -811,13 +817,15 @@ void main() {
           await authService.register('integrity@example.com', 'Integrity User', 'password123');
           await authService.login('integrity@example.com', 'password123');
 
+          // Use unique date for this test to avoid conflicts
+          final testDate = DateTime(2023, 1, 10, 9, 0);
           final timeBlocks = <TimeBlockModel>[];
           for (int i = 0; i < 10; i++) {
             final timeBlock = TimeBlockModel.create(
               title: 'Integrity Task $i',
               description: 'Task for integrity testing',
-              startTime: DateTime(2023, 1, 2, 9 + i, 0),
-              endTime: DateTime(2023, 1, 2, 10 + i, 0),
+              startTime: testDate.add(Duration(hours: i)),
+              endTime: testDate.add(Duration(hours: i + 1)),
               category: 'Work',
               color: '#2196F3',
             );
@@ -826,12 +834,19 @@ void main() {
           }
 
           // When: The user performs various operations
-          final allBlocks = await timeBlockRepository.getAllTimeBlocks();
-          expect(allBlocks.length, equals(10));
+          // Filter by test date to avoid counting blocks from other tests
+          var allBlocks = await timeBlockRepository.getAllTimeBlocks();
+          var testDateBlocks = allBlocks.where((block) => 
+            block.startTime.year == testDate.year &&
+            block.startTime.month == testDate.month &&
+            block.startTime.day == testDate.day
+          ).toList();
+          expect(testDateBlocks.length, equals(10),
+              reason: 'Should have exactly 10 blocks for the test date');
 
           // Update some blocks
           for (int i = 0; i < 5; i++) {
-            final updatedBlock = allBlocks[i].copyWith(
+            final updatedBlock = testDateBlocks[i].copyWith(
               isCompleted: true,
               title: 'Updated Integrity Task $i',
             );
@@ -840,15 +855,22 @@ void main() {
 
           // Delete some blocks
           for (int i = 5; i < 7; i++) {
-            await timeBlockRepository.deleteTimeBlock(allBlocks[i].id);
+            await timeBlockRepository.deleteTimeBlock(testDateBlocks[i].id);
           }
 
           // Then: Data consistency is maintained
+          // Filter by test date to avoid counting blocks from other tests
           final finalBlocks = await timeBlockRepository.getAllTimeBlocks();
-          expect(finalBlocks.length, equals(8)); // 10 - 2 deleted = 8
+          final finalTestDateBlocks = finalBlocks.where((block) => 
+            block.startTime.year == testDate.year &&
+            block.startTime.month == testDate.month &&
+            block.startTime.day == testDate.day
+          ).toList();
+          expect(finalTestDateBlocks.length, equals(8),
+              reason: 'Should have exactly 8 blocks for the test date (10 - 2 deleted)');
 
-          final completedBlocks = finalBlocks.where((block) => block.isCompleted).toList();
-          final incompleteBlocks = finalBlocks.where((block) => !block.isCompleted).toList();
+          final completedBlocks = finalTestDateBlocks.where((block) => block.isCompleted).toList();
+          final incompleteBlocks = finalTestDateBlocks.where((block) => !block.isCompleted).toList();
           
           expect(completedBlocks.length, equals(5)); // First 5 should be completed
           expect(incompleteBlocks.length, equals(3)); // Remaining 3 should be incomplete
@@ -869,42 +891,61 @@ void main() {
           await authService.register('validation@example.com', 'Validation User', 'password123');
           await authService.login('validation@example.com', 'password123');
 
+          // Use unique date for this test to avoid conflicts
+          final testDate = DateTime(2023, 1, 11, 9, 0);
           // When: The user creates valid data
           final validTimeBlock = TimeBlockModel.create(
             title: 'Valid Task',
             description: 'This is a valid task with proper data',
-            startTime: DateTime(2023, 1, 2, 9, 0),
-            endTime: DateTime(2023, 1, 2, 10, 0),
+            startTime: testDate,
+            endTime: testDate.add(const Duration(hours: 1)),
             category: 'Work',
             color: '#2196F3',
           );
           await timeBlockRepository.addTimeBlock(validTimeBlock);
 
           // Then: The valid data is accepted
+          // Filter by test date to avoid counting blocks from other tests
           final allBlocks = await timeBlockRepository.getAllTimeBlocks();
-          expect(allBlocks.length, equals(1));
-          expect(allBlocks.first.title, equals('Valid Task'));
+          final testDateBlocks = allBlocks.where((block) => 
+            block.startTime.year == testDate.year &&
+            block.startTime.month == testDate.month &&
+            block.startTime.day == testDate.day
+          ).toList();
+          expect(testDateBlocks.length, equals(1),
+              reason: 'Should have exactly 1 block for the test date');
+          expect(testDateBlocks.first.title, equals('Valid Task'));
 
           // When: The user attempts to create invalid data
+          // TimeBlockModel uses assert() which throws AssertionError, not Exception
           try {
             final invalidTimeBlock = TimeBlockModel(
               id: 'invalid',
-              title: '', // Empty title
+              title: '', // Empty title - will trigger assert
               description: 'Invalid task',
-              startTime: DateTime(2023, 1, 2, 10, 0),
-              endTime: DateTime(2023, 1, 2, 9, 0), // End before start
+              startTime: testDate.add(const Duration(hours: 1)),
+              endTime: testDate, // End before start
               category: 'Work',
               color: '#2196F3',
             );
             await timeBlockRepository.addTimeBlock(invalidTimeBlock);
+            fail('Should have thrown an error for invalid data');
           } catch (e) {
             // Then: Invalid data is rejected
-            expect(e, isA<Exception>());
+            // TimeBlockModel uses assert() which throws AssertionError
+            expect(e, isA<AssertionError>());
           }
 
           // Verify only valid data exists
+          // Filter by test date to avoid counting blocks from other tests
           final finalBlocks = await timeBlockRepository.getAllTimeBlocks();
-          expect(finalBlocks.length, equals(1));
+          final finalTestDateBlocks = finalBlocks.where((block) => 
+            block.startTime.year == testDate.year &&
+            block.startTime.month == testDate.month &&
+            block.startTime.day == testDate.day
+          ).toList();
+          expect(finalTestDateBlocks.length, equals(1),
+              reason: 'Should have exactly 1 block for the test date');
         });
       });
     });
@@ -924,6 +965,9 @@ void main() {
         final currentUser = await authService.getCurrentUser();
         expect(currentUser, isNotNull);
 
+        // Use unique date for this test to avoid conflicts
+        final testDate = DateTime(2023, 1, 12, 7, 0);
+        
         // Step 3: Create Habits
         final habits = [
           HabitModel.create(
@@ -951,8 +995,8 @@ void main() {
             title: 'Team Meeting',
             description: 'Weekly team sync',
             category: 'Work',
-            startTime: DateTime(2023, 1, 2, 10, 0),
-            endTime: DateTime(2023, 1, 2, 11, 0),
+            startTime: testDate.add(const Duration(hours: 3)),
+            endTime: testDate.add(const Duration(hours: 4)),
             priority: 'High',
             sendReminder: true,
             reminderMinutesBefore: 15,
@@ -962,8 +1006,8 @@ void main() {
             title: 'Project Review',
             description: 'Review project progress',
             category: 'Work',
-            startTime: DateTime(2023, 1, 2, 14, 0),
-            endTime: DateTime(2023, 1, 2, 15, 0),
+            startTime: testDate.add(const Duration(hours: 7)),
+            endTime: testDate.add(const Duration(hours: 8)),
             priority: 'Medium',
             sendReminder: true,
             reminderMinutesBefore: 10,
@@ -978,8 +1022,8 @@ void main() {
           final timeBlock = TimeBlockModel.create(
             title: habit.title,
             description: habit.description,
-            startTime: DateTime(2023, 1, 2, 7, 0),
-            endTime: DateTime(2023, 1, 2, 7, 30),
+            startTime: testDate,
+            endTime: testDate.add(const Duration(minutes: 30)),
             category: habit.category,
             color: '#4CAF50',
           );
@@ -1007,7 +1051,6 @@ void main() {
 
         // Step 6: Data Analysis
         // Filter blocks by the test date to avoid counting blocks from other tests
-        final testDate = DateTime(2023, 1, 2);
         final allBlocks = await timeBlockRepository.getAllTimeBlocks();
         final testDateBlocks = allBlocks.where((block) => 
           block.startTime.year == testDate.year &&
@@ -1028,22 +1071,31 @@ void main() {
 
         // Step 7: Mark some tasks as completed
         final completedBlocks = <TimeBlockModel>[];
-        for (int i = 0; i < 2; i++) {
-          final completedBlock = allBlocks[i].markAsCompleted();
+        // Use testDateBlocks instead of allBlocks to only mark blocks from this test
+        for (int i = 0; i < 2 && i < testDateBlocks.length; i++) {
+          final completedBlock = testDateBlocks[i].markAsCompleted();
           await timeBlockRepository.updateTimeBlock(completedBlock);
           completedBlocks.add(completedBlock);
         }
 
         // Step 8: Generate statistics
+        // Filter by test date to avoid counting blocks from other tests
         final finalBlocks = await timeBlockRepository.getAllTimeBlocks();
-        final completedCount = finalBlocks.where((block) => block.isCompleted).length;
-        final completionRate = (completedCount / finalBlocks.length) * 100;
+        final finalTestDateBlocks = finalBlocks.where((block) => 
+          block.startTime.year == testDate.year &&
+          block.startTime.month == testDate.month &&
+          block.startTime.day == testDate.day
+        ).toList();
+        final completedCount = finalTestDateBlocks.where((block) => block.isCompleted).length;
+        final completionRate = (completedCount / finalTestDateBlocks.length) * 100;
 
-        expect(completedCount, equals(2));
+        expect(completedCount, equals(2),
+            reason: 'Should have exactly 2 completed blocks for the test date');
         expect(completionRate, equals(50.0));
 
         // Step 9: Export data
-        final exportData = finalBlocks.map((block) => {
+        // Use finalTestDateBlocks instead of finalBlocks to only export blocks from this test
+        final exportData = finalTestDateBlocks.map((block) => {
           'title': block.title,
           'category': block.category,
           'start_time': block.startTime.toIso8601String(),

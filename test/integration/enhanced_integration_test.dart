@@ -48,49 +48,45 @@ void main() {
   });
 
   setUp(() async {
-    // Close boxes if they are open before deleting
-    try {
-      final usersBox = Hive.box('users');
-      if (usersBox.isOpen) {
-        await usersBox.close();
-      }
-    } catch (e) {
-      // Box might not exist or be open
-    }
-    try {
-      final authBox = Hive.box('auth');
-      if (authBox.isOpen) {
-        await authBox.close();
-      }
-    } catch (e) {
-      // Box might not exist or be open
-    }
-    try {
-      final productiveBlocksBox = Hive.box('productive_blocks');
-      if (productiveBlocksBox.isOpen) {
-        await productiveBlocksBox.close();
-      }
-    } catch (e) {
-      // Box might not exist or be open
-    }
-    
-    // Clean up previous test data
-    await Hive.deleteBoxFromDisk('users');
-    await Hive.deleteBoxFromDisk('auth');
-    await Hive.deleteBoxFromDisk('productive_blocks');
-    
-    // Initialize services
+    // Initialize services first
     authService = AuthService();
     csvService = TestCsvService();
     eventBus = EventBus();
-  });
-
-  tearDown(() async {
-    // Close boxes if they are open before deleting
+    
+    // Clear box contents to clean up previous test data
+    // Use clear() instead of deleteBoxFromDisk() to maintain boxes open
     try {
       final usersBox = Hive.box('users');
       if (usersBox.isOpen) {
-        await usersBox.close();
+        await usersBox.clear();
+      }
+    } catch (e) {
+      // Box might not exist or be open, will be created when needed
+    }
+    try {
+      final authBox = Hive.box('auth');
+      if (authBox.isOpen) {
+        await authBox.clear();
+      }
+    } catch (e) {
+      // Box might not exist or be open, will be created when needed
+    }
+    try {
+      final productiveBlocksBox = Hive.box('productive_blocks');
+      if (productiveBlocksBox.isOpen) {
+        await productiveBlocksBox.clear();
+      }
+    } catch (e) {
+      // Box might not exist or be open, will be created when needed
+    }
+  });
+
+  tearDown(() async {
+    // Clear box contents instead of closing/deleting to avoid "Box has already been closed" errors
+    try {
+      final usersBox = Hive.box('users');
+      if (usersBox.isOpen) {
+        await usersBox.clear();
       }
     } catch (e) {
       // Box might not exist or be open
@@ -98,7 +94,7 @@ void main() {
     try {
       final authBox = Hive.box('auth');
       if (authBox.isOpen) {
-        await authBox.close();
+        await authBox.clear();
       }
     } catch (e) {
       // Box might not exist or be open
@@ -106,16 +102,11 @@ void main() {
     try {
       final productiveBlocksBox = Hive.box('productive_blocks');
       if (productiveBlocksBox.isOpen) {
-        await productiveBlocksBox.close();
+        await productiveBlocksBox.clear();
       }
     } catch (e) {
       // Box might not exist or be open
     }
-    
-    // Clean up test data after each test
-    await Hive.deleteBoxFromDisk('users');
-    await Hive.deleteBoxFromDisk('auth');
-    await Hive.deleteBoxFromDisk('productive_blocks');
   });
 
   group('Enhanced Integration Tests', () {
@@ -172,15 +163,19 @@ void main() {
         group('Level 2: Component Integration (C-F, D-G, E-H)', () {
           test('C-F: AuthService + Database Integration', () async {
             // Test AuthService integration with database
+            // Use unique email to avoid conflicts with other tests
+            final timestamp = DateTime.now().millisecondsSinceEpoch;
+            final email = 'integration$timestamp@example.com';
+            
             final user = await authService.register(
-              'integration@example.com',
+              email,
               'Integration User',
               'password123',
             );
             
             // Verify user is persisted
             final loginResult = await authService.login(
-              'integration@example.com',
+              email,
               'password123',
             );
             
@@ -188,7 +183,10 @@ void main() {
             
             final currentUser = await authService.getCurrentUser();
             expect(currentUser, isNotNull);
-            expect(currentUser!.email, equals('integration@example.com'));
+            expect(currentUser!.email, equals(email));
+            
+            // Clean up: logout to avoid interfering with subsequent tests
+            await authService.logout();
           });
 
           test('D-G: ProductiveBlock + Data Processing Integration', () async {

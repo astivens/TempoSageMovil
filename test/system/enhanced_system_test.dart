@@ -46,39 +46,36 @@ void main() {
   });
 
   setUp(() async {
-    // Close boxes if they are open before deleting
+    // Initialize services first
+    authService = AuthService();
+    csvService = TestCsvService();
+    
+    // Clear box contents to clean up previous test data
+    // Use clear() instead of deleteBoxFromDisk() to maintain boxes open
     try {
       final usersBox = Hive.box('users');
       if (usersBox.isOpen) {
-        await usersBox.close();
+        await usersBox.clear();
       }
     } catch (e) {
-      // Box might not exist or be open
+      // Box might not exist or be open, will be created when needed
     }
     try {
       final authBox = Hive.box('auth');
       if (authBox.isOpen) {
-        await authBox.close();
+        await authBox.clear();
       }
     } catch (e) {
-      // Box might not exist or be open
+      // Box might not exist or be open, will be created when needed
     }
-    
-    // Clean up previous test data
-    await Hive.deleteBoxFromDisk('users');
-    await Hive.deleteBoxFromDisk('auth');
-    
-    // Initialize services
-    authService = AuthService();
-    csvService = TestCsvService();
   });
 
   tearDown(() async {
-    // Close boxes if they are open before deleting
+    // Clear box contents instead of closing/deleting to avoid "Box has already been closed" errors
     try {
       final usersBox = Hive.box('users');
       if (usersBox.isOpen) {
-        await usersBox.close();
+        await usersBox.clear();
       }
     } catch (e) {
       // Box might not exist or be open
@@ -86,15 +83,11 @@ void main() {
     try {
       final authBox = Hive.box('auth');
       if (authBox.isOpen) {
-        await authBox.close();
+        await authBox.clear();
       }
     } catch (e) {
       // Box might not exist or be open
     }
-    
-    // Clean up test data after each test
-    await Hive.deleteBoxFromDisk('users');
-    await Hive.deleteBoxFromDisk('auth');
   });
 
   group('Enhanced System Tests', () {
@@ -598,7 +591,11 @@ void main() {
 
       group('Access Control Testing', () {
         test('Security: User Session Management', () async {
-          // Arrange - Use unique emails to avoid conflicts
+          // Arrange - Ensure no active session from previous tests
+          await authService.logout();
+          await Future.delayed(const Duration(milliseconds: 100));
+          
+          // Use unique emails to avoid conflicts
           final timestamp = DateTime.now().millisecondsSinceEpoch;
           final user1Email = 'user1$timestamp@example.com';
           final user2Email = 'user2$timestamp@example.com';
@@ -897,6 +894,10 @@ void main() {
 
         test('Usability: System State Indication', () async {
           // Test that system clearly indicates current state
+          
+          // Ensure no active session from previous tests
+          await authService.logout();
+          await Future.delayed(const Duration(milliseconds: 100));
           
           // Test 1: Logged out state
           var currentUser = await authService.getCurrentUser();
