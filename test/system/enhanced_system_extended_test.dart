@@ -112,7 +112,7 @@ void main() {
               color: i % 2 == 0 ? '#2196F3' : '#4CAF50',
             );
             timeBlocks.add(timeBlock);
-            await timeBlockRepository.createTimeBlock(timeBlock);
+            await timeBlockRepository.addTimeBlock(timeBlock);
           }
 
           // Step 4: Verify Data Creation
@@ -186,7 +186,7 @@ void main() {
                 color: '#2196F3',
               );
               timeBlockPromises.add(
-                timeBlockRepository.createTimeBlock(timeBlock).then((_) => timeBlock)
+                timeBlockRepository.addTimeBlock(timeBlock).then((_) => timeBlock)
               );
             }
           }
@@ -220,7 +220,7 @@ void main() {
               color: '#2196F3',
             );
             timeBlocks.add(timeBlock);
-            await timeBlockRepository.createTimeBlock(timeBlock);
+            await timeBlockRepository.addTimeBlock(timeBlock);
           }
 
           // Perform various operations
@@ -276,7 +276,7 @@ void main() {
           // Create all blocks
           final startTime = DateTime.now();
           for (final block in largeDataset) {
-            await timeBlockRepository.createTimeBlock(block);
+            await timeBlockRepository.addTimeBlock(block);
           }
           final creationTime = DateTime.now().difference(startTime);
 
@@ -354,7 +354,7 @@ void main() {
             category: 'Work',
             color: '#2196F3',
           );
-          await timeBlockRepository.createTimeBlock(timeBlock);
+          await timeBlockRepository.addTimeBlock(timeBlock);
           final creationTime = DateTime.now().difference(startTime);
           creationTimes.add(creationTime);
         }
@@ -399,7 +399,7 @@ void main() {
             color: '#2196F3',
           );
           timeBlocks.add(timeBlock);
-          await timeBlockRepository.createTimeBlock(timeBlock);
+          await timeBlockRepository.addTimeBlock(timeBlock);
         }
 
         // Verify all data was created
@@ -458,7 +458,7 @@ void main() {
             color: '#2196F3',
           );
           timeBlockPromises.add(
-            timeBlockRepository.createTimeBlock(timeBlock).then((_) => timeBlock)
+            timeBlockRepository.addTimeBlock(timeBlock).then((_) => timeBlock)
           );
         }
 
@@ -502,7 +502,7 @@ void main() {
             color: '#2196F3',
           );
           timeBlocks.add(timeBlock);
-          await timeBlockRepository.createTimeBlock(timeBlock);
+          await timeBlockRepository.addTimeBlock(timeBlock);
         }
 
         // Step 4: View data (should be clear)
@@ -575,7 +575,7 @@ void main() {
             category: 'Work',
             color: '#2196F3',
           );
-          await timeBlockRepository.createTimeBlock(invalidTimeBlock);
+          await timeBlockRepository.addTimeBlock(invalidTimeBlock);
         } catch (e) {
           // System should handle invalid time block gracefully
           expect(e, isA<Exception>());
@@ -590,7 +590,7 @@ void main() {
           category: 'Work',
           color: '#2196F3',
         );
-        await timeBlockRepository.createTimeBlock(validTimeBlock);
+        await timeBlockRepository.addTimeBlock(validTimeBlock);
 
         final allBlocks = await timeBlockRepository.getAllTimeBlocks();
         expect(allBlocks.length, equals(1));
@@ -634,7 +634,7 @@ void main() {
         ];
 
         for (final block in timeBlocks) {
-          await timeBlockRepository.createTimeBlock(block);
+          await timeBlockRepository.addTimeBlock(block);
         }
 
         // Verify all blocks were created with correct data

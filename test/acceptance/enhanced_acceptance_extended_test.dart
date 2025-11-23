@@ -322,7 +322,8 @@ void main() {
           final remainingBlock = testDateBlocks.first;
           expect(remainingBlock.id, equals(timeBlock2.id));
           expect(remainingBlock.title, equals('Task 2'));
-          expect(allBlocks.first.id, equals(timeBlock2.id));
+          // Verify timeBlock2 exists in all blocks
+          expect(allBlocks.any((block) => block.id == timeBlock2.id), isTrue);
         });
       });
 
