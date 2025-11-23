@@ -1,0 +1,180 @@
+@startuml TempoSage_Class_Diagram_Data_Layer
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1800x2700px)
+!define DPI 400
+scale max 1800 width
+scale max 2700 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam classFontSize 19
+skinparam classAttributeFontSize 18
+skinparam classMethodFontSize 18
+skinparam packageFontSize 20
+skinparam linetype ortho
+
+skinparam package {
+    BackgroundColor #F8F9FA
+    BorderColor #495057
+    FontColor #212529
+}
+
+skinparam class {
+    BackgroundColor<<Data>> #FFF3E0
+    BorderColor<<Data>> #F57C00
+    FontColor<<Data>> #E65100
+}
+
+skinparam class {
+    BackgroundColor<<Domain>> #E8F5E8
+    BorderColor<<Domain>> #388E3C
+    FontColor<<Domain>> #1B5E20
+}
+
+skinparam class {
+    BackgroundColor<<Core>> #E3F2FD
+    BorderColor<<Core>> #1976D2
+    FontColor<<Core>> #0D47A1
+}
+
+skinparam classArrowColor #495057
+skinparam arrowColor #495057
+
+skinparam minClassWidth 140
+skinparam maxClassWidth 180
+skinparam classIconSize 0
+
+title Diagrama de Clases - Data Layer\nMódulo: Capa de Datos e Implementaciones
+
+' ===========================================
+' DOMAIN LAYER - Abstracciones (referencias)
+' ===========================================
+package "Domain Layer (Referencias)" as domain #E8F5E8 {
+    abstract class HabitRepository <<Domain>> {
+        +getAllHabits(): Future<List<Habit>>
+        +addHabit(Habit habit): Future<void>
+        +updateHabit(Habit habit): Future<void>
+        +deleteHabit(String id): Future<void>
+    }
+    
+    class Habit <<Domain>> {
+        +id: String
+        +name: String
+        +daysOfWeek: List<String>
+        +category: String
+    }
+    
+    class Activity <<Domain>> {
+        +id: String
+        +name: String
+        +date: DateTime
+        +category: String
+    }
+    
+    class TimeBlock <<Domain>> {
+        +id: String
+        +title: String
+        +startTime: DateTime
+        +endTime: DateTime
+    }
+}
+
+' ===========================================
+' DATA LAYER - Models & Implementations
+' ===========================================
+package "Data Layer" as data #FFF3E0 {
+    
+    ' Models
+    class HabitModel <<Data>> {
+        <<HiveType>>
+        +id: String
+        +title: String
+        +description: String
+        +daysOfWeek: List<String>
+        +isCompleted: bool
+        +copyWith(): HabitModel
+        +toJson(): Map<String, dynamic>
+        +toDomain(): Habit
+    }
+    
+    class ActivityModel <<Data>> {
+        <<freezed>>
+        +id: String
+        +title: String
+        +category: String
+        +startTime: DateTime
+        +endTime: DateTime
+        +isCompleted: bool
+        +toggleCompletion(): ActivityModel
+    }
+    
+    class TimeBlockModel <<Data>> {
+        <<HiveType>>
+        +id: String
+        +title: String
+        +startTime: DateTime
+        +endTime: DateTime
+        +category: String
+        +isFocusTime: bool
+        +isCompleted: bool
+    }
+    
+    ' Repository Implementations
+    class HabitRepositoryImpl <<Data>> {
+        -{static} _boxName: String
+        -_localStorage: LocalStorage
+        +getAllHabits(): Future<List<Habit>>
+        +addHabit(Habit habit): Future<void>
+        +updateHabit(Habit habit): Future<void>
+        +deleteHabit(String id): Future<void>
+    }
+    
+    class TimeBlockRepository <<Data>> {
+        -_localStorage: LocalStorage
+        +getAllTimeBlocks(): Future<List<TimeBlock>>
+        +addTimeBlock(TimeBlock block): Future<void>
+        +updateTimeBlock(TimeBlock block): Future<void>
+    }
+}
+
+' ===========================================
+' CORE LAYER (Referencia)
+' ===========================================
+package "Core Layer (Referencia)" as core #E3F2FD {
+    abstract class LocalStorage <<Core>> {
+        +getBox<T>(): Future<Box<T>>
+        +saveData<T>(): Future<void>
+    }
+}
+
+' ===========================================
+' RELACIONES
+' ===========================================
+HabitRepository <|-- HabitRepositoryImpl : implements
+
+HabitRepositoryImpl --> LocalStorage : uses
+TimeBlockRepository --> LocalStorage : uses
+
+HabitRepositoryImpl --> HabitModel : uses
+TimeBlockRepository --> TimeBlockModel : uses
+
+HabitModel ..> Habit : transforms to
+ActivityModel ..> Activity : transforms to
+TimeBlockModel ..> TimeBlock : transforms to
+
+HabitRepositoryImpl ..> Habit : returns
+TimeBlockRepository ..> TimeBlock : returns
+
+note right of HabitRepositoryImpl
+  Implementa HabitRepository
+  del Domain Layer
+end note
+
+note bottom of HabitModel
+  Modelo de datos (Hive)
+  Se transforma a Habit (Domain)
+end note
+
+@enduml
+

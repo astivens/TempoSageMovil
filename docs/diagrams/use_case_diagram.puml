@@ -1,9 +1,16 @@
 @startuml TempoSage_Use_Case_Diagram
 !theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 2000x3000px)
+!define DPI 400
+scale max 2000 width
+scale max 3000 height
+
 skinparam backgroundColor #FFFFFF
-skinparam defaultFontSize 10
-skinparam usecaseFontSize 9
-skinparam actorFontSize 10
+skinparam defaultFontSize 28
+skinparam usecaseFontSize 27
+skinparam actorFontSize 30
+skinparam packageFontSize 28
 
 ' Colores específicos para actores
 skinparam actor {
@@ -61,27 +68,41 @@ skinparam usecase {
     FontColor<<System>> #B71C1C
 }
 
-' Layout optimizado para relación 1:1
-skinparam minClassWidth 80
-skinparam maxMessageSize 100
-
-title Diagrama de Casos de Uso - TempoSage\nFuncionalidades del Sistema con Diferenciación Visual
+title Diagrama de Casos de Uso - TempoSage\nFuncionalidades del Sistema
 
 ' ===========================================
-' ACTORES (Alrededor del sistema)
+' ACTORES
+' Según la descripción del documento:
+' - Usuario: Persona que utiliza la aplicación
+' - Sistema de IA: Componente que proporciona recomendaciones inteligentes
+' - Base de Datos Local: Almacenamiento persistente de datos
 ' ===========================================
-actor "Usuario Principal" as user
-actor "Sistema de\nNotificaciones" as notif_system
-actor "API ML" as ml_api
-actor "Calendario\nDispositivo" as calendar
-actor "Admin Sistema" as admin
+actor "Usuario" as user
+actor "Sistema de IA" as ai_system
+actor "Base de Datos\nLocal" as database
 
 ' ===========================================
 ' SISTEMA PRINCIPAL
 ' ===========================================
 rectangle "TempoSage System" {
     
-    ' GESTIÓN DE HÁBITOS
+    ' AUTENTICACIÓN (Caso de uso principal #1 según descripción)
+    package "Autenticación" <<System>> as auth {
+        usecase "Registrar Usuario" <<System>> as UC_RegisterUser
+        usecase "Iniciar Sesión" <<System>> as UC_Login
+        usecase "Cerrar Sesión" <<System>> as UC_Logout
+    }
+    
+    ' GESTIÓN DE ACTIVIDADES (Caso de uso principal #2)
+    package "Gestión de Actividades" <<Management>> as activities {
+        usecase "Crear Actividad" <<Management>> as UC_CreateActivity
+        usecase "Editar Actividad" <<Management>> as UC_EditActivity
+        usecase "Completar Actividad" <<Management>> as UC_CompleteActivity
+        usecase "Cancelar Actividad" <<Management>> as UC_CancelActivity
+        usecase "Listar Actividades" <<Core>> as UC_ListActivities
+    }
+    
+    ' GESTIÓN DE HÁBITOS (Caso de uso principal #3)
     package "Gestión de Hábitos" <<Management>> as habits {
         usecase "Crear Hábito" <<Management>> as UC_CreateHabit
         usecase "Editar Hábito" <<Management>> as UC_EditHabit
@@ -90,41 +111,33 @@ rectangle "TempoSage System" {
         usecase "Ver Estadísticas\nde Hábitos" <<Core>> as UC_ViewHabitStats
     }
     
-    ' GESTIÓN DE ACTIVIDADES
-    package "Gestión de Actividades" <<Management>> as activities {
-        usecase "Planificar Actividad" <<Management>> as UC_PlanActivity
-        usecase "Editar Actividad" <<Management>> as UC_EditActivity
-        usecase "Completar Actividad" <<Management>> as UC_CompleteActivity
-        usecase "Cancelar Actividad" <<Management>> as UC_CancelActivity
-    }
-    
-    ' GESTIÓN DE TAREAS
-    package "Gestión de Tareas" <<Management>> as tasks {
-        usecase "Crear Tarea" <<Management>> as UC_CreateTask
-        usecase "Asignar Subtareas" <<Management>> as UC_CreateSubtask
-        usecase "Completar Tarea" <<Management>> as UC_CompleteTask
-        usecase "Priorizar Tareas" <<Core>> as UC_PrioritizeTasks
-    }
-    
-    ' BLOQUES DE TIEMPO
-    package "Bloques de Tiempo" <<Core>> as timeblocks {
+    ' GESTIÓN DE TIME BLOCKS (Caso de uso principal #4)
+    package "Gestión de Time Blocks" <<Core>> as timeblocks {
         usecase "Generar Bloques\nAutomáticos" <<Intelligence>> as UC_GenerateBlocks
-        usecase "Ajustar Bloques\nManualmente" <<Management>> as UC_AdjustBlocks
+        usecase "Crear Time Block" <<Management>> as UC_CreateTimeBlock
+        usecase "Editar Time Block" <<Management>> as UC_EditTimeBlock
         usecase "Ver Calendario" <<Core>> as UC_ViewCalendar
     }
     
-    ' DASHBOARD Y MONITOREO
+    ' CONSULTA DE RECOMENDACIONES (Caso de uso principal #5)
+    package "Recomendaciones IA" <<Intelligence>> as recommendations {
+        usecase "Obtener\nRecomendaciones" <<Intelligence>> as UC_GetRecommendations
+        usecase "Sugerir Tiempo\nÓptimo" <<Intelligence>> as UC_SuggestOptimalTime
+        usecase "Predecir\nProductividad" <<Intelligence>> as UC_PredictProductivity
+    }
+    
+    ' ANÁLISIS DE PRODUCTIVIDAD (Caso de uso principal #6)
     package "Dashboard" <<Core>> as dashboard {
         usecase "Ver Dashboard" <<Core>> as UC_ViewDashboard
         usecase "Analizar\nProductividad" <<Intelligence>> as UC_AnalyzeProductivity
         usecase "Ver Progreso\nMetas" <<Core>> as UC_ViewGoalProgress
     }
     
-    ' RECOMENDACIONES
-    package "Recomendaciones IA" <<Intelligence>> as recommendations {
-        usecase "Obtener\nRecomendaciones" <<Intelligence>> as UC_GetRecommendations
-        usecase "Sugerir Tiempo\nÓptimo" <<Intelligence>> as UC_SuggestOptimalTime
-        usecase "Predecir\nProductividad" <<Intelligence>> as UC_PredictProductivity
+    ' EXPORTACIÓN DE DATOS (Caso de uso principal #7)
+    package "Sincronización" <<System>> as sync {
+        usecase "Exportar Datos" <<System>> as UC_ExportData
+        usecase "Importar Datos" <<System>> as UC_ImportData
+        usecase "Sincronizar con\nCalendario" <<System>> as UC_SyncCalendar
     }
     
     ' CONFIGURACIÓN
@@ -138,80 +151,65 @@ rectangle "TempoSage System" {
     package "Notificaciones" <<System>> as notifications {
         usecase "Programar\nRecordatorios" <<System>> as UC_ScheduleReminders
         usecase "Enviar\nNotificaciones" <<System>> as UC_SendNotifications
-        usecase "Gestionar\nAlertas" <<System>> as UC_ManageAlerts
-    }
-    
-    ' SINCRONIZACIÓN
-    package "Sincronización" <<System>> as sync {
-        usecase "Sincronizar con\nCalendario" <<System>> as UC_SyncCalendar
-        usecase "Exportar Datos" <<System>> as UC_ExportData
-        usecase "Importar Datos" <<System>> as UC_ImportData
     }
 }
 
 ' ===========================================
-' RELACIONES USUARIO PRINCIPAL
+' RELACIONES ACTORES CON CASOS DE USO
 ' ===========================================
 
-' Gestión de Hábitos
+' AUTENTICACIÓN (Usuario y Base de Datos)
+user --> UC_RegisterUser
+user --> UC_Login
+user --> UC_Logout
+database --> UC_RegisterUser
+database --> UC_Login
+
+' GESTIÓN DE ACTIVIDADES (Usuario y Base de Datos)
+user --> UC_CreateActivity
+user --> UC_EditActivity
+user --> UC_CompleteActivity
+user --> UC_CancelActivity
+user --> UC_ListActivities
+database --> UC_CreateActivity
+database --> UC_EditActivity
+
+' GESTIÓN DE HÁBITOS (Usuario)
 user --> UC_CreateHabit
 user --> UC_EditHabit
 user --> UC_DeleteHabit
 user --> UC_CompleteHabit
 user --> UC_ViewHabitStats
 
-' Gestión de Actividades
-user --> UC_PlanActivity
-user --> UC_EditActivity
-user --> UC_CompleteActivity
-user --> UC_CancelActivity
-
-' Gestión de Tareas
-user --> UC_CreateTask
-user --> UC_CreateSubtask
-user --> UC_CompleteTask
-user --> UC_PrioritizeTasks
-
-' Bloques de Tiempo
-user --> UC_AdjustBlocks
+' GESTIÓN DE TIME BLOCKS (Usuario y Base de Datos)
+user --> UC_CreateTimeBlock
+user --> UC_EditTimeBlock
 user --> UC_ViewCalendar
+database --> UC_CreateTimeBlock
+database --> UC_EditTimeBlock
 
-' Dashboard
+' DASHBOARD (Usuario)
 user --> UC_ViewDashboard
 user --> UC_AnalyzeProductivity
 user --> UC_ViewGoalProgress
 
-' Recomendaciones
+' CONSULTA DE RECOMENDACIONES (Usuario y Sistema de IA)
 user --> UC_GetRecommendations
+ai_system --> UC_GetRecommendations
+ai_system --> UC_SuggestOptimalTime
+ai_system --> UC_PredictProductivity
 
-' Configuración
+' EXPORTACIÓN DE DATOS (Usuario y Base de Datos)
+user --> UC_ExportData
+user --> UC_ImportData
+user --> UC_SyncCalendar
+database --> UC_ExportData
+database --> UC_ImportData
+
+' CONFIGURACIÓN (Usuario)
 user --> UC_ConfigPrefs
 user --> UC_ManageCategories
 user --> UC_ConfigNotifications
-
-' Sincronización
-user --> UC_SyncCalendar
-user --> UC_ExportData
-user --> UC_ImportData
-
-' ===========================================
-' RELACIONES OTROS ACTORES
-' ===========================================
-
-' Sistema de Notificaciones
-notif_system --> UC_SendNotifications
-notif_system --> UC_ScheduleReminders
-
-' API ML
-ml_api --> UC_SuggestOptimalTime
-ml_api --> UC_PredictProductivity
-ml_api --> UC_GetRecommendations
-
-' Calendario del Dispositivo
-calendar --> UC_SyncCalendar
-
-' Administrador
-admin --> UC_ManageAlerts
 
 ' ===========================================
 ' RELACIONES INCLUDE/EXTEND
@@ -219,20 +217,13 @@ admin --> UC_ManageAlerts
 
 ' Includes (siempre se ejecutan)
 UC_CreateHabit ..> UC_GenerateBlocks : <<include>>
-UC_PlanActivity ..> UC_GenerateBlocks : <<include>>
+UC_CreateActivity ..> UC_GenerateBlocks : <<include>>
 UC_GenerateBlocks ..> UC_ScheduleReminders : <<include>>
 UC_ViewDashboard ..> UC_AnalyzeProductivity : <<include>>
+UC_GetRecommendations ..> UC_ViewDashboard : <<include>>
 
 ' Extends (opcionales)
 UC_GetRecommendations ..> UC_SuggestOptimalTime : <<extend>>
 UC_AnalyzeProductivity ..> UC_PredictProductivity : <<extend>>
-UC_ConfigNotifications ..> UC_ManageAlerts : <<extend>>
 
-' Layout hints para mejor distribución
-user -[hidden]down- habits
-activities -[hidden]right- tasks
-timeblocks -[hidden]down- dashboard
-recommendations -[hidden]right- settings
-notifications -[hidden]right- sync
-
-@enduml 
+@enduml

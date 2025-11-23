@@ -1,0 +1,75 @@
+@startuml TempoSage_Use_Case_Diagram_AI
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 1:1 (dimensiones físicas: 2000x2000px)
+!define DPI 400
+scale max 2000 width
+scale max 2000 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam usecaseFontSize 19
+skinparam actorFontSize 22
+skinparam packageFontSize 20
+
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam package {
+    BackgroundColor<<Intelligence>> #F3E5F5
+    BorderColor<<Intelligence>> #7B1FA2
+    FontColor<<Intelligence>> #4A148C
+}
+
+skinparam usecase {
+    BackgroundColor<<Intelligence>> #E1BEE7
+    BorderColor<<Intelligence>> #8E24AA
+    FontColor<<Intelligence>> #4A148C
+}
+
+title Diagrama de Casos de Uso - Inteligencia Artificial\nMódulo de Recomendaciones y Análisis con IA
+
+' ===========================================
+' ACTORES
+' ===========================================
+actor "Usuario" as user
+actor "Sistema de IA" as ai_system
+
+' ===========================================
+' SISTEMA
+' ===========================================
+rectangle "TempoSage System" {
+    
+    package "Recomendaciones IA" <<Intelligence>> as recommendations {
+        usecase "Obtener\nRecomendaciones" <<Intelligence>> as UC_GetRecommendations
+        usecase "Sugerir Tiempo\nÓptimo" <<Intelligence>> as UC_SuggestOptimalTime
+        usecase "Predecir\nProductividad" <<Intelligence>> as UC_PredictProductivity
+        usecase "Generar Bloques\nAutomáticos" <<Intelligence>> as UC_GenerateBlocks
+    }
+}
+
+' ===========================================
+' RELACIONES
+' ===========================================
+user --> UC_GetRecommendations
+
+ai_system --> UC_GetRecommendations
+ai_system --> UC_SuggestOptimalTime
+ai_system --> UC_PredictProductivity
+ai_system --> UC_GenerateBlocks
+
+' Extends
+UC_GetRecommendations ..> UC_SuggestOptimalTime : <<extend>>
+UC_GetRecommendations ..> UC_PredictProductivity : <<extend>>
+
+note right of UC_GetRecommendations
+  Análisis de patrones del usuario
+  y generación de recomendaciones
+  personalizadas
+end note
+
+@enduml
+

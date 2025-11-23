@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import '../utils/logger.dart';
@@ -6,6 +7,7 @@ import '../models/productive_block.dart';
 import './csv_service.dart';
 import './schedule_rule_service.dart';
 import './ml_model_adapter.dart';
+import './debug_data_service.dart';
 
 class InteractionEvent {
   final String itemId;
@@ -547,6 +549,12 @@ class RecommendationService {
   }
 
   List<dynamic> _getDefaultRecommendations(String? type) {
+    // En modo debug, usar datos ficticios más realistas
+    if (kDebugMode) {
+      _logger.i('Usando recomendaciones ficticias para modo debug');
+      return DebugDataService.generateFakeRecommendations();
+    }
+    
     return type == 'habit'
         ? [
             {

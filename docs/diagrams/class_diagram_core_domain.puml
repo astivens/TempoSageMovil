@@ -1,0 +1,158 @@
+@startuml TempoSage_Class_Diagram_Core_Domain
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1800x2700px)
+!define DPI 400
+scale max 1800 width
+scale max 2700 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam classFontSize 19
+skinparam classAttributeFontSize 18
+skinparam classMethodFontSize 18
+skinparam packageFontSize 20
+skinparam linetype ortho
+
+skinparam package {
+    BackgroundColor #F8F9FA
+    BorderColor #495057
+    FontColor #212529
+}
+
+skinparam class {
+    BackgroundColor<<Core>> #E3F2FD
+    BorderColor<<Core>> #1976D2
+    FontColor<<Core>> #0D47A1
+}
+
+skinparam class {
+    BackgroundColor<<Domain>> #E8F5E8
+    BorderColor<<Domain>> #388E3C
+    FontColor<<Domain>> #1B5E20
+}
+
+skinparam classArrowColor #495057
+skinparam arrowColor #495057
+
+skinparam minClassWidth 140
+skinparam maxClassWidth 180
+skinparam classIconSize 0
+
+title Diagrama de Clases - Core y Domain\nMódulo: Capa Core y Domain Layer
+
+' ===========================================
+' CORE LAYER
+' ===========================================
+package "Core Layer" as core #E3F2FD {
+    
+    abstract class LocalStorage <<Core>> {
+        +getBox<T>(): Future<Box<T>>
+        +getAllData<T>(): Future<List<T>>
+        +saveData<T>(): Future<void>
+        +deleteData(): Future<void>
+    }
+    
+    class ServiceLocator <<Core>> {
+        -{static} _instance: ServiceLocator
+        +{static} getInstance(): ServiceLocator
+        +getActivityRepository(): ActivityRepository
+        +getTimeBlockRepository(): TimeBlockRepository
+        +getHabitRepository(): HabitRepository
+    }
+    
+    class Logger <<Core>> {
+        +{static} instance: Logger
+        +i(String message, String? tag): void
+        +e(String message, String? tag, dynamic error): void
+        +d(String message, String? tag): void
+    }
+}
+
+' ===========================================
+' DOMAIN LAYER - Entities & Abstractions
+' ===========================================
+package "Domain Layer" as domain #E8F5E8 {
+    
+    ' Entities
+    class Activity <<Domain>> {
+        +id: String
+        +name: String
+        +date: DateTime
+        +category: String
+        +isCompleted: bool
+    }
+    
+    class Habit <<Domain>> {
+        +id: String
+        +name: String
+        +daysOfWeek: List<String>
+        +category: String
+        +time: String
+        +isDone: bool
+        +copyWith(): Habit
+    }
+    
+    class TimeBlock <<Domain>> {
+        +id: String
+        +title: String
+        +startTime: DateTime
+        +endTime: DateTime
+        +category: String
+    }
+    
+    ' Repository Abstractions
+    abstract class HabitRepository <<Domain>> {
+        +getAllHabits(): Future<List<Habit>>
+        +addHabit(Habit habit): Future<void>
+        +updateHabit(Habit habit): Future<void>
+        +deleteHabit(String id): Future<void>
+    }
+    
+    abstract class ActivityRepository <<Domain>> {
+        +getAllActivities(): Future<List<Activity>>
+        +addActivity(Activity activity): Future<void>
+        +updateActivity(Activity activity): Future<void>
+        +deleteActivity(String id): Future<void>
+    }
+    
+    abstract class TimeBlockRepository <<Domain>> {
+        +getAllTimeBlocks(): Future<List<TimeBlock>>
+        +addTimeBlock(TimeBlock block): Future<void>
+        +updateTimeBlock(TimeBlock block): Future<void>
+    }
+    
+    ' Use Cases
+    class GetHabitsUseCase <<Domain>> {
+        -repository: HabitRepository
+        +execute(): Future<List<Habit>>
+    }
+    
+    class HabitToTimeBlockService <<Domain>> {
+        -timeBlockRepository: TimeBlockRepository
+        +planificarBloques(): Future<int>
+    }
+}
+
+' ===========================================
+' RELACIONES
+' ===========================================
+ServiceLocator --> HabitRepository : creates
+ServiceLocator --> ActivityRepository : creates
+ServiceLocator --> TimeBlockRepository : creates
+
+GetHabitsUseCase --> HabitRepository : depends on
+HabitToTimeBlockService --> TimeBlockRepository : depends on
+
+note right of ServiceLocator
+  Singleton para inyección
+  de dependencias
+end note
+
+note right of HabitRepository
+  Abstracción del dominio.
+  Implementación en Data Layer
+end note
+
+@enduml
+

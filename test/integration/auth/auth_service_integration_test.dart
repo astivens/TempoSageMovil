@@ -1,19 +1,20 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:temposage/features/auth/data/services/auth_service.dart';
 import 'package:temposage/features/auth/data/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:integration_test/integration_test.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   late AuthService authService;
+  late Directory tempDir;
 
   setUpAll(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    Hive.init(dir.path);
+    tempDir = await Directory.systemTemp.createTemp();
+    Hive.init(tempDir.path);
     if (!Hive.isAdapterRegistered(1)) {
       Hive.registerAdapter(UserModelAdapter());
     }
@@ -23,6 +24,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     authService = AuthService();
     await authService.createInitialUser();
+  });
+
+  tearDownAll(() async {
+    await Hive.close();
+    await tempDir.delete(recursive: true);
   });
 
   test('should login, persist session and logout', () async {

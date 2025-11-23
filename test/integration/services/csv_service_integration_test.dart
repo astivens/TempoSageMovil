@@ -1,10 +1,10 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:temposage/core/services/csv_service.dart';
 import 'package:temposage/core/models/productive_block.dart';
 import 'package:temposage/features/activities/data/models/activity_model_adapter.dart';
 import 'package:temposage/features/habits/data/models/habit_model.dart';
 import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:temposage/features/timeblocks/data/models/time_block_model.dart';
 
@@ -12,10 +12,11 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   late CSVService csvService;
+  late Directory tempDir;
 
   setUpAll(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    Hive.init(dir.path);
+    tempDir = await Directory.systemTemp.createTemp();
+    Hive.init(tempDir.path);
     if (!Hive.isAdapterRegistered(2)) {
       Hive.registerAdapter(ActivityModelAdapter());
     }
@@ -29,6 +30,11 @@ void main() {
 
   setUp(() {
     csvService = CSVService();
+  });
+
+  tearDownAll(() async {
+    await Hive.close();
+    await tempDir.delete(recursive: true);
   });
 
   test('should load top 3 productive blocks', () async {

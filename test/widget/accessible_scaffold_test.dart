@@ -128,8 +128,12 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
-      // Act - No se requiere acción adicional
+      // Act - Abrir el drawer
+      final scaffoldState = tester.state<ScaffoldState>(find.byType(Scaffold));
+      scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
 
       // Assert
       expect(find.byType(Drawer), findsOneWidget);
@@ -147,6 +151,10 @@ void main() {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.home),
                   label: 'Inicio',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings),
+                  label: 'Configuración',
                 ),
               ],
             ),
@@ -255,7 +263,9 @@ void main() {
       // Act - No se requiere acción adicional
 
       // Assert
-      expect(find.byType(SafeArea), findsOneWidget);
+      // Puede haber múltiples SafeArea (uno del AccessibleScaffold y otro del MaterialApp/Scaffold)
+      // Verificamos que existe al menos uno
+      expect(find.byType(SafeArea), findsWidgets);
     });
   });
 }

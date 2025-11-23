@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:temposage/core/services/recommendation_service.dart'
     as core_rec;
@@ -15,6 +17,34 @@ class MockScheduleRuleService extends Mock implements ScheduleRuleService {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  
+  late Directory tempDir;
+
+  setUpAll(() async {
+    tempDir = await Directory.systemTemp.createTemp();
+    
+    // Mock path_provider
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getApplicationDocumentsDirectory') {
+          return tempDir.path;
+        }
+        return null;
+      },
+    );
+  });
+
+  tearDownAll(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      null,
+    );
+    await tempDir.delete(recursive: true);
+  });
+
   group('RecommendationService', () {
     late core_rec.RecommendationService service;
 
@@ -301,14 +331,19 @@ void main() {
 
     group('dispose', () {
       test('should dispose resources correctly', () async {
+        // Inicializar el servicio (puede fallar en tests sin modelo ML, pero usa fallback)
+        // El servicio maneja el error internamente y usa modo fallback
         await service.initialize();
         await Future.delayed(const Duration(milliseconds: 100));
+        
+        // Dispose no debe lanzar excepciones, incluso si el servicio está en modo fallback
         service.dispose();
 
-        // Verificar que el servicio está en estado inicializado = false
-        // (aunque no podemos acceder directamente, podemos verificar que no falla)
+        // Verificar que el servicio sigue funcionando después de dispose
+        // (aunque no esté inicializado, debe retornar recomendaciones por defecto)
         final result = await service.getRecommendations();
         expect(result, isList);
+        expect(result.length, greaterThan(0));
       });
     });
   });

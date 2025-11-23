@@ -1,9 +1,18 @@
 @startuml TempoSage_Sequence_Diagram
 !theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 2000x3000px)
+!define DPI 400
+scale max 2000 width
+scale max 3000 height
+
 skinparam backgroundColor #FFFFFF
-skinparam defaultFontSize 10
-skinparam participantFontSize 10
+skinparam defaultFontSize 28
+skinparam participantFontSize 28
 skinparam sequenceMessageAlign center
+skinparam sequenceArrowFontSize 27
+skinparam sequenceReferenceFontSize 26
+skinparam noteFontSize 26
 
 ' Colores para diferentes tipos de componentes
 skinparam actor {

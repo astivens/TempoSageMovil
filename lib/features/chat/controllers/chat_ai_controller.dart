@@ -2,11 +2,14 @@ import 'package:flutter/foundation.dart';
 import '../../../services/google_ai_service.dart'
     show ChatResponse, GoogleAIService;
 import '../services/ml_data_processor.dart';
+import '../../../core/services/ml_ai_integration_service.dart';
+import '../../../core/di/service_locator.dart' as sl;
 
 /// Controlador para gestionar el estado y las operaciones del chat con IA
 class ChatAIController with ChangeNotifier {
   final dynamic _aiService; // Puede ser GoogleAIService u OllamaAIService
   final MLDataProcessor _mlDataProcessor;
+  final MLAIIntegrationService _mlAIIntegrationService;
 
   /// Lista de mensajes en la conversación
   final List<ChatResponse> _messages = [];
@@ -23,11 +26,16 @@ class ChatAIController with ChangeNotifier {
   /// Indica si ya se ha cargado el contexto ML
   bool _mlContextLoaded = false;
 
+  /// Indica si está usando la integración ML-IA avanzada
+  bool _useMLIntegration = true;
+
   ChatAIController({
     required dynamic aiService,
     MLDataProcessor? mlDataProcessor,
+    MLAIIntegrationService? mlAIIntegrationService,
   })  : _aiService = aiService,
-        _mlDataProcessor = mlDataProcessor ?? MLDataProcessor();
+        _mlDataProcessor = mlDataProcessor ?? MLDataProcessor(),
+        _mlAIIntegrationService = mlAIIntegrationService ?? sl.getIt<MLAIIntegrationService>();
 
   /// Envía un mensaje al servicio de IA y maneja la respuesta
   Future<void> sendMessage(String message) async {
@@ -49,8 +57,37 @@ class ChatAIController with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Obtener respuesta del servicio de IA
-      final aiResponse = await _aiService.sendMessage(message);
+      ChatResponse aiResponse;
+      
+      // Usar integración ML-IA avanzada si está disponible
+      if (_useMLIntegration && _aiService is GoogleAIService) {
+        try {
+          // Usar el servicio de integración ML-IA
+          final mlResponse = await _mlAIIntegrationService.processQueryWithML(message);
+          aiResponse = ChatResponse.fromAI(mlResponse);
+        } catch (e) {
+          // Fallback al método mejorado si hay error
+          debugPrint('Error en integración ML-IA, usando fallback: $e');
+          final contextualMLData = await _mlDataProcessor.getContextualMLData(message);
+          
+          if (contextualMLData.isNotEmpty) {
+            aiResponse = await _aiService.sendMessageWithMLContext(message, contextualMLData);
+          } else {
+            aiResponse = await _aiService.sendMessage(message);
+          }
+        }
+      } else {
+        // Método tradicional con contexto ML básico
+        final contextualMLData = await _mlDataProcessor.getContextualMLData(message);
+        
+        if (_aiService is GoogleAIService && contextualMLData.isNotEmpty) {
+          aiResponse = await _aiService.sendMessageWithMLContext(message, contextualMLData);
+        } else {
+          // Fallback al método normal
+          aiResponse = await _aiService.sendMessage(message);
+        }
+      }
+      
       _messages.add(aiResponse);
     } catch (e) {
       _errorMessage = e.toString();
@@ -96,5 +133,32 @@ class ChatAIController with ChangeNotifier {
     _mlContextLoaded = false;
     _errorMessage = null;
     notifyListeners();
+  }
+
+  /// Habilita o deshabilita la integración ML-IA avanzada
+  void toggleMLIntegration(bool enabled) {
+    _useMLIntegration = enabled;
+    notifyListeners();
+  }
+
+  /// Obtiene el estado de la integración ML-IA
+  bool get isMLIntegrationEnabled => _useMLIntegration;
+
+  /// Fuerza la recarga del contexto ML y reinicia la integración
+  Future<void> refreshMLIntegration() async {
+    _mlContextLoaded = false;
+    await _loadMLContext();
+    notifyListeners();
+  }
+
+  /// Obtiene información sobre el estado de la integración ML-IA
+  Map<String, dynamic> getMLIntegrationStatus() {
+    return {
+      'mlIntegrationEnabled': _useMLIntegration,
+      'mlContextLoaded': _mlContextLoaded,
+      'aiServiceType': _aiService.runtimeType.toString(),
+      'hasMLDataProcessor': _mlDataProcessor != null,
+      'hasMLAIIntegrationService': _mlAIIntegrationService != null,
+    };
   }
 }

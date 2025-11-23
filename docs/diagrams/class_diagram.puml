@@ -1,10 +1,18 @@
 @startuml TempoSage_Class_Diagram
 !theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 2200x3300px)
+!define DPI 400
+scale max 2200 width
+scale max 3300 height
+
 skinparam backgroundColor #FFFFFF
-skinparam defaultFontSize 10
-skinparam classFontSize 10
-skinparam classAttributeFontSize 9
-skinparam packageFontSize 11
+skinparam defaultFontSize 28
+skinparam classFontSize 27
+skinparam classAttributeFontSize 26
+skinparam classMethodFontSize 26
+skinparam packageFontSize 28
+skinparam linetype ortho
 
 ' Colores específicos para cada capa
 skinparam package {
@@ -49,16 +57,17 @@ skinparam class {
 }
 
 skinparam classArrowColor #495057
+skinparam arrowColor #495057
 
-' Layout optimizado para relación 1:1
-!define RECTANGLE class
-skinparam minClassWidth 120
-skinparam maxMessageSize 150
+' Configuración para mejor legibilidad
+skinparam minClassWidth 140
+skinparam maxClassWidth 180
+skinparam classIconSize 0
 
 title Diagrama de Clases - TempoSage\nArquitectura Limpia con Diferenciación Visual
 
 ' ===========================================
-' CORE LAYER (Superior Izquierda)
+' CORE LAYER
 ' ===========================================
 package "Core Layer" as core #E3F2FD {
     
@@ -70,27 +79,23 @@ package "Core Layer" as core #E3F2FD {
     }
     
     class ServiceLocator <<Core>> {
-        -{static} instance
-        +getActivityRepository()
-        +getTimeBlockRepository()
-        +getHabitRepository()
+        -{static} _instance: ServiceLocator
+        +{static} getInstance(): ServiceLocator
+        +getActivityRepository(): ActivityRepository
+        +getTimeBlockRepository(): TimeBlockRepository
+        +getHabitRepository(): HabitRepository
     }
     
     class Logger <<Core>> {
-        +{static} instance
-        +i(message, tag): void
-        +e(message, tag, error): void
-        +d(message, tag): void
-    }
-    
-    abstract class ErrorHandler <<Core>> {
-        +{static} logError(): void
-        +{static} handleError(): String
+        +{static} instance: Logger
+        +i(String message, String? tag): void
+        +e(String message, String? tag, dynamic error): void
+        +d(String message, String? tag): void
     }
 }
 
 ' ===========================================
-' DOMAIN LAYER (Superior Derecha)
+' DOMAIN LAYER - Entities & Abstractions
 ' ===========================================
 package "Domain Layer" as domain #E8F5E8 {
     
@@ -113,12 +118,27 @@ package "Domain Layer" as domain #E8F5E8 {
         +copyWith(): Habit
     }
     
+    class TimeBlock <<Domain>> {
+        +id: String
+        +title: String
+        +startTime: DateTime
+        +endTime: DateTime
+        +category: String
+    }
+    
     ' Repository Abstractions
     abstract class HabitRepository <<Domain>> {
         +getAllHabits(): Future<List<Habit>>
-        +addHabit(habit): Future<void>
-        +updateHabit(habit): Future<void>
-        +deleteHabit(id): Future<void>
+        +addHabit(Habit habit): Future<void>
+        +updateHabit(Habit habit): Future<void>
+        +deleteHabit(String id): Future<void>
+    }
+    
+    abstract class ActivityRepository <<Domain>> {
+        +getAllActivities(): Future<List<Activity>>
+        +addActivity(Activity activity): Future<void>
+        +updateActivity(Activity activity): Future<void>
+        +deleteActivity(String id): Future<void>
     }
     
     ' Use Cases
@@ -129,17 +149,17 @@ package "Domain Layer" as domain #E8F5E8 {
     
     class PredictProductivityUseCase <<Domain>> {
         -apiService: TempoSageApiService
-        +execute(): Future<Map>
+        +execute(): Future<Map<String, dynamic>>
     }
     
     class HabitToTimeBlockService <<Domain>> {
-        -timeBlockRepository
+        -timeBlockRepository: TimeBlockRepository
         +planificarBloques(): Future<int>
     }
 }
 
 ' ===========================================
-' DATA LAYER (Centro)
+' DATA LAYER - Models & Implementations
 ' ===========================================
 package "Data Layer" as data #FFF3E0 {
     
@@ -152,7 +172,8 @@ package "Data Layer" as data #FFF3E0 {
         +daysOfWeek: List<String>
         +isCompleted: bool
         +copyWith(): HabitModel
-        +toJson(): Map
+        +toJson(): Map<String, dynamic>
+        +toDomain(): Habit
     }
     
     class ActivityModel <<Data>> {
@@ -177,129 +198,144 @@ package "Data Layer" as data #FFF3E0 {
         +isCompleted: bool
     }
     
-    class TaskModel <<Data>> {
-        <<freezed>>
-        +id: String
-        +title: String
-        +isCompleted: bool
-        +createdAt: DateTime
-        +subtasks: List<SubtaskModel>
-    }
-    
     ' Repository Implementations
     class HabitRepositoryImpl <<Data>> {
         -{static} _boxName: String
+        -_localStorage: LocalStorage
         +getAllHabits(): Future<List<Habit>>
-        +addHabit(): Future<void>
-        +updateHabit(): Future<void>
-        +deleteHabit(): Future<void>
+        +addHabit(Habit habit): Future<void>
+        +updateHabit(Habit habit): Future<void>
+        +deleteHabit(String id): Future<void>
     }
     
     class TimeBlockRepository <<Data>> {
-        +getAllTimeBlocks(): Future<List>
-        +addTimeBlock(): Future<void>
-        +updateTimeBlock(): Future<void>
+        -_localStorage: LocalStorage
+        +getAllTimeBlocks(): Future<List<TimeBlock>>
+        +addTimeBlock(TimeBlock block): Future<void>
+        +updateTimeBlock(TimeBlock block): Future<void>
     }
 }
 
 ' ===========================================
-' PRESENTATION LAYER (Inferior Izquierda)
+' PRESENTATION LAYER - Controllers & State
 ' ===========================================
 package "Presentation Layer" as presentation #F3E5F5 {
     
     ' State Management
     class HabitState <<Presentation>> {
         <<freezed>>
+        +isLoading: bool
+        +habits: List<Habit>
+        +error: String?
         +initial(): HabitState
         +loading(): HabitState
-        +loaded(): HabitState
-        +error(): HabitState
+        +loaded(List<Habit> habits): HabitState
+        +error(String message): HabitState
     }
     
     class HabitCubit <<Presentation>> {
-        +repository: HabitRepository
+        -repository: HabitRepository
         +getHabitsForToday(): Future<void>
-        +completeHabit(): Future<void>
-        +createHabit(): Future<void>
+        +completeHabit(String id): Future<void>
+        +createHabit(Habit habit): Future<void>
     }
     
     class DashboardController <<Presentation>> {
-        -_activityRepository
-        -_habitRepository
+        -_activityRepository: ActivityRepository
+        -_habitRepository: HabitRepository
         -_isLoading: bool
         +refreshDashboard(): Future<void>
-        +getTodayActivities(): List
+        +getTodayActivities(): List<Activity>
         +predictProductivity(): Future<void>
-    }
-    
-    class TaskCubit <<Presentation>> {
-        -_repository: TaskRepository
-        +loadTasks(): Future<void>
-        +createTask(): Future<void>
-        +toggleTaskCompletion(): Future<void>
     }
 }
 
 ' ===========================================
-' SERVICES LAYER (Inferior Derecha)
+' SERVICES LAYER
 ' ===========================================
 package "Services Layer" as services #FFEBEE {
     
     class RecommendationService <<Services>> {
         -_logger: Logger
-        +getActivityRecommendations(): Future<List>
-        +getHabitRecommendations(): Future<List>
-        +analyzeUserPatterns(): Future<Map>
+        +getActivityRecommendations(): Future<List<Activity>>
+        +getHabitRecommendations(): Future<List<Habit>>
+        +analyzeUserPatterns(): Future<Map<String, dynamic>>
     }
     
     class TempoSageApiService <<Services>> {
-        +predictProductivity(): Future<Map>
-        +suggestOptimalTime(): Future<List>
-        +analyzePatterns(): Future<Map>
+        +predictProductivity(): Future<Map<String, dynamic>>
+        +suggestOptimalTime(): Future<List<TimeBlock>>
+        +analyzePatterns(): Future<Map<String, dynamic>>
     }
     
     class NotificationService <<Services>> {
-        +scheduleNotification(): Future<void>
-        +cancelNotification(): Future<void>
+        +scheduleNotification(String id, DateTime time, String message): Future<void>
+        +cancelNotification(String id): Future<void>
         +cancelAllNotifications(): Future<void>
     }
 }
 
 ' ===========================================
-' RELATIONSHIPS OPTIMIZADAS
+' RELACIONES - Notación UML Estándar
 ' ===========================================
 
-' Core relationships
-ServiceLocator .down.> HabitRepositoryImpl
-ServiceLocator .down.> TimeBlockRepository
-ServiceLocator .right.> TempoSageApiService
+' Core Layer - Dependency Injection
+ServiceLocator --> HabitRepositoryImpl : creates
+ServiceLocator --> TimeBlockRepository : creates
+ServiceLocator --> TempoSageApiService : creates
 
-' Domain to Data
-HabitRepository <|.down. HabitRepositoryImpl
-GetHabitsUseCase .right.> HabitRepository
-PredictProductivityUseCase .down.> TempoSageApiService
-HabitToTimeBlockService .down.> TimeBlockRepository
+' Domain to Data - Inheritance (Repository Pattern)
+HabitRepository <|-- HabitRepositoryImpl : implements
+ActivityRepository <|-- HabitRepositoryImpl : implements
 
-' Data relationships
-HabitRepositoryImpl .up.> LocalStorage
-TimeBlockRepository .up.> LocalStorage
-HabitRepositoryImpl .right.> HabitModel
-HabitRepositoryImpl .left.> Habit
+' Domain to Data - Composition
+HabitRepositoryImpl --> LocalStorage : uses
+TimeBlockRepository --> LocalStorage : uses
 
-' Presentation relationships
-HabitCubit .up.> HabitRepository
-HabitCubit .left.> HabitState
-DashboardController .up.> PredictProductivityUseCase
-TaskCubit .up.> TaskModel
+' Domain Entities to Data Models - Transformation
+HabitModel ..> Habit : transforms to
+ActivityModel ..> Activity : transforms to
+TimeBlockModel ..> TimeBlock : transforms to
 
-' Services relationships
-RecommendationService .up.> Logger
-HabitToTimeBlockService .right.> TimeBlockRepository
+' Use Cases - Dependency
+GetHabitsUseCase --> HabitRepository : depends on
+PredictProductivityUseCase --> TempoSageApiService : depends on
+HabitToTimeBlockService --> TimeBlockRepository : depends on
 
-' Inheritance relationships (simplificadas)
-HabitCubit --|> "Cubit<HabitState>"
-DashboardController --|> "ChangeNotifier"
-HabitModel --|> "HiveObject"
-TimeBlockModel --|> "HiveObject"
+' Presentation - Dependencies
+HabitCubit --> HabitRepository : uses
+HabitCubit --> HabitState : manages
+DashboardController --> ActivityRepository : uses
+DashboardController --> HabitRepository : uses
+DashboardController --> PredictProductivityUseCase : uses
 
-@enduml 
+' Services - Dependencies
+RecommendationService --> Logger : uses
+HabitToTimeBlockService --> TimeBlockRepository : uses
+
+' Data Layer - Model Usage
+HabitRepositoryImpl --> HabitModel : uses
+TimeBlockRepository --> TimeBlockModel : uses
+
+' Inheritance - Flutter/Riverpod Patterns
+HabitCubit --|> Cubit : extends
+DashboardController --|> ChangeNotifier : extends
+HabitModel --|> HiveObject : extends
+TimeBlockModel --|> HiveObject : extends
+
+note right of ServiceLocator
+  Singleton para inyección
+  de dependencias
+end note
+
+note right of HabitRepository
+  Abstracción del dominio.
+  Implementación en Data Layer
+end note
+
+note bottom of HabitCubit
+  Estado gestionado con
+  BLoC pattern (Cubit)
+end note
+
+@enduml

@@ -1,0 +1,41 @@
+# SonarCloud Configuration for TempoSageMovil
+# Updated: 2025-01-XX - Using SonarCloud with official Dart/Flutter support
+# SonarCloud includes full official support for Dart/Flutter (free for open source projects)
+
+# Project Information
+# IMPORTANT: Replace 'astivens' with your SonarCloud organization key
+# Format: organization_key:project_key
+sonar.projectKey=astivens:temposage-movil
+sonar.organization=astivens
+sonar.projectName=TempoSage Movil
+sonar.projectVersion=1.0.0
+
+# Source Code Configuration
+sonar.sources=lib
+sonar.tests=test
+sonar.sourceEncoding=UTF-8
+
+# Language Configuration - Official Dart/Flutter support (10.7+)
+# SonarQube detecta automáticamente Dart/Flutter, pero puedes especificarlo explícitamente
+sonar.language=dart
+
+# Coverage Configuration - Official Dart/Flutter support
+# Usa la propiedad específica para Dart/Flutter
+sonar.dart.coverage.reportPaths=coverage/lcov.info
+# Excluir archivos generados de la cobertura
+sonar.coverage.exclusions=**/*.g.dart,**/*.freezed.dart,**/*.mocks.dart,**/*.gr.dart,**/*.chopper.dart,**/generated/**
+
+# Source Exclusions
+# Excluir archivos generados, build, y recursos no relevantes
+sonar.exclusions=**/*.g.dart,**/*.freezed.dart,**/*.mocks.dart,**/*.gr.dart,**/*.chopper.dart,**/generated/**,**/build/**,**/.dart_tool/**,**/*.md,**/docs/**,**/*.json,**/*.yaml,**/*.yml,**/*.lock,**/*.txt,**/*.csv,**/*.pickle,**/performance_reports/**,**/test-reports/**,**/coverage/**,**/web/**,**/ios/**,**/android/**,**/linux/**,**/macos/**,**/windows/**,**/.github/**,**/sonar-plugins/**,**/ollama_proxy/**,**/data/**,**/assets/**,**/*.xml,**/*.properties,**/*.toml,**/*.sh,**/*.py,**/*.jar,**/*.pdf,**/*.jpg,**/*.png,**/*.gif,**/*.svg,**/*.ico,**/*.ttf,**/*.otf
+
+# Test Exclusions
+sonar.test.exclusions=**/integration_test/**,**/test_driver/**
+
+# Quality Gate Configuration
+sonar.qualitygate.wait=true
+
+# SonarCloud Server Configuration
+sonar.host.url=https://sonarcloud.io
+# Use SONAR_TOKEN environment variable with your SonarCloud token
+sonar.login=${env.SONAR_TOKEN}

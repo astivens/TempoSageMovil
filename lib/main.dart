@@ -5,7 +5,14 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'core/services/local_storage.dart';
 import 'core/services/navigation_service.dart';
 import 'core/services/notification_service.dart';
-import 'core/services/service_locator.dart';
+import 'core/di/service_locator.dart';
+import 'features/activities/data/repositories/activity_repository.dart';
+import 'features/habits/domain/repositories/habit_repository.dart';
+import 'features/habits/domain/services/habit_to_timeblock_service.dart';
+import 'services/activity_recommendation_controller.dart';
+import 'features/habits/domain/services/habit_recommendation_service.dart';
+import 'core/services/recommendation_service.dart';
+import 'core/services/debug_data_service.dart';
 import 'core/services/migration_service.dart';
 import 'core/utils/logger.dart';
 import 'core/theme/theme_manager.dart';
@@ -54,9 +61,13 @@ Future<void> _initializeApp() async {
     final settingsService = SettingsService();
     await settingsService.init();
 
-    // Inicializar repositorios
-    await ServiceLocator.instance.initializeAll();
+    // Inicializar repositorios y dependencias
+    await setupDependencies();
     logger.i('Servicios y repositorios inicializados', tag: 'App');
+    
+    // Inicializar datos ficticios en modo debug
+    await DebugDataService.initializeFakeDataIfNeeded();
+    logger.i('Datos ficticios inicializados (si aplica)', tag: 'App');
 
     // Ejecutar migraciones automáticas (incluye limpieza de duplicados)
     await MigrationService.runMigrations();
@@ -69,12 +80,10 @@ Future<void> _initializeApp() async {
     _planificarBloquesAutomaticamente();
 
     // Programar notificaciones para actividades existentes
-    await ServiceLocator.instance.activityNotificationService
-        .scheduleAllActivityNotifications();
+    // await getIt<ActivityNotificationService>().scheduleAllActivityNotifications();
 
     // Programar notificaciones para hábitos existentes
-    await ServiceLocator.instance.habitNotificationService
-        .scheduleAllHabitNotifications();
+    // await getIt<HabitNotificationService>().scheduleAllHabitNotifications();
 
     // Mostrar notificaciones inmediatas para actividades próximas (dentro de 1 hora)
     await _showImminentNotifications();
@@ -112,7 +121,7 @@ void _planificarBloquesAutomaticamente() {
   Future.microtask(() async {
     try {
       final habitToTimeBlockService =
-          ServiceLocator.instance.habitToTimeBlockService;
+          getIt<HabitToTimeBlockService>();
 
       // Planificar bloques para los próximos 7 días
       final bloquesPlanificados = await habitToTimeBlockService
@@ -185,8 +194,8 @@ void _safeRegisterAdapter<T>(
 Future<void> _showImminentNotifications() async {
   try {
     final logger = Logger.instance;
-    final activityRepo = ServiceLocator.instance.activityRepository;
-    final notificationService = ServiceLocator.instance.notificationService;
+    final activityRepo = getIt<ActivityRepository>();
+    final notificationService = NotificationService();
 
     // Obtener la fecha actual
     final now = DateTime.now();
@@ -243,9 +252,9 @@ void _precargaModeloML() {
 
       // Obtener instancias de los controladores
       final activityRecommendationController =
-          ServiceLocator.instance.activityRecommendationController;
+          getIt<ActivityRecommendationController>();
       final habitRecommendationService =
-          ServiceLocator.instance.habitRecommendationService;
+          getIt<HabitRecommendationService>();
 
       // Inicializar el controlador de recomendaciones de actividades
       await activityRecommendationController.initialize();
@@ -264,7 +273,7 @@ void _precargaModeloML() {
       });
 
       // Precargar datos de bloques productivos y otras estadísticas
-      await ServiceLocator.instance.recommendationService.initialize();
+      await getIt<RecommendationService>().initialize();
 
       // COMENTADO: No crear actividades automáticamente
       // _crearRecomendacionesActividades(); // DESHABILITADO: No crear actividades automáticamente
@@ -313,8 +322,8 @@ class MyApp extends StatelessWidget {
         // Otros proveedores
         ChangeNotifierProvider(
           create: (_) => DashboardController(
-            activityRepository: ServiceLocator.instance.activityRepository,
-            habitRepository: ServiceLocator.instance.habitRepository,
+            activityRepository: getIt<ActivityRepository>(),
+            habitRepository: getIt<HabitRepository>(),
           ),
         ),
       ],

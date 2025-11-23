@@ -73,25 +73,18 @@ void main() {
       expect(AppStyles.bodySmall.fontFamily, 'Noto Sans');
     });
 
-    test('debería tener labelLarge definido correctamente', () {
+    test('debería tener lightTheme definido correctamente', () {
       // Assert
-      expect(AppStyles.labelLarge, isA<TextStyle>());
-      expect(AppStyles.labelLarge.fontSize, 14);
-      expect(AppStyles.labelLarge.fontFamily, 'Noto Sans');
+      expect(AppStyles.lightTheme, isA<ThemeData>());
+      expect(AppStyles.lightTheme.brightness, Brightness.light);
+      expect(AppStyles.lightTheme.fontFamily, 'Noto Sans');
     });
 
-    test('debería tener labelMedium definido correctamente', () {
+    test('debería tener darkTheme definido correctamente', () {
       // Assert
-      expect(AppStyles.labelMedium, isA<TextStyle>());
-      expect(AppStyles.labelMedium.fontSize, 12);
-      expect(AppStyles.labelMedium.fontFamily, 'Noto Sans');
-    });
-
-    test('debería tener labelSmall definido correctamente', () {
-      // Assert
-      expect(AppStyles.labelSmall, isA<TextStyle>());
-      expect(AppStyles.labelSmall.fontSize, 11);
-      expect(AppStyles.labelSmall.fontFamily, 'Noto Sans');
+      expect(AppStyles.darkTheme, isA<ThemeData>());
+      expect(AppStyles.darkTheme.brightness, Brightness.dark);
+      expect(AppStyles.darkTheme.fontFamily, 'Noto Sans');
     });
   });
 }

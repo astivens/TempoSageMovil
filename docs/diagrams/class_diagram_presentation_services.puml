@@ -1,0 +1,173 @@
+@startuml TempoSage_Class_Diagram_Presentation_Services
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1800x2700px)
+!define DPI 400
+scale max 1800 width
+scale max 2700 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam classFontSize 19
+skinparam classAttributeFontSize 18
+skinparam classMethodFontSize 18
+skinparam packageFontSize 20
+skinparam linetype ortho
+
+skinparam package {
+    BackgroundColor #F8F9FA
+    BorderColor #495057
+    FontColor #212529
+}
+
+skinparam class {
+    BackgroundColor<<Presentation>> #F3E5F5
+    BorderColor<<Presentation>> #7B1FA2
+    FontColor<<Presentation>> #4A148C
+}
+
+skinparam class {
+    BackgroundColor<<Services>> #FFEBEE
+    BorderColor<<Services>> #C62828
+    FontColor<<Services>> #B71C1C
+}
+
+skinparam class {
+    BackgroundColor<<Domain>> #E8F5E8
+    BorderColor<<Domain>> #388E3C
+    FontColor<<Domain>> #1B5E20
+}
+
+skinparam class {
+    BackgroundColor<<Core>> #E3F2FD
+    BorderColor<<Core>> #1976D2
+    FontColor<<Core>> #0D47A1
+}
+
+skinparam classArrowColor #495057
+skinparam arrowColor #495057
+
+skinparam minClassWidth 140
+skinparam maxClassWidth 180
+skinparam classIconSize 0
+
+title Diagrama de Clases - Presentation y Services\nMódulo: Capa de Presentación y Servicios
+
+' ===========================================
+' DOMAIN LAYER (Referencias)
+' ===========================================
+package "Domain Layer (Referencias)" as domain #E8F5E8 {
+    abstract class HabitRepository <<Domain>> {
+        +getAllHabits(): Future<List<Habit>>
+        +addHabit(Habit habit): Future<void>
+        +updateHabit(Habit habit): Future<void>
+    }
+    
+    abstract class ActivityRepository <<Domain>> {
+        +getAllActivities(): Future<List<Activity>>
+        +addActivity(Activity activity): Future<void>
+    }
+    
+    class PredictProductivityUseCase <<Domain>> {
+        -apiService: TempoSageApiService
+        +execute(): Future<Map<String, dynamic>>
+    }
+}
+
+' ===========================================
+' PRESENTATION LAYER - Controllers & State
+' ===========================================
+package "Presentation Layer" as presentation #F3E5F5 {
+    
+    ' State Management
+    class HabitState <<Presentation>> {
+        <<freezed>>
+        +isLoading: bool
+        +habits: List<Habit>
+        +error: String?
+        +initial(): HabitState
+        +loading(): HabitState
+        +loaded(List<Habit> habits): HabitState
+        +error(String message): HabitState
+    }
+    
+    class HabitCubit <<Presentation>> {
+        -repository: HabitRepository
+        +getHabitsForToday(): Future<void>
+        +completeHabit(String id): Future<void>
+        +createHabit(Habit habit): Future<void>
+    }
+    
+    class DashboardController <<Presentation>> {
+        -_activityRepository: ActivityRepository
+        -_habitRepository: HabitRepository
+        -_isLoading: bool
+        +refreshDashboard(): Future<void>
+        +getTodayActivities(): List<Activity>
+        +predictProductivity(): Future<void>
+    }
+}
+
+' ===========================================
+' SERVICES LAYER
+' ===========================================
+package "Services Layer" as services #FFEBEE {
+    
+    class RecommendationService <<Services>> {
+        -_logger: Logger
+        +getActivityRecommendations(): Future<List<Activity>>
+        +getHabitRecommendations(): Future<List<Habit>>
+        +analyzeUserPatterns(): Future<Map<String, dynamic>>
+    }
+    
+    class TempoSageApiService <<Services>> {
+        +predictProductivity(): Future<Map<String, dynamic>>
+        +suggestOptimalTime(): Future<List<TimeBlock>>
+        +analyzePatterns(): Future<Map<String, dynamic>>
+    }
+    
+    class NotificationService <<Services>> {
+        +scheduleNotification(String id, DateTime time, String message): Future<void>
+        +cancelNotification(String id): Future<void>
+        +cancelAllNotifications(): Future<void>
+    }
+}
+
+' ===========================================
+' CORE LAYER (Referencia)
+' ===========================================
+package "Core Layer (Referencia)" as core #E3F2FD {
+    class Logger <<Core>> {
+        +{static} instance: Logger
+        +i(String message, String? tag): void
+        +e(String message, String? tag, dynamic error): void
+    }
+}
+
+' ===========================================
+' RELACIONES
+' ===========================================
+HabitCubit --> HabitRepository : uses
+HabitCubit --> HabitState : manages
+DashboardController --> ActivityRepository : uses
+DashboardController --> HabitRepository : uses
+DashboardController --> PredictProductivityUseCase : uses
+
+PredictProductivityUseCase --> TempoSageApiService : depends on
+RecommendationService --> Logger : uses
+
+HabitCubit --|> Cubit : extends
+DashboardController --|> ChangeNotifier : extends
+
+note bottom of HabitCubit
+  Estado gestionado con
+  BLoC pattern (Cubit)
+end note
+
+note right of TempoSageApiService
+  Servicio para integración
+  con modelos de ML
+end note
+
+@enduml
+

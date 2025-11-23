@@ -1,0 +1,166 @@
+@startuml TempoSage_Entity_Relationship_Diagram_Config_Analytics
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1800x2700px)
+!define DPI 400
+scale max 1800 width
+scale max 2700 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam classFontSize 19
+skinparam classAttributeFontSize 18
+skinparam packageFontSize 20
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor<<Central>> #E3F2FD
+    BorderColor<<Central>> #1976D2
+    FontColor<<Central>> #0D47A1
+}
+
+skinparam class {
+    BackgroundColor<<Domain>> #E8F5E8
+    BorderColor<<Domain>> #388E3C
+    FontColor<<Domain>> #1B5E20
+}
+
+skinparam class {
+    BackgroundColor<<Config>> #F3E5F5
+    BorderColor<<Config>> #7B1FA2
+    FontColor<<Config>> #4A148C
+}
+
+skinparam class {
+    BackgroundColor<<Analytics>> #FFEBEE
+    BorderColor<<Analytics>> #C62828
+    FontColor<<Analytics>> #B71C1C
+}
+
+skinparam classArrowColor #495057
+skinparam arrowColor #495057
+
+title Diagrama Entidad-Relación - Configuración y Análisis\nMódulo: Entidades de Configuración y Analytics
+
+' ===========================================
+' ENTIDADES DE CONFIGURACIÓN
+' ===========================================
+class User <<Central>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    --
+    +email: String [NOT NULL, UNIQUE]
+    +name: String [NOT NULL]
+}
+
+class Settings <<Config>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL, UNIQUE]
+    --
+    +theme: String [NOT NULL]
+    +language: String [NOT NULL]
+    +notificationsEnabled: bool [DEFAULT true]
+    +soundEnabled: bool [DEFAULT true]
+    +defaultFocusTime: int [NOT NULL]
+    +weekStartDay: String [NOT NULL]
+}
+
+class Notification <<Config>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    +habitId: String? [FK -> Habit.id]
+    +activityId: String? [FK -> Activity.id]
+    --
+    +title: String [NOT NULL]
+    +body: String [NOT NULL]
+    +scheduledTime: DateTime [NOT NULL]
+    +isDelivered: bool [DEFAULT false]
+    +type: String [NOT NULL]
+}
+
+class Category <<Data>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    --
+    +name: String [NOT NULL, UNIQUE per user]
+    +color: String [NOT NULL]
+    +icon: String
+    +isDefault: bool [DEFAULT false]
+}
+
+' ===========================================
+' ENTIDADES DE ANÁLISIS Y ML
+' ===========================================
+class ProductivityMetric <<Analytics>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    --
+    +date: DateTime [NOT NULL, UNIQUE per user/date]
+    +completedHabits: int [DEFAULT 0]
+    +completedTasks: int [DEFAULT 0]
+    +focusTime: int [DEFAULT 0]
+    +productivityScore: double [NOT NULL]
+    +mood: String?
+}
+
+class UserInteraction <<Analytics>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    --
+    +action: String [NOT NULL]
+    +targetType: String [NOT NULL]
+    +targetId: String [NOT NULL]
+    +timestamp: DateTime [NOT NULL]
+    +context: Map<String, dynamic>
+}
+
+class Goal <<Domain>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    +habitId: String? [FK -> Habit.id]
+    --
+    +title: String [NOT NULL]
+    +description: String
+    +targetValue: int [NOT NULL]
+    +currentValue: int [DEFAULT 0]
+    +deadline: DateTime [NOT NULL]
+    +isAchieved: bool [DEFAULT false]
+}
+
+' ===========================================
+' RELACIONES
+' ===========================================
+User ||--|| Settings : "configura (1:1)"
+User ||--o{ Notification : "recibe (1:N)"
+User ||--o{ Category : "define (1:N)"
+User ||--o{ Goal : "establece (1:N)"
+User ||--o{ ProductivityMetric : "genera (1:N)"
+User ||--o{ UserInteraction : "realiza (1:N)"
+
+Habit ||--o{ Goal : "asocia con (1:N)"
+Habit ||--o{ Notification : "programa (1:N)"
+
+note top of User
+  Entidad central.
+  Relación 1:1 con Settings
+end note
+
+note bottom of ProductivityMetric
+  Métricas agregadas diarias
+  para análisis de productividad
+  y machine learning
+end note
+
+note right of Settings
+  Configuración única
+  por usuario (1:1)
+end note
+
+@enduml
+

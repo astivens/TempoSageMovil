@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:csv/csv.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:temposage/core/models/productive_block.dart';
 import 'package:temposage/core/utils/logger.dart';
+import 'package:temposage/core/services/debug_data_service.dart';
 
 class CSVService {
   static const String _top3BlocksPath =
@@ -26,6 +28,16 @@ class CSVService {
       return _parseProductiveBlocks(csvContent);
     } catch (e) {
       _logger.e('Error al cargar Top 3 bloques productivos: $e');
+      
+      // En modo debug, usar datos ficticios
+      if (kDebugMode) {
+        _logger.i('Usando datos ficticios para top 3 bloques');
+        final fakeBlocks = DebugDataService.generateFakeProductiveBlocks();
+        // Ordenar por completionRate y tomar los top 3
+        fakeBlocks.sort((a, b) => b.completionRate.compareTo(a.completionRate));
+        return fakeBlocks.take(3).toList();
+      }
+      
       // Devolver datos por defecto en caso de error
       return _getDefaultBlocks(3);
     }
@@ -40,6 +52,13 @@ class CSVService {
       return _parseProductiveBlocks(csvContent);
     } catch (e) {
       _logger.e('Error al cargar estadísticas de bloques productivos: $e');
+      
+      // En modo debug, usar datos ficticios
+      if (kDebugMode) {
+        _logger.i('Usando datos ficticios para estadísticas de bloques');
+        return DebugDataService.generateFakeProductiveBlocks();
+      }
+      
       // Devolver datos por defecto en caso de error
       return _getDefaultBlocks(5);
     }

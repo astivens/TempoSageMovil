@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/services/recommendation_service.dart';
 import '../features/activities/data/models/activity_model.dart';
-import '../core/services/service_locator.dart';
+import '../core/di/service_locator.dart';
+import '../features/activities/data/repositories/activity_repository.dart';
 
 class ActivityRecommendationController extends ChangeNotifier {
   final RecommendationService _recommendationService = RecommendationService();
@@ -134,7 +135,7 @@ class ActivityRecommendationController extends ChangeNotifier {
   Future<List<InteractionEvent>> _generateUserHistory() async {
     final List<InteractionEvent> history = [];
     try {
-      final activityRepo = ServiceLocator.instance.activityRepository;
+      final activityRepo = getIt<ActivityRepository>();
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final List<ActivityModel> recentActivities =
@@ -250,7 +251,7 @@ class ActivityRecommendationController extends ChangeNotifier {
       );
 
       // Guardar en el repositorio
-      final activityRepo = ServiceLocator.instance.activityRepository;
+      final activityRepo = getIt<ActivityRepository>();
       await activityRepo.addActivity(activity);
 
       // Añadir a la lista de actividades recientemente creadas

@@ -21,6 +21,11 @@ void main() {
     }
   });
 
+  tearDownAll(() async {
+    await Hive.close();
+    await tempDir.delete(recursive: true);
+  });
+
   setUp(() async {
     // Clean up previous test data
     await Hive.deleteBoxFromDisk('users');

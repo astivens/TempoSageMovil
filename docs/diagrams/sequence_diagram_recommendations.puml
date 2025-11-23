@@ -1,0 +1,148 @@
+@startuml TempoSage_Sequence_Diagram_Recommendations
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1600x2400px)
+!define DPI 400
+scale max 1600 width
+scale max 2400 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam participantFontSize 20
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowFontSize 19
+skinparam sequenceReferenceFontSize 18
+skinparam noteFontSize 18
+
+' Colores para diferentes tipos de componentes
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam participant {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+    FontColor #4A148C
+}
+
+skinparam control {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontColor #E65100
+}
+
+skinparam boundary {
+    BackgroundColor #FFEBEE
+    BorderColor #C62828
+    FontColor #B71C1C
+}
+
+title Diagrama de Secuencia - Obtención de Recomendaciones\nSistema de IA y Recomendaciones Inteligentes
+
+' ===========================================
+' PARTICIPANTES
+' ===========================================
+actor "Usuario" as user
+participant "DashboardScreen" as dashboard
+participant "RecommendationController" as controller
+participant "RecommendationService" as service
+participant "ActivityRepository" as activityRepo
+participant "HabitRepository" as habitRepo
+participant "TempoSageApiService" as api
+database "HiveDatabase" as hive
+
+' ===========================================
+' FLUJO - OBTENER RECOMENDACIONES
+' ===========================================
+== Obtener Recomendaciones Inteligentes ==
+
+user -> dashboard : Abrir Dashboard
+activate dashboard
+
+dashboard -> controller : loadRecommendations()
+activate controller
+
+controller -> activityRepo : getRecentActivities()
+activate activityRepo
+activityRepo -> hive : queryRecentActivities(userId)
+activate hive
+hive --> activityRepo : activitiesList
+deactivate hive
+activityRepo --> controller : List<Activity>
+deactivate activityRepo
+
+controller -> habitRepo : getActiveHabits()
+activate habitRepo
+habitRepo -> hive : queryActiveHabits(userId)
+activate hive
+hive --> habitRepo : habitsList
+deactivate hive
+habitRepo --> controller : List<Habit>
+deactivate habitRepo
+
+controller -> service : getRecommendations(activities, habits)
+activate service
+
+service -> service : analyzeUserPatterns()
+service -> service : calcularPatronesDeTiempo()
+service -> service : identificarOportunidades()
+
+service -> api : predictProductivity(userData)
+activate api
+api -> api : procesarDatos()
+api -> api : generarPrediccion()
+api --> service : ProductivityPrediction
+deactivate api
+
+service -> api : suggestOptimalTime(userContext)
+activate api
+api -> api : analizarHistorial()
+api --> service : OptimalTimeSuggestions
+deactivate api
+
+service -> service : generarRecomendaciones()
+service --> controller : RecommendationResult
+deactivate service
+
+controller -> controller : procesarRecomendaciones()
+controller --> dashboard : recommendationsLoaded
+deactivate controller
+
+dashboard -> dashboard : mostrarRecomendaciones()
+dashboard --> user : Mostrar recomendaciones personalizadas
+
+note right of service
+  Recomendaciones incluyen:
+  - Mejor horario para actividades
+  - Hábitos sugeridos
+  - Predicción de productividad
+  - Optimización de tiempo
+end note
+
+alt Usuario acepta recomendación
+    user -> dashboard : Tap "Aplicar Recomendación"
+    activate dashboard
+    
+    dashboard -> controller : applyRecommendation(recommendation)
+    activate controller
+    
+    controller -> activityRepo : createActivityFromRecommendation()
+    activate activityRepo
+    activityRepo -> hive : saveActivity()
+    activate hive
+    hive --> activityRepo : saved
+    deactivate hive
+    activityRepo --> controller : activityCreated
+    deactivate activityRepo
+    
+    controller --> dashboard : recommendationApplied
+    deactivate controller
+    
+    dashboard --> user : "Recomendación aplicada exitosamente"
+    deactivate dashboard
+end
+
+@enduml
+

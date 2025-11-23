@@ -1,0 +1,124 @@
+@startuml TempoSage_Sequence_Diagram_Task_Management
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1600x2400px)
+!define DPI 400
+scale max 1600 width
+scale max 2400 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam participantFontSize 20
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowFontSize 19
+skinparam sequenceReferenceFontSize 18
+skinparam noteFontSize 18
+
+' Colores para diferentes tipos de componentes
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam participant {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+    FontColor #4A148C
+}
+
+skinparam control {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontColor #E65100
+}
+
+skinparam database {
+    BackgroundColor #E8F5E8
+    BorderColor #388E3C
+    FontColor #1B5E20
+}
+
+title Diagrama de Secuencia - Gestión de Tareas\nCreación y Completado de Tareas
+
+' ===========================================
+' PARTICIPANTES
+' ===========================================
+actor "Usuario" as user
+participant "TasksScreen" as screen
+participant "TaskCubit" as cubit
+participant "TaskRepository" as repo
+database "HiveDatabase" as hive
+
+' ===========================================
+' FLUJO 1 - CREAR TAREA
+' ===========================================
+== Crear Nueva Tarea ==
+
+user -> screen : Tap "Agregar Tarea"
+activate screen
+
+screen -> cubit : createTask(taskData)
+activate cubit
+
+cubit -> cubit : Validar datos
+cubit -> repo : addTask(task)
+activate repo
+
+repo -> hive : saveTask(taskModel)
+activate hive
+hive --> repo : taskSaved
+deactivate hive
+
+repo --> cubit : taskCreated
+deactivate repo
+
+cubit -> cubit : emit(TaskState.loaded)
+cubit --> screen : TaskState.updated
+deactivate cubit
+
+screen -> screen : actualizarUI()
+screen --> user : Tarea agregada a la lista
+deactivate screen
+
+' ===========================================
+' FLUJO 2 - COMPLETAR TAREA
+' ===========================================
+== Completar Tarea ==
+
+user -> screen : Tap checkbox de tarea
+activate screen
+
+screen -> cubit : completeTask(taskId)
+activate cubit
+
+cubit -> repo : updateTask(taskId, isCompleted=true)
+activate repo
+
+repo -> hive : updateTaskStatus(taskId, true)
+activate hive
+hive --> repo : updated
+deactivate hive
+
+repo --> cubit : taskUpdated
+deactivate repo
+
+cubit -> cubit : calcularProgresoDiario()
+cubit -> cubit : emit(TaskState.updated)
+
+cubit --> screen : TaskState.updated
+deactivate cubit
+
+screen -> screen : actualizarUI()
+screen --> user : Tarea marcada como completada
+deactivate screen
+
+note right of cubit
+  Actualiza:
+  - Estado de completitud
+  - Progreso diario
+  - Estadísticas
+end note
+
+@enduml
+

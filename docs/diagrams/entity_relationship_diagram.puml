@@ -1,250 +1,301 @@
 @startuml TempoSage_Entity_Relationship_Diagram
 !theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 2000x3000px)
+!define DPI 400
+scale max 2000 width
+scale max 3000 height
+
 skinparam backgroundColor #FFFFFF
-skinparam defaultFontSize 10
-skinparam entityFontSize 10
+skinparam defaultFontSize 28
+skinparam classFontSize 27
+skinparam classAttributeFontSize 26
+skinparam packageFontSize 28
+skinparam linetype ortho
 
 ' Colores específicos para diferentes tipos de entidades
 ' Entidades centrales - Azul
-skinparam entity {
+skinparam class {
     BackgroundColor<<Central>> #E3F2FD
     BorderColor<<Central>> #1976D2
     FontColor<<Central>> #0D47A1
 }
 
 ' Entidades del dominio principal - Verde
-skinparam entity {
+skinparam class {
     BackgroundColor<<Domain>> #E8F5E8
     BorderColor<<Domain>> #388E3C
     FontColor<<Domain>> #1B5E20
 }
 
 ' Entidades de datos y estructura - Naranja
-skinparam entity {
+skinparam class {
     BackgroundColor<<Data>> #FFF3E0
     BorderColor<<Data>> #F57C00
     FontColor<<Data>> #E65100
 }
 
 ' Entidades de configuración y UI - Púrpura
-skinparam entity {
+skinparam class {
     BackgroundColor<<Config>> #F3E5F5
     BorderColor<<Config>> #7B1FA2
     FontColor<<Config>> #4A148C
 }
 
 ' Entidades de análisis y ML - Rojo
-skinparam entity {
+skinparam class {
     BackgroundColor<<Analytics>> #FFEBEE
     BorderColor<<Analytics>> #C62828
     FontColor<<Analytics>> #B71C1C
 }
 
-' Layout optimizado para relación 1:1
-skinparam minClassWidth 100
-skinparam maxMessageSize 120
+skinparam classArrowColor #495057
+skinparam arrowColor #495057
 
-title Diagrama Entidad-Relación - TempoSage\nModelo de Datos del Dominio con Diferenciación Visual
-
-' ===========================================
-' ENTIDADES PRINCIPALES (Centro)
-' ===========================================
-
-entity "User" <<Central>> as user {
-    * **id** : String <<PK>>
-    --
-    email : String
-    name : String
-    passwordHash : String
-    createdAt : DateTime
-    lastLoginAt : DateTime?
-    preferences : Map<String, dynamic>
-}
-
-entity "Habit" <<Domain>> as habit {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
-    --
-    title : String
-    description : String
-    daysOfWeek : List<String>
-    category : String
-    time : String
-    isActive : bool
-    createdAt : DateTime
-    streak : int
-}
-
-entity "Activity" <<Domain>> as activity {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
-    --
-    title : String
-    description : String
-    category : String
-    startTime : DateTime
-    endTime : DateTime
-    priority : String
-    isCompleted : bool
-    estimatedDuration : int
-}
-
-entity "Task" <<Domain>> as task {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
-    --
-    title : String
-    description : String
-    isCompleted : bool
-    priority : String
-    dueDate : DateTime?
-    createdAt : DateTime
-    completedAt : DateTime?
-}
+title Diagrama Entidad-Relación - TempoSage\nModelo de Datos del Dominio
 
 ' ===========================================
-' ENTIDADES RELACIONADAS (Alrededor)
+' ENTIDADES PRINCIPALES - Dominio Core
 ' ===========================================
 
-entity "TimeBlock" <<Data>> as timeblock {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
-    habitId : String? <<FK>>
-    activityId : String? <<FK>>
+class User <<Central>> {
+    ** Atributos Principales **
+    +id: String [PK]
     --
-    title : String
-    startTime : DateTime
-    endTime : DateTime
-    category : String
-    isFocusTime : bool
-    isCompleted : bool
-    color : String
+    +email: String [NOT NULL, UNIQUE]
+    +name: String [NOT NULL]
+    +passwordHash: String [NOT NULL]
+    +createdAt: DateTime [NOT NULL]
+    +lastLoginAt: DateTime?
+    +preferences: Map<String, dynamic>
 }
 
-entity "Subtask" <<Data>> as subtask {
-    * **id** : String <<PK>>
-    * **taskId** : String <<FK>>
+class Habit <<Domain>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
     --
-    title : String
-    isCompleted : bool
-    order : int
-    createdAt : DateTime
+    +title: String [NOT NULL]
+    +description: String
+    +daysOfWeek: List<String> [NOT NULL]
+    +category: String [NOT NULL]
+    +time: String [NOT NULL]
+    +isActive: bool [NOT NULL, DEFAULT true]
+    +createdAt: DateTime [NOT NULL]
+    +streak: int [DEFAULT 0]
 }
 
-entity "Category" <<Data>> as category {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
+class Activity <<Domain>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
     --
-    name : String
-    color : String
-    icon : String
-    isDefault : bool
+    +title: String [NOT NULL]
+    +description: String
+    +category: String [NOT NULL]
+    +startTime: DateTime [NOT NULL]
+    +endTime: DateTime [NOT NULL]
+    +priority: String
+    +isCompleted: bool [NOT NULL, DEFAULT false]
+    +estimatedDuration: int
 }
 
-entity "Notification" <<Config>> as notification {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
-    habitId : String? <<FK>>
-    activityId : String? <<FK>>
+class Task <<Domain>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
     --
-    title : String
-    body : String
-    scheduledTime : DateTime
-    isDelivered : bool
-    type : String
+    +title: String [NOT NULL]
+    +description: String
+    +isCompleted: bool [NOT NULL, DEFAULT false]
+    +priority: String
+    +dueDate: DateTime?
+    +createdAt: DateTime [NOT NULL]
+    +completedAt: DateTime?
+}
+
+' ===========================================
+' ENTIDADES RELACIONADAS - Datos y Estructura
+' ===========================================
+
+class TimeBlock <<Data>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    +habitId: String? [FK -> Habit.id]
+    +activityId: String? [FK -> Activity.id]
+    --
+    +title: String [NOT NULL]
+    +startTime: DateTime [NOT NULL]
+    +endTime: DateTime [NOT NULL]
+    +category: String [NOT NULL]
+    +isFocusTime: bool [NOT NULL, DEFAULT false]
+    +isCompleted: bool [NOT NULL, DEFAULT false]
+    +color: String
+}
+
+class Subtask <<Data>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +taskId: String [FK -> Task.id, NOT NULL]
+    --
+    +title: String [NOT NULL]
+    +isCompleted: bool [NOT NULL, DEFAULT false]
+    +order: int [NOT NULL]
+    +createdAt: DateTime [NOT NULL]
+}
+
+class Category <<Data>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    --
+    +name: String [NOT NULL, UNIQUE per user]
+    +color: String [NOT NULL]
+    +icon: String
+    +isDefault: bool [NOT NULL, DEFAULT false]
 }
 
 ' ===========================================
 ' ENTIDADES DE CONFIGURACIÓN
 ' ===========================================
 
-entity "Settings" <<Config>> as settings {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
+class Settings <<Config>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL, UNIQUE]
     --
-    theme : String
-    language : String
-    notificationsEnabled : bool
-    soundEnabled : bool
-    defaultFocusTime : int
-    weekStartDay : String
+    +theme: String [NOT NULL]
+    +language: String [NOT NULL]
+    +notificationsEnabled: bool [NOT NULL, DEFAULT true]
+    +soundEnabled: bool [NOT NULL, DEFAULT true]
+    +defaultFocusTime: int [NOT NULL]
+    +weekStartDay: String [NOT NULL]
 }
 
-entity "Goal" <<Domain>> as goal {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
-    habitId : String? <<FK>>
+class Notification <<Config>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    +habitId: String? [FK -> Habit.id]
+    +activityId: String? [FK -> Activity.id]
     --
-    title : String
-    description : String
-    targetValue : int
-    currentValue : int
-    deadline : DateTime
-    isAchieved : bool
+    +title: String [NOT NULL]
+    +body: String [NOT NULL]
+    +scheduledTime: DateTime [NOT NULL]
+    +isDelivered: bool [NOT NULL, DEFAULT false]
+    +type: String [NOT NULL]
+}
+
+class Goal <<Domain>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    +habitId: String? [FK -> Habit.id]
+    --
+    +title: String [NOT NULL]
+    +description: String
+    +targetValue: int [NOT NULL]
+    +currentValue: int [NOT NULL, DEFAULT 0]
+    +deadline: DateTime [NOT NULL]
+    +isAchieved: bool [NOT NULL, DEFAULT false]
 }
 
 ' ===========================================
 ' ENTIDADES DE ANÁLISIS Y ML
 ' ===========================================
 
-entity "Productivity_Metric" <<Analytics>> as metric {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
+class ProductivityMetric <<Analytics>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
     --
-    date : DateTime
-    completedHabits : int
-    completedTasks : int
-    focusTime : int
-    productivityScore : double
-    mood : String?
+    +date: DateTime [NOT NULL, UNIQUE per user/date]
+    +completedHabits: int [NOT NULL, DEFAULT 0]
+    +completedTasks: int [NOT NULL, DEFAULT 0]
+    +focusTime: int [NOT NULL, DEFAULT 0]
+    +productivityScore: double [NOT NULL]
+    +mood: String?
 }
 
-entity "User_Interaction" <<Analytics>> as interaction {
-    * **id** : String <<PK>>
-    * **userId** : String <<FK>>
+class UserInteraction <<Analytics>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
     --
-    action : String
-    targetType : String
-    targetId : String
-    timestamp : DateTime
-    context : Map<String, dynamic>
+    +action: String [NOT NULL]
+    +targetType: String [NOT NULL]
+    +targetId: String [NOT NULL]
+    +timestamp: DateTime [NOT NULL]
+    +context: Map<String, dynamic>
 }
 
 ' ===========================================
-' RELACIONES PRINCIPALES
+' RELACIONES - Notación UML con Cardinalidades
 ' ===========================================
 
-' Usuario como entidad central
-user ||--o{ habit : "tiene"
-user ||--o{ activity : "planifica"
-user ||--o{ task : "gestiona"
-user ||--o{ timeblock : "organiza"
-user ||--o{ category : "define"
-user ||--o{ notification : "recibe"
-user ||--|| settings : "configura"
-user ||--o{ goal : "establece"
-user ||--o{ metric : "genera"
-user ||--o{ interaction : "realiza"
+' Usuario como entidad central (1 a muchos)
+User ||--o{ Habit : "tiene (1:N)"
+User ||--o{ Activity : "planifica (1:N)"
+User ||--o{ Task : "gestiona (1:N)"
+User ||--o{ TimeBlock : "organiza (1:N)"
+User ||--o{ Category : "define (1:N)"
+User ||--o{ Notification : "recibe (1:N)"
+User ||--|| Settings : "configura (1:1)"
+User ||--o{ Goal : "establece (1:N)"
+User ||--o{ ProductivityMetric : "genera (1:N)"
+User ||--o{ UserInteraction : "realiza (1:N)"
 
-' Relaciones específicas
-task ||--o{ subtask : "contiene"
-habit ||--o{ timeblock : "genera"
-activity ||--o| timeblock : "convierte a"
-habit ||--o{ goal : "asocia con"
-habit ||--o{ notification : "programa"
-activity ||--o{ notification : "programa"
+' Relaciones específicas entre entidades
+Task ||--o{ Subtask : "contiene (1:N)"
+Habit ||--o{ TimeBlock : "genera (1:N)"
+Activity ||--o| TimeBlock : "convierte a (1:1)"
+Habit ||--o{ Goal : "asocia con (1:N)"
+Habit ||--o{ Notification : "programa (1:N)"
+Activity ||--o{ Notification : "programa (1:N)"
 
-' Relaciones de categorización
-category ||--o{ habit : "categoriza"
-category ||--o{ activity : "categoriza"
-category ||--o{ task : "categoriza"
+' Relaciones de categorización (muchos a muchos implícito a través de String)
+Category }o--o{ Habit : "categoriza (M:N)"
+Category }o--o{ Activity : "categoriza (M:N)"
+Category }o--o{ Task : "categoriza (M:N)"
 
-note top of user : Entidad central del sistema.\nTodos los datos están asociados\na un usuario específico.
+' Notas explicativas
+note top of User
+  **Entidad Central del Sistema**
+  
+  Todos los datos están asociados
+  a un usuario específico.
+  
+  Relación 1:1 con Settings
+  Relación 1:N con otras entidades
+end note
 
-note bottom of habit : Ejecuta en días específicos.\nGenera TimeBlocks automáticamente.
+note bottom of Habit
+  **Hábitos del Usuario**
+  
+  Ejecuta en días específicos de la semana.
+  Genera TimeBlocks automáticamente
+  cuando corresponde.
+end note
 
-note right of timeblock : Puede originarse de Habit\no Activity. Representa tiempo\nasignado en el calendario.
+note right of TimeBlock
+  **Bloques de Tiempo**
+  
+  Puede originarse de:
+  - Habit (generación automática)
+  - Activity (conversión manual)
+  
+  Representa tiempo asignado
+  en el calendario del usuario.
+end note
 
-note left of metric : Datos agregados diarios\npara análisis de productividad\ny machine learning.
+note left of ProductivityMetric
+  **Métricas de Productividad**
+  
+  Datos agregados diarios para:
+  - Análisis de productividad
+  - Machine Learning
+  - Recomendaciones inteligentes
+end note
 
-@enduml 
+@enduml

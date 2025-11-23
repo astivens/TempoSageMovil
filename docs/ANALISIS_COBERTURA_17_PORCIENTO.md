@@ -166,3 +166,5 @@
 - Priorizar **lógica de negocio crítica** sobre widgets/UI
 - Establecer un **Quality Gate en SonarCloud** con mínimo de 30% inicialmente
 
+
+

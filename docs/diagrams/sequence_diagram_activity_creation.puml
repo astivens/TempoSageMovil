@@ -1,0 +1,134 @@
+@startuml TempoSage_Sequence_Diagram_Activity_Creation
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1600x2400px)
+!define DPI 400
+scale max 1600 width
+scale max 2400 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam participantFontSize 20
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowFontSize 19
+skinparam sequenceReferenceFontSize 18
+skinparam noteFontSize 18
+
+' Colores para diferentes tipos de componentes
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam participant {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+    FontColor #4A148C
+}
+
+skinparam control {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontColor #E65100
+}
+
+skinparam database {
+    BackgroundColor #E8F5E8
+    BorderColor #388E3C
+    FontColor #1B5E20
+}
+
+title Diagrama de Secuencia - Creación de Actividad\nFlujo Completo de Planificación
+
+' ===========================================
+' PARTICIPANTES
+' ===========================================
+actor "Usuario" as user
+participant "ActivitiesScreen" as screen
+participant "CreateActivityDialog" as dialog
+participant "ActivityController" as controller
+participant "ActivityRepository" as repo
+database "HiveDatabase" as hive
+participant "TimeBlockService" as timeService
+participant "NotificationService" as notifService
+
+' ===========================================
+' FLUJO PRINCIPAL - CREACIÓN DE ACTIVIDAD
+' ===========================================
+== Creación de Nueva Actividad ==
+
+user -> screen : Tap "Crear Actividad"
+activate screen
+
+screen -> dialog : Mostrar diálogo de creación
+activate dialog
+dialog --> user : Formulario con campos
+deactivate dialog
+
+user -> dialog : Completar formulario y guardar
+activate dialog
+
+dialog -> dialog : Validar datos
+
+alt Datos válidos
+    dialog -> controller : createActivity(activityData)
+    activate controller
+    
+    controller -> controller : Preparar ActivityModel
+    controller -> repo : addActivity(activity)
+    activate repo
+    
+    repo -> hive : saveActivity(activityModel)
+    activate hive
+    hive --> repo : activitySaved
+    deactivate hive
+    
+    repo --> controller : success
+    deactivate repo
+    
+    ' Generación automática de TimeBlock (opcional)
+    opt Generar TimeBlock automáticamente
+        controller -> timeService : generateTimeBlockFromActivity(activity)
+        activate timeService
+        
+        timeService -> timeService : calcularHorario()
+        timeService -> repo : saveTimeBlock(timeBlock)
+        activate repo
+        repo -> hive : saveTimeBlock()
+        activate hive
+        hive --> repo : saved
+        deactivate hive
+        repo --> timeService : timeBlockCreated
+        deactivate repo
+        
+        timeService --> controller : timeBlockGenerated
+        deactivate timeService
+    end
+    
+    ' Programar notificaciones (opcional)
+    opt Recordatorio activado
+        controller -> notifService : scheduleActivityReminder(activity)
+        activate notifService
+        notifService -> notifService : createNotification()
+        notifService --> controller : reminderScheduled
+        deactivate notifService
+    end
+    
+    controller --> dialog : activityCreated
+    deactivate controller
+    
+    dialog -> screen : closeDialog()
+    deactivate dialog
+    
+    screen -> screen : refreshActivitiesList()
+    screen --> user : "Actividad creada exitosamente"
+    deactivate screen
+    
+else Datos inválidos
+    dialog --> user : Mostrar errores de validación
+    deactivate dialog
+end
+
+@enduml
+

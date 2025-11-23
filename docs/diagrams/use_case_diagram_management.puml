@@ -1,0 +1,109 @@
+@startuml TempoSage_Use_Case_Diagram_Management
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1800x2700px)
+!define DPI 400
+scale max 1800 width
+scale max 2700 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam usecaseFontSize 19
+skinparam actorFontSize 22
+skinparam packageFontSize 20
+
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam package {
+    BackgroundColor<<Management>> #FFF3E0
+    BorderColor<<Management>> #F57C00
+    FontColor<<Management>> #E65100
+}
+
+skinparam package {
+    BackgroundColor<<Core>> #E8F5E8
+    BorderColor<<Core>> #388E3C
+    FontColor<<Core>> #1B5E20
+}
+
+skinparam usecase {
+    BackgroundColor<<Management>> #FFE0B2
+    BorderColor<<Management>> #FB8C00
+    FontColor<<Management>> #E65100
+}
+
+skinparam usecase {
+    BackgroundColor<<Core>> #C8E6C9
+    BorderColor<<Core>> #2E7D32
+    FontColor<<Core>> #1B5E20
+}
+
+title Diagrama de Casos de Uso - Gestión de Entidades\nMódulo de Gestión de Actividades, Hábitos y Time Blocks
+
+' ===========================================
+' ACTORES
+' ===========================================
+actor "Usuario" as user
+actor "Base de Datos\nLocal" as database
+
+' ===========================================
+' SISTEMA
+' ===========================================
+rectangle "TempoSage System" {
+    
+    package "Gestión de Actividades" <<Management>> as activities {
+        usecase "Crear Actividad" <<Management>> as UC_CreateActivity
+        usecase "Editar Actividad" <<Management>> as UC_EditActivity
+        usecase "Completar Actividad" <<Management>> as UC_CompleteActivity
+        usecase "Cancelar Actividad" <<Management>> as UC_CancelActivity
+        usecase "Listar Actividades" <<Core>> as UC_ListActivities
+    }
+    
+    package "Gestión de Hábitos" <<Management>> as habits {
+        usecase "Crear Hábito" <<Management>> as UC_CreateHabit
+        usecase "Editar Hábito" <<Management>> as UC_EditHabit
+        usecase "Eliminar Hábito" <<Management>> as UC_DeleteHabit
+        usecase "Marcar Hábito\nCompletado" <<Management>> as UC_CompleteHabit
+        usecase "Ver Estadísticas\nde Hábitos" <<Core>> as UC_ViewHabitStats
+    }
+    
+    package "Gestión de Time Blocks" <<Core>> as timeblocks {
+        usecase "Crear Time Block" <<Management>> as UC_CreateTimeBlock
+        usecase "Editar Time Block" <<Management>> as UC_EditTimeBlock
+        usecase "Ver Calendario" <<Core>> as UC_ViewCalendar
+    }
+}
+
+' ===========================================
+' RELACIONES
+' ===========================================
+user --> UC_CreateActivity
+user --> UC_EditActivity
+user --> UC_CompleteActivity
+user --> UC_CancelActivity
+user --> UC_ListActivities
+database --> UC_CreateActivity
+database --> UC_EditActivity
+
+user --> UC_CreateHabit
+user --> UC_EditHabit
+user --> UC_DeleteHabit
+user --> UC_CompleteHabit
+user --> UC_ViewHabitStats
+
+user --> UC_CreateTimeBlock
+user --> UC_EditTimeBlock
+user --> UC_ViewCalendar
+database --> UC_CreateTimeBlock
+database --> UC_EditTimeBlock
+
+' Includes
+UC_CreateHabit ..> UC_CreateTimeBlock : <<include>>
+UC_CreateActivity ..> UC_CreateTimeBlock : <<include>>
+
+@enduml
+

@@ -52,16 +52,22 @@ void main() {
 
     test('debería crear TaskModel con subtareas', () {
       // Arrange
+      final now = DateTime.now();
       final subtasks = [
         SubtaskModel(
           id: '1',
           title: 'Subtask 1',
           isCompleted: false,
+          parentTaskId: '1',
+          createdAt: now,
         ),
         SubtaskModel(
           id: '2',
           title: 'Subtask 2',
           isCompleted: true,
+          parentTaskId: '1',
+          createdAt: now,
+          completedAt: now,
         ),
       ];
 

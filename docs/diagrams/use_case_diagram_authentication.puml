@@ -1,0 +1,74 @@
+@startuml TempoSage_Use_Case_Diagram_Authentication
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 1:1 (dimensiones físicas: 2000x2000px)
+!define DPI 400
+scale max 2000 width
+scale max 2000 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam usecaseFontSize 19
+skinparam actorFontSize 22
+skinparam packageFontSize 20
+
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam package {
+    BackgroundColor<<System>> #FFEBEE
+    BorderColor<<System>> #C62828
+    FontColor<<System>> #B71C1C
+}
+
+skinparam usecase {
+    BackgroundColor<<System>> #FFCDD2
+    BorderColor<<System>> #D32F2F
+    FontColor<<System>> #B71C1C
+}
+
+title Diagrama de Casos de Uso - Autenticación\nMódulo de Autenticación y Gestión de Usuarios
+
+' ===========================================
+' ACTORES
+' ===========================================
+actor "Usuario" as user
+actor "Base de Datos\nLocal" as database
+
+' ===========================================
+' SISTEMA
+' ===========================================
+rectangle "TempoSage System" {
+    
+    package "Autenticación" <<System>> as auth {
+        usecase "Registrar Usuario" <<System>> as UC_RegisterUser
+        usecase "Iniciar Sesión" <<System>> as UC_Login
+        usecase "Cerrar Sesión" <<System>> as UC_Logout
+    }
+}
+
+' ===========================================
+' RELACIONES
+' ===========================================
+user --> UC_RegisterUser
+user --> UC_Login
+user --> UC_Logout
+
+database --> UC_RegisterUser
+database --> UC_Login
+
+note right of UC_RegisterUser
+  Registro de nuevos usuarios
+  con validación de datos
+end note
+
+note right of UC_Login
+  Inicio de sesión seguro
+  con almacenamiento local
+end note
+
+@enduml
+

@@ -1,15 +1,15 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:temposage/features/auth/data/models/user_model.dart';
 import 'package:temposage/features/auth/data/services/auth_service.dart';
 
 void main() {
   late AuthService authService;
+  late Directory tempDir;
 
-  setUp(() async {
-    // Inicializar Hive con un directorio temporal para pruebas
-    final tempDir = await getTemporaryDirectory();
+  setUpAll(() async {
+    tempDir = await Directory.systemTemp.createTemp();
     Hive.init(tempDir.path);
 
     // Registrar adaptadores
@@ -27,6 +27,23 @@ void main() {
 
   tearDown(() async {
     // Limpiar todos los datos después de cada prueba
+    // Cerrar las cajas antes de eliminarlas
+    try {
+      final usersBox = Hive.box<UserModel>('users');
+      if (usersBox.isOpen) {
+        await usersBox.close();
+      }
+    } catch (e) {
+      // La caja puede no estar abierta o ya estar cerrada
+    }
+    try {
+      final authBox = Hive.box('auth');
+      if (authBox.isOpen) {
+        await authBox.close();
+      }
+    } catch (e) {
+      // La caja puede no estar abierta o ya estar cerrada
+    }
     await Hive.deleteBoxFromDisk('users');
     await Hive.deleteBoxFromDisk('auth');
   });
@@ -120,5 +137,10 @@ void main() {
       final result = await authService.login('test@example.com', '12345678');
       expect(result, true);
     });
+  });
+
+  tearDownAll(() async {
+    await Hive.close();
+    await tempDir.delete(recursive: true);
   });
 }

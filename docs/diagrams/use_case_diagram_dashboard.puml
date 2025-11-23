@@ -1,0 +1,89 @@
+@startuml TempoSage_Use_Case_Diagram_Dashboard
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 1:1 (dimensiones físicas: 2000x2000px)
+!define DPI 400
+scale max 2000 width
+scale max 2000 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam usecaseFontSize 19
+skinparam actorFontSize 22
+skinparam packageFontSize 20
+
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam package {
+    BackgroundColor<<Core>> #E8F5E8
+    BorderColor<<Core>> #388E3C
+    FontColor<<Core>> #1B5E20
+}
+
+skinparam package {
+    BackgroundColor<<System>> #FFEBEE
+    BorderColor<<System>> #C62828
+    FontColor<<System>> #B71C1C
+}
+
+skinparam usecase {
+    BackgroundColor<<Core>> #C8E6C9
+    BorderColor<<Core>> #2E7D32
+    FontColor<<Core>> #1B5E20
+}
+
+skinparam usecase {
+    BackgroundColor<<System>> #FFCDD2
+    BorderColor<<System>> #D32F2F
+    FontColor<<System>> #B71C1C
+}
+
+title Diagrama de Casos de Uso - Dashboard y Análisis\nMódulo de Visualización y Análisis de Productividad
+
+' ===========================================
+' ACTORES
+' ===========================================
+actor "Usuario" as user
+actor "Base de Datos\nLocal" as database
+
+' ===========================================
+' SISTEMA
+' ===========================================
+rectangle "TempoSage System" {
+    
+    package "Dashboard" <<Core>> as dashboard {
+        usecase "Ver Dashboard" <<Core>> as UC_ViewDashboard
+        usecase "Analizar\nProductividad" <<Core>> as UC_AnalyzeProductivity
+        usecase "Ver Progreso\nMetas" <<Core>> as UC_ViewGoalProgress
+    }
+    
+    package "Sincronización" <<System>> as sync {
+        usecase "Exportar Datos" <<System>> as UC_ExportData
+        usecase "Importar Datos" <<System>> as UC_ImportData
+        usecase "Sincronizar con\nCalendario" <<System>> as UC_SyncCalendar
+    }
+}
+
+' ===========================================
+' RELACIONES
+' ===========================================
+user --> UC_ViewDashboard
+user --> UC_AnalyzeProductivity
+user --> UC_ViewGoalProgress
+
+user --> UC_ExportData
+user --> UC_ImportData
+user --> UC_SyncCalendar
+
+database --> UC_ExportData
+database --> UC_ImportData
+
+' Includes
+UC_ViewDashboard ..> UC_AnalyzeProductivity : <<include>>
+
+@enduml
+

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:temposage/features/habits/domain/services/habit_recommendation_service.dart';
 import 'package:temposage/features/habits/data/repositories/habit_repository.dart';
@@ -6,17 +7,17 @@ import 'package:temposage/features/habits/data/models/time_of_day_adapter.dart';
 import 'package:temposage/features/habits/domain/entities/habit.dart';
 import 'package:temposage/core/services/recommendation_service.dart';
 import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:integration_test/integration_test.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   late HabitRecommendationService service;
   late HabitRepositoryImpl habitRepository;
+  late Directory tempDir;
 
   setUpAll(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    Hive.init(dir.path);
+    tempDir = await Directory.systemTemp.createTemp();
+    Hive.init(tempDir.path);
     if (!Hive.isAdapterRegistered(3)) {
       Hive.registerAdapter(HabitModelAdapter());
     }
@@ -34,6 +35,11 @@ void main() {
       recommendationService: RecommendationService(),
       habitRepository: habitRepository,
     );
+  });
+
+  tearDownAll(() async {
+    await Hive.close();
+    await tempDir.delete(recursive: true);
   });
 
   test('should generate habit recommendations from real habit data', () async {

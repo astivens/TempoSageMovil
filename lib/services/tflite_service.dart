@@ -11,11 +11,11 @@ class TFLiteService {
   Future<void> init() async {
     // Cargar intérprete desde assets
     _interpreter = await Interpreter.fromAsset(
-      'assets/ml_models/multitask_model_fp16.tflite',
+      'assets/ml_models/TPS_Model/multitask_model_fp16.tflite',
     );
     // Cargar etiquetas desde assets
     final rawLabels = await rootBundle.loadString(
-      'assets/ml_models/labels.txt',
+      'assets/ml_models/TPS_Model/labels.txt',
     );
     _labels = rawLabels
         .split('\n')

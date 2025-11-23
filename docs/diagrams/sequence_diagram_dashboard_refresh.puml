@@ -1,0 +1,119 @@
+@startuml TempoSage_Sequence_Diagram_Dashboard_Refresh
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1600x2400px)
+!define DPI 400
+scale max 1600 width
+scale max 2400 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam participantFontSize 20
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowFontSize 19
+skinparam sequenceReferenceFontSize 18
+skinparam noteFontSize 18
+
+' Colores para diferentes tipos de componentes
+skinparam actor {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontColor #0D47A1
+}
+
+skinparam participant {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+    FontColor #4A148C
+}
+
+skinparam control {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+    FontColor #E65100
+}
+
+skinparam database {
+    BackgroundColor #E8F5E8
+    BorderColor #388E3C
+    FontColor #1B5E20
+}
+
+title Diagrama de Secuencia - Actualización del Dashboard\nCarga y Actualización de Datos del Día
+
+' ===========================================
+' PARTICIPANTES
+' ===========================================
+actor "Usuario" as user
+participant "DashboardScreen" as dashboard
+participant "DashboardController" as controller
+participant "ActivityRepository" as activityRepo
+participant "HabitRepository" as habitRepo
+participant "TimeBlockRepository" as timeRepo
+database "HiveDatabase" as hive
+
+' ===========================================
+' FLUJO - ACTUALIZAR DASHBOARD
+' ===========================================
+== Actualizar Dashboard ==
+
+user -> dashboard : Abrir aplicación o pull-to-refresh
+activate dashboard
+
+dashboard -> controller : refreshDashboard()
+activate controller
+
+par Cargar Actividades del Día
+    controller -> activityRepo : getTodayActivities(userId)
+    activate activityRepo
+    activityRepo -> hive : queryTodayActivities(userId, today)
+    activate hive
+    hive --> activityRepo : todayActivities
+    deactivate hive
+    activityRepo --> controller : List<Activity>
+    deactivate activityRepo
+end
+
+par Cargar Hábitos del Día
+    controller -> habitRepo : getTodayHabits(userId)
+    activate habitRepo
+    habitRepo -> hive : queryTodayHabits(userId, today)
+    activate hive
+    hive --> habitRepo : todayHabits
+    deactivate hive
+    habitRepo --> controller : List<Habit>
+    deactivate habitRepo
+end
+
+par Cargar Bloques de Tiempo del Día
+    controller -> timeRepo : getTodayTimeBlocks(userId)
+    activate timeRepo
+    timeRepo -> hive : queryTodayTimeBlocks(userId, today)
+    activate hive
+    hive --> timeRepo : todayTimeBlocks
+    deactivate hive
+    timeRepo --> controller : List<TimeBlock>
+    deactivate timeRepo
+end
+
+controller -> controller : calcularEstadísticas()
+controller -> controller : prepararDatosParaUI()
+
+controller --> dashboard : DashboardData
+deactivate controller
+
+dashboard -> dashboard : actualizarUI()
+dashboard --> user : Mostrar dashboard actualizado\ncon resumen del día
+
+note right of controller
+  Estadísticas calculadas:
+  - Actividades completadas
+  - Hábitos completados hoy
+  - Tiempo de enfoque total
+  - Progreso diario
+end note
+
+deactivate dashboard
+
+@enduml
+

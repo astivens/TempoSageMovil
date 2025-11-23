@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/navigation/app_router.dart';
+import 'ml_model_diagnostic_screen.dart';
 
 class MLRecommendationsTestScreen extends StatefulWidget {
   const MLRecommendationsTestScreen({super.key});
@@ -170,23 +173,48 @@ class _MLRecommendationsTestScreenState
             const SizedBox(height: 24),
 
             // Botones de acción
-            Row(
+            Column(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _generateTestRecommendations(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Generar Nuevas'),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _generateTestRecommendations(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Generar Nuevas'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: AccessibleButton.primary(
+                        text: 'Volver',
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icons.arrow_back,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: AccessibleButton.primary(
-                    text: 'Volver',
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icons.arrow_back,
+                if (kDebugMode) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MLModelDiagnosticScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.bug_report),
+                      label: const Text('Diagnóstico del Modelo ML'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
 

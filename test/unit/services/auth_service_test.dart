@@ -6,11 +6,21 @@ import 'dart:io';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  late Directory tempDir;
+  
   setUpAll(() async {
-    final dir = await Directory.systemTemp.createTemp();
-    Hive.init(dir.path);
-    Hive.registerAdapter(UserModelAdapter());
+    tempDir = await Directory.systemTemp.createTemp();
+    Hive.init(tempDir.path);
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(UserModelAdapter());
+    }
   });
+
+  tearDownAll(() async {
+    await Hive.close();
+    await tempDir.delete(recursive: true);
+  });
+
   group('AuthService', () {
     late AuthService service;
 

@@ -5,6 +5,9 @@ import '../../../../core/services/ollama_ai_service.dart';
 import '../../../../services/google_ai_service.dart' show ChatResponse;
 import '../../../../core/constants/app_styles.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/di/service_locator.dart' as sl;
+import '../../../../services/google_ai_service.dart';
+import '../widgets/ml_status_indicator.dart';
 
 /// Página que muestra la interfaz de chat con IA
 class ChatAIPage extends StatefulWidget {
@@ -28,13 +31,24 @@ class _ChatAIPageState extends State<ChatAIPage> {
   @override
   void initState() {
     super.initState();
+    // Usar GoogleAIService con integración ML-IA
     _controller = ChatAIController(
-      aiService: OllamaAIService(),
+      aiService: sl.getIt<GoogleAIService>(),
     );
+    
+    // Listener para scroll automático cuando se agregan mensajes
+    _controller?.addListener(() {
+      if (_controller?.messages.isNotEmpty == true) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    // No necesitamos remover el listener específico ya que el controller se destruye
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -58,6 +72,39 @@ class _ChatAIPageState extends State<ChatAIPage> {
     return ChangeNotifierProvider.value(
       value: _controller,
       child: Scaffold(
+        appBar: AppBar(
+          title: const Text('TempoSage AI'),
+          actions: [
+            Consumer<ChatAIController>(
+              builder: (context, controller, _) {
+                return MLStatusIndicator(controller: controller);
+              },
+            ),
+            Consumer<ChatAIController>(
+              builder: (context, controller, _) {
+                return IconButton(
+                  icon: const Icon(Icons.info_outline),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Estado ML-IA'),
+                        content: MLStatusExpanded(controller: controller),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cerrar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
         body: Column(
           children: [
             // Lista de mensajes
@@ -98,10 +145,14 @@ class _ChatAIPageState extends State<ChatAIPage> {
                             alignment: WrapAlignment.center,
                             children: _quickPrompts.map((prompt) {
                               return InkWell(
-                                onTap: () {
+                                onTap: () async {
                                   _textController.text = prompt;
-                                  controller.sendMessage(prompt);
+                                  await controller.sendMessage(prompt);
                                   _textController.clear();
+                                  // Scroll automático después de enviar
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    _scrollToBottom();
+                                  });
                                 },
                                 borderRadius: BorderRadius.circular(20),
                                 child: Container(
@@ -141,11 +192,6 @@ class _ChatAIPageState extends State<ChatAIPage> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
-
-                      // Desplaza hacia abajo cuando se carga la vista
-                      WidgetsBinding.instance
-                          .addPostFrameCallback((_) => _scrollToBottom());
-
                       return _MessageBubble(message: message);
                     },
                   );
@@ -294,11 +340,15 @@ class _ChatAIPageState extends State<ChatAIPage> {
                           color: Colors.white,
                           onPressed: controller.isLoading
                               ? null
-                              : () {
+                              : () async {
                                   final message = _textController.text.trim();
                                   if (message.isNotEmpty) {
-                                    controller.sendMessage(message);
+                                    await controller.sendMessage(message);
                                     _textController.clear();
+                                    // Scroll automático después de enviar
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      _scrollToBottom();
+                                    });
                                   }
                                 },
                         ),

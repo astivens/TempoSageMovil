@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:temposage/core/services/ml_model_adapter.dart';
 
@@ -11,6 +12,27 @@ void main() {
   setUpAll(() async {
     // Crear directorio temporal para las pruebas
     tempDir = await Directory.systemTemp.createTemp('temposage_ml_test_');
+    
+    // Mock path_provider
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getApplicationDocumentsDirectory') {
+          return tempDir.path;
+        }
+        return null;
+      },
+    );
+  });
+
+  tearDownAll(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      null,
+    );
+    await tempDir.delete(recursive: true);
   });
 
   setUp(() async {

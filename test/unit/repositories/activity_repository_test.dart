@@ -60,6 +60,9 @@ void main() {
     if (!Hive.isAdapterRegistered(2)) {
       Hive.registerAdapter(ActivityModelAdapter());
     }
+    if (!Hive.isAdapterRegistered(6)) {
+      Hive.registerAdapter(TimeBlockModelAdapter());
+    }
     
     // Registrar fallback values para mocktail
     registerFallbackValue(ActivityModel(

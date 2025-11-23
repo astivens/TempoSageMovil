@@ -1,0 +1,149 @@
+@startuml TempoSage_Entity_Relationship_Diagram_Core_Entities
+!theme plain
+
+' Configuración OPTIMIZADA - Relación de aspecto 2:3 (dimensiones físicas: 1800x2700px)
+!define DPI 400
+scale max 1800 width
+scale max 2700 height
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 20
+skinparam classFontSize 19
+skinparam classAttributeFontSize 18
+skinparam packageFontSize 20
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor<<Central>> #E3F2FD
+    BorderColor<<Central>> #1976D2
+    FontColor<<Central>> #0D47A1
+}
+
+skinparam class {
+    BackgroundColor<<Domain>> #E8F5E8
+    BorderColor<<Domain>> #388E3C
+    FontColor<<Domain>> #1B5E20
+}
+
+skinparam class {
+    BackgroundColor<<Data>> #FFF3E0
+    BorderColor<<Data>> #F57C00
+    FontColor<<Data>> #E65100
+}
+
+skinparam classArrowColor #495057
+skinparam arrowColor #495057
+
+title Diagrama Entidad-Relación - Entidades Principales\nMódulo: Entidades Core del Dominio
+
+' ===========================================
+' ENTIDADES PRINCIPALES
+' ===========================================
+class User <<Central>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    --
+    +email: String [NOT NULL, UNIQUE]
+    +name: String [NOT NULL]
+    +passwordHash: String [NOT NULL]
+    +createdAt: DateTime [NOT NULL]
+    +lastLoginAt: DateTime?
+}
+
+class Habit <<Domain>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    --
+    +title: String [NOT NULL]
+    +description: String
+    +daysOfWeek: List<String> [NOT NULL]
+    +category: String [NOT NULL]
+    +time: String [NOT NULL]
+    +isActive: bool [DEFAULT true]
+    +streak: int [DEFAULT 0]
+}
+
+class Activity <<Domain>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    --
+    +title: String [NOT NULL]
+    +category: String [NOT NULL]
+    +startTime: DateTime [NOT NULL]
+    +endTime: DateTime [NOT NULL]
+    +isCompleted: bool [DEFAULT false]
+    +priority: String
+}
+
+class Task <<Domain>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    --
+    +title: String [NOT NULL]
+    +description: String
+    +isCompleted: bool [DEFAULT false]
+    +priority: String
+    +dueDate: DateTime?
+    +createdAt: DateTime [NOT NULL]
+}
+
+class TimeBlock <<Data>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +userId: String [FK -> User.id, NOT NULL]
+    +habitId: String? [FK -> Habit.id]
+    +activityId: String? [FK -> Activity.id]
+    --
+    +title: String [NOT NULL]
+    +startTime: DateTime [NOT NULL]
+    +endTime: DateTime [NOT NULL]
+    +category: String [NOT NULL]
+    +isCompleted: bool [DEFAULT false]
+    +isFocusTime: bool [DEFAULT false]
+}
+
+class Subtask <<Data>> {
+    ** Atributos Principales **
+    +id: String [PK]
+    +taskId: String [FK -> Task.id, NOT NULL]
+    --
+    +title: String [NOT NULL]
+    +isCompleted: bool [DEFAULT false]
+    +order: int [NOT NULL]
+}
+
+' ===========================================
+' RELACIONES PRINCIPALES
+' ===========================================
+User ||--o{ Habit : "tiene (1:N)"
+User ||--o{ Activity : "planifica (1:N)"
+User ||--o{ Task : "gestiona (1:N)"
+User ||--o{ TimeBlock : "organiza (1:N)"
+
+Task ||--o{ Subtask : "contiene (1:N)"
+Habit ||--o{ TimeBlock : "genera (1:N)"
+Activity ||--o| TimeBlock : "convierte a (1:1)"
+
+note top of User
+  **Entidad Central del Sistema**
+  
+  Todas las entidades están
+  asociadas a un usuario.
+end note
+
+note bottom of Habit
+  Ejecuta en días específicos.
+  Genera TimeBlocks automáticamente.
+end note
+
+note right of TimeBlock
+  Puede originarse de:
+  - Habit (generación automática)
+  - Activity (conversión manual)
+end note
+
+@enduml
+

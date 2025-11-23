@@ -5,7 +5,7 @@ import '../../habits/data/models/habit_model.dart';
 import '../../activities/data/repositories/activity_repository.dart';
 import '../../habits/domain/repositories/habit_repository.dart';
 import '../../habits/domain/services/habit_to_timeblock_service.dart';
-import '../../../../core/services/service_locator.dart';
+import '../../../../core/di/service_locator.dart';
 import '../../../../core/utils/date_time_helper.dart';
 import '../../habits/domain/entities/habit.dart';
 import '../../activities/domain/usecases/predict_productivity_use_case.dart';
@@ -57,7 +57,7 @@ class DashboardController extends ChangeNotifier {
   })  : _activityRepository = activityRepository,
         _habitRepository = habitRepository,
         _habitToTimeBlockService =
-            ServiceLocator.instance.habitToTimeBlockService,
+            getIt<HabitToTimeBlockService>(),
         _predictProductivityUseCase =
             predictProductivityUseCase ?? PredictProductivityUseCase(),
         _suggestOptimalTimeUseCase =

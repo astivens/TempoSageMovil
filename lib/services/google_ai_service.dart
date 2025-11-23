@@ -1,6 +1,5 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 /// Excepción específica para errores del servicio de Google AI
 class GoogleAIServiceException implements Exception {
@@ -51,75 +50,70 @@ class ChatResponse {
 /// Servicio para interactuar con Google AI Studio API
 @singleton
 class GoogleAIService {
-  final String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-  final String _model = 'gemini-pro';
-  final http.Client _client;
   final String apiKey;
-
-  // Historial de conversación para mantener contexto
-  final List<Map<String, dynamic>> _conversationHistory = [];
+  late final GenerativeModel _model;
+  ChatSession? _chatSession;
 
   GoogleAIService({
     required this.apiKey,
-    http.Client? client,
-  }) : _client = client ?? http.Client();
+  }) {
+    _initializeModel();
+  }
+
+  /// Inicializa el modelo de Google AI
+  void _initializeModel() {
+    _model = GenerativeModel(
+      model: 'gemini-pro',
+      apiKey: apiKey,
+      generationConfig: GenerationConfig(
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      ),
+    );
+  }
+
+  /// Obtiene o crea la sesión de chat
+  ChatSession get _session {
+    _chatSession ??= _model.startChat();
+    return _chatSession!;
+  }
 
   /// Envía un mensaje al modelo de IA y recibe una respuesta
   Future<ChatResponse> sendMessage(String message) async {
     try {
-      // Agregar mensaje del usuario al historial
-      _conversationHistory.add({
-        'role': 'user',
-        'parts': [
-          {'text': message}
-        ]
-      });
-
-      // Construir URL de la API
-      final url =
-          Uri.parse('$_baseUrl/models/$_model:generateContent?key=$apiKey');
-
-      // Construir cuerpo de la solicitud
-      final requestBody = {
-        'contents': _conversationHistory,
-        'generationConfig': {
-          'temperature': 0.7,
-          'topK': 40,
-          'topP': 0.95,
-          'maxOutputTokens': 1024,
-        }
-      };
-
-      // Realizar la solicitud HTTP
-      final response = await _client.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
-      );
-
-      // Verificar respuesta
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-
-        // Extraer texto de la respuesta
-        final aiResponse =
-            responseData['candidates'][0]['content']['parts'][0]['text'];
-
-        // Agregar respuesta al historial
-        _conversationHistory.add({
-          'role': 'model',
-          'parts': [
-            {'text': aiResponse}
-          ]
-        });
-
-        return ChatResponse.fromAI(aiResponse);
-      } else {
-        throw GoogleAIServiceException(
-          'Error al comunicarse con Google AI Studio',
-          statusCode: response.statusCode,
+      // Verificar si la API key es válida
+      if (apiKey == 'mock_key_for_development') {
+        return ChatResponse.fromAI(
+          '⚠️ Google AI Studio no está configurado. '
+          'Por favor, configura tu API key en AIConfig.',
         );
       }
+
+      final response = await _session.sendMessage(
+        Content.text(message),
+      );
+
+      final aiResponse = response.text ?? 'No se pudo generar una respuesta.';
+      return ChatResponse.fromAI(aiResponse);
+    } on Exception catch (e) {
+      // Manejar errores específicos de la API
+      if (e.toString().contains('API_KEY_INVALID')) {
+        throw GoogleAIServiceException(
+          'API Key inválida. Verifica tu configuración.',
+        );
+      } else if (e.toString().contains('QUOTA_EXCEEDED')) {
+        throw GoogleAIServiceException(
+          'Cuota de API excedida. Intenta más tarde.',
+        );
+      } else if (e.toString().contains('SAFETY')) {
+        throw GoogleAIServiceException(
+          'El contenido fue bloqueado por filtros de seguridad.',
+        );
+      }
+      
+      throw GoogleAIServiceException('Error de API: $e');
     } catch (e) {
       if (e is GoogleAIServiceException) {
         rethrow;
@@ -130,38 +124,96 @@ class GoogleAIService {
 
   /// Limpia el historial de la conversación
   void clearConversation() {
-    _conversationHistory.clear();
+    _chatSession = null; // Se recreará cuando se necesite
   }
 
   /// Configura datos de contexto para mejorar las respuestas basadas en ML
   Future<void> setMLContext(String contextData) async {
-    // Agregar contexto al inicio de la conversación
-    if (_conversationHistory.isEmpty) {
-      _conversationHistory.add({
-        'role': 'user',
-        'parts': [
-          {
-            'text':
-                'Por favor, utiliza estos datos como contexto para responder a mis preguntas futuras: $contextData'
-          }
-        ]
-      });
+    // Reiniciar la sesión con el contexto
+    _chatSession = _model.startChat(
+      history: [
+        Content.text(
+          '''Eres TempoSage AI, un asistente especializado en productividad que utiliza modelos de Machine Learning para ayudar a los usuarios.
 
-      // Agregar respuesta ficticia de confirmación
-      _conversationHistory.add({
-        'role': 'model',
-        'parts': [
-          {
-            'text':
-                'Entendido, utilizaré esta información como contexto para nuestras conversaciones.'
-          }
-        ]
-      });
+$contextData
+
+INSTRUCCIONES IMPORTANTES:
+1. Siempre usa los datos ML proporcionados para dar recomendaciones precisas
+2. Cuando el usuario pregunte sobre actividades, usa las categorías y patrones disponibles
+3. Para horarios, consulta los bloques de tiempo óptimos
+4. Para productividad, usa las estadísticas y patrones del usuario
+5. Sé específico y basado en datos, no genérico
+6. Si no tienes datos específicos, dilo claramente
+7. Siempre explica el razonamiento detrás de tus recomendaciones
+
+Responde de manera útil y basada en los datos ML disponibles.''',
+        ),
+        Content.model([
+          TextPart('Entendido. Soy TempoSage AI y utilizaré todos los datos de Machine Learning disponibles para proporcionar recomendaciones precisas y personalizadas. Estoy listo para ayudarte con productividad, horarios óptimos, recomendaciones de actividades y análisis basado en tus patrones de comportamiento.'),
+        ]),
+      ],
+    );
+  }
+
+  /// Envía un mensaje con contexto ML dinámico
+  Future<ChatResponse> sendMessageWithMLContext(
+    String message, 
+    String mlContextData
+  ) async {
+    try {
+      if (apiKey == 'mock_key_for_development') {
+        return ChatResponse.fromAI(
+          '⚠️ Google AI Studio no está configurado. '
+          'Por favor, configura tu API key en AIConfig.',
+        );
+      }
+
+      // Crear un prompt enriquecido con contexto ML
+      final enrichedMessage = '''
+CONTEXTO ML ACTUAL:
+$mlContextData
+
+CONSULTA DEL USUARIO:
+$message
+
+Por favor, responde usando específicamente los datos ML proporcionados arriba. Si la consulta requiere análisis de patrones, recomendaciones de horarios, o sugerencias de actividades, usa los datos exactos del contexto ML.
+''';
+
+      final response = await _session.sendMessage(
+        Content.text(enrichedMessage),
+      );
+
+      final aiResponse = response.text ?? 'No se pudo generar una respuesta.';
+      return ChatResponse.fromAI(aiResponse);
+    } on Exception catch (e) {
+      if (e.toString().contains('API_KEY_INVALID')) {
+        throw GoogleAIServiceException(
+          'API Key inválida. Verifica tu configuración.',
+        );
+      } else if (e.toString().contains('QUOTA_EXCEEDED')) {
+        throw GoogleAIServiceException(
+          'Cuota de API excedida. Intenta más tarde.',
+        );
+      } else if (e.toString().contains('SAFETY')) {
+        throw GoogleAIServiceException(
+          'El contenido fue bloqueado por filtros de seguridad.',
+        );
+      }
+      
+      throw GoogleAIServiceException('Error de API: $e');
+    } catch (e) {
+      if (e is GoogleAIServiceException) {
+        rethrow;
+      }
+      throw GoogleAIServiceException('Error inesperado: $e');
     }
   }
 
+  /// Obtiene el historial de la conversación
+  List<Content> get conversationHistory => _session.history.toList();
+
   /// Libera recursos cuando el servicio ya no se necesita
   void dispose() {
-    _client.close();
+    // No es necesario cerrar nada con la nueva implementación
   }
 }

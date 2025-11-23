@@ -9,12 +9,15 @@ void main() {
         id: '1',
         title: 'Test Subtask',
         isCompleted: false,
+        parentTaskId: 'parent-1',
+        createdAt: DateTime.now(),
       );
 
       // Assert
       expect(subtask.id, '1');
       expect(subtask.title, 'Test Subtask');
       expect(subtask.isCompleted, isFalse);
+      expect(subtask.parentTaskId, 'parent-1');
     });
 
     test('debería crear SubtaskModel completado', () {
@@ -23,10 +26,14 @@ void main() {
         id: '1',
         title: 'Test Subtask',
         isCompleted: true,
+        parentTaskId: 'parent-1',
+        createdAt: DateTime.now(),
+        completedAt: DateTime.now(),
       );
 
       // Assert
       expect(subtask.isCompleted, isTrue);
+      expect(subtask.completedAt, isNotNull);
     });
   });
 }

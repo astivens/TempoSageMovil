@@ -14,6 +14,9 @@ TempoSage es una aplicación de productividad que utiliza inteligencia artificia
 - Calendario integrado
 - Soporte multilenguaje
 - Modo oscuro/claro
+- **Análisis de calidad de código con SonarQube**
+- **Cobertura de pruebas automatizada**
+- **CI/CD con análisis continuo**
 
 ## Arquitectura
 
@@ -164,12 +167,58 @@ Para más detalles sobre la configuración, consulte:
 - [Guía de Integración con SonarQube](docs/INTEGRACION_SONARQUBE.md)
 - [Configuración de SonarQube con Docker](docs/CONFIGURACION_SONARQUBE_DOCKER.md)
 
-## Documentación adicional
+## 🔍 Análisis de Calidad de Código
+
+### SonarQube Integration
+
+Este proyecto incluye análisis de calidad de código automatizado con SonarQube:
+
+#### Métricas Actuales
+- **Líneas de Código:** 17,549
+- **Cobertura de Pruebas:** 27.2%
+- **Calificación de Seguridad:** A (Excelente)
+- **Calificación de Confiabilidad:** C (Necesita mejora)
+- **Vulnerabilidades:** 0
+- **Duplicación:** 0.4%
+
+#### Ejecución Rápida
+```bash
+# Análisis completo automatizado
+./scripts/run_sonarqube_analysis.sh
+
+# Análisis de issues críticos
+./scripts/analyze_critical_issues.sh
+```
+
+#### Acceso al Dashboard
+- **URL:** http://localhost:9000/dashboard?id=temposage-movil
+- **Usuario:** admin
+- **Contraseña:** admin
+
+### Quality Gates
+
+El proyecto implementa quality gates que verifican:
+- ✅ Cobertura de pruebas > 80%
+- ✅ Sin vulnerabilidades de seguridad
+- ✅ Calificación de seguridad A
+- ✅ Duplicación < 3%
+
+### CI/CD
+
+Análisis automático en cada:
+- Push a ramas principales
+- Pull Request
+- Release
+
+## 📚 Documentación adicional
 
 Para más información sobre la estrategia de pruebas y otros aspectos técnicos, consulte:
 
 - [Estrategia de Pruebas](docs/ESTRATEGIA_PRUEBAS.md)
 - [Integración con SonarQube](docs/INTEGRACION_SONARQUBE.md)
+- [README SonarQube](docs/README_SONARQUBE.md)
+- [Reporte de Calidad](docs/REPORTE_SONARQUBE_TEMPOSAGE.md)
+- [Entregar Final](docs/ENTREGA_FINAL_SOFTWARE_TEMPOSAGE.md)
 
 ## Contribución
 
