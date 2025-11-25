@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:temposage/core/services/recommendation_service.dart';
 import 'dart:io';
@@ -12,16 +13,35 @@ void main() {
     // Crear directorio temporal para las pruebas
     tempDir =
         await Directory.systemTemp.createTemp('temposage_recommendation_test_');
+    
+    // Mock path_provider para evitar MissingPluginException
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getApplicationDocumentsDirectory') {
+          return tempDir.path;
+        }
+        return null;
+      },
+    );
+  });
+  
+  tearDownAll(() async {
+    // Limpiar el mock de path_provider
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      null,
+    );
+    
+    // Limpiar el directorio temporal
+    await tempDir.delete(recursive: true);
   });
 
   setUp(() async {
     recommendationService = RecommendationService();
     await recommendationService.initialize();
-  });
-
-  tearDownAll(() async {
-    // Limpiar el directorio temporal
-    await tempDir.delete(recursive: true);
   });
 
   group('RecommendationService Integration Tests', () {

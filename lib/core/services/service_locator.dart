@@ -44,10 +44,38 @@ class ServiceLocator {
   // Casos de uso - inicialización perezosa
   GetHabitsUseCase? _getHabitsUseCase;
 
-  late final RecommendationService recommendationService;
-  late final SuggestOptimalTimeUseCase suggestOptimalTimeUseCase;
-  late final ActivityRecommendationController _activityRecommendationController;
-  late final HabitRecommendationService _habitRecommendationService;
+  RecommendationService? _recommendationService;
+  SuggestOptimalTimeUseCase? _suggestOptimalTimeUseCase;
+  ActivityRecommendationController? _activityRecommendationController;
+  HabitRecommendationService? _habitRecommendationService;
+  
+  RecommendationService get recommendationService {
+    if (_recommendationService == null) {
+      throw StateError('ServiceLocator no ha sido inicializado. Llama a initializeAll() primero.');
+    }
+    return _recommendationService!;
+  }
+  
+  SuggestOptimalTimeUseCase get suggestOptimalTimeUseCase {
+    if (_suggestOptimalTimeUseCase == null) {
+      throw StateError('ServiceLocator no ha sido inicializado. Llama a initializeAll() primero.');
+    }
+    return _suggestOptimalTimeUseCase!;
+  }
+  
+  ActivityRecommendationController get activityRecommendationController {
+    if (_activityRecommendationController == null) {
+      throw StateError('ServiceLocator no ha sido inicializado. Llama a initializeAll() primero.');
+    }
+    return _activityRecommendationController!;
+  }
+  
+  HabitRecommendationService get habitRecommendationService {
+    if (_habitRecommendationService == null) {
+      throw StateError('ServiceLocator no ha sido inicializado. Llama a initializeAll() primero.');
+    }
+    return _habitRecommendationService!;
+  }
 
   /// Inicializa los repositorios de la aplicación.
   /// Este método se llama automáticamente al crear la instancia del ServiceLocator.
@@ -82,32 +110,41 @@ class ServiceLocator {
 
   /// Inicializa todos los repositorios, preparándolos para su uso.
   /// Debe llamarse al inicio de la aplicación antes de acceder a los repositorios.
+  /// Puede llamarse múltiples veces de forma segura (idempotente).
   Future<void> initializeAll() async {
     try {
       _logger.i('Inicializando todos los repositorios...',
           tag: 'ServiceLocator');
 
-      // Inicializar repositorios
+      // Inicializar repositorios (idempotente)
       await _activityRepository.init();
       await _timeBlockRepository.init();
       await _habitRepository.init();
 
-      // Inicializar servicios de recomendación
-      recommendationService = RecommendationService();
-      await recommendationService.initialize();
+      // Inicializar servicios de recomendación solo si no están inicializados
+      if (_recommendationService == null) {
+        _recommendationService = RecommendationService();
+        await _recommendationService!.initialize();
+      }
 
-      suggestOptimalTimeUseCase = SuggestOptimalTimeUseCase();
+      if (_suggestOptimalTimeUseCase == null) {
+        _suggestOptimalTimeUseCase = SuggestOptimalTimeUseCase();
+      }
 
-      // Inicializar controladores y servicios adicionales
-      _activityRecommendationController = ActivityRecommendationController(
-        activityRepository: _activityRepository,
-        recommendationService: recommendationService,
-      );
+      // Inicializar controladores y servicios adicionales solo si no están inicializados
+      if (_activityRecommendationController == null) {
+        _activityRecommendationController = ActivityRecommendationController(
+          activityRepository: _activityRepository,
+          recommendationService: _recommendationService!,
+        );
+      }
 
-      _habitRecommendationService = HabitRecommendationService(
-        recommendationService: recommendationService,
-        habitRepository: _habitRepository,
-      );
+      if (_habitRecommendationService == null) {
+        _habitRecommendationService = HabitRecommendationService(
+          recommendationService: _recommendationService!,
+          habitRepository: _habitRepository,
+        );
+      }
 
       _logger.i('Todos los repositorios inicializados correctamente',
           tag: 'ServiceLocator');
@@ -170,16 +207,6 @@ class ServiceLocator {
     return _habitNotificationService!;
   }
 
-  /// Obtiene el controlador de recomendaciones de actividades.
-  ActivityRecommendationController get activityRecommendationController {
-    return _activityRecommendationController;
-  }
-
-  /// Obtiene el servicio de recomendaciones de hábitos.
-  HabitRecommendationService get habitRecommendationService {
-    return _habitRecommendationService;
-  }
-
   /// Reinicia todos los servicios y limpia cachés.
   /// Útil para pruebas o cuando se requiere un estado limpio.
   void resetServices() {
@@ -194,7 +221,7 @@ class ServiceLocator {
 
   void dispose() {
     resetServices();
-    recommendationService.dispose();
-    _activityRecommendationController.dispose();
+    _recommendationService?.dispose();
+    _activityRecommendationController?.dispose();
   }
 }

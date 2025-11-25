@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:temposage/services/activity_recommendation_controller.dart';
@@ -6,6 +7,7 @@ import 'package:temposage/features/activities/data/repositories/activity_reposit
 import 'package:temposage/features/activities/data/models/activity_model.dart';
 import 'package:temposage/core/di/service_locator.dart';
 import 'package:get_it/get_it.dart';
+import 'dart:io';
 
 class MockRecommendationService extends Mock implements RecommendationService {}
 
@@ -14,7 +16,24 @@ class MockActivityRepository extends Mock implements ActivityRepository {}
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   
-  setUpAll(() {
+  late Directory tempDir;
+  
+  setUpAll(() async {
+    // Crear directorio temporal para las pruebas
+    tempDir = await Directory.systemTemp.createTemp('temposage_test_');
+    
+    // Mock path_provider para evitar MissingPluginException
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getApplicationDocumentsDirectory') {
+          return tempDir.path;
+        }
+        return null;
+      },
+    );
+    
     // Register fallback values for mocktail
     registerFallbackValue(ActivityModel(
       id: 'test-id',
@@ -27,6 +46,18 @@ void main() {
       sendReminder: false,
       reminderMinutesBefore: 0,
     ));
+  });
+  
+  tearDownAll(() async {
+    // Limpiar el mock de path_provider
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      null,
+    );
+    
+    // Limpiar el directorio temporal
+    await tempDir.delete(recursive: true);
   });
   
   group('ActivityRecommendationController (services) Tests', () {
