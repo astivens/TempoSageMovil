@@ -112,6 +112,8 @@ class RecommendationService {
           .initialize(_modelFileName, modelBasePath: _tpsModelBasePath);
 
       if (!modelInitialized) {
+        // En tests o cuando TensorFlow Lite no está disponible, esto es esperado
+        // No lanzar excepción, simplemente activar modo fallback
         throw Exception("No se pudo inicializar el adaptador del modelo ML");
       }
 
@@ -132,13 +134,21 @@ class RecommendationService {
       _isInitialized = true;
       _logger.i("Servicio de recomendaciones inicializado correctamente");
     } catch (e, stackTrace) {
-      _logger.e("Error al inicializar el servicio de recomendaciones",
-          error: e, stackTrace: stackTrace);
+      // En tests o cuando TensorFlow Lite no está disponible, esto es esperado
+      final isExpectedFailure = e.toString().contains('No se pudo inicializar el adaptador') ||
+          e.toString().contains('cannot open shared object file') ||
+          e.toString().contains('MissingPluginException');
+      
+      if (isExpectedFailure) {
+        _logger.w("TensorFlow Lite no disponible, usando modo fallback para recomendaciones");
+      } else {
+        _logger.e("Error al inicializar el servicio de recomendaciones",
+            error: e, stackTrace: stackTrace);
+      }
 
       // Marcar como inicializado pero usando fallback
       _isInitialized = true;
       _isUsingFallback = true;
-      _logger.w("Usando modo fallback para recomendaciones");
     }
   }
 

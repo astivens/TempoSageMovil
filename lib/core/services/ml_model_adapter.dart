@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -43,8 +44,18 @@ class MlModelAdapter {
       _logger.i('Adaptador de modelo inicializado correctamente');
       return true;
     } catch (e, stackTrace) {
-      _logger.e('Error al inicializar el adaptador del modelo',
-          error: e, stackTrace: stackTrace);
+      // En tests o cuando TensorFlow Lite no está disponible, esto es esperado
+      // Usar WARNING en lugar de ERROR para no confundir en logs de tests
+      final isExpectedFailure = e.toString().contains('cannot open shared object file') ||
+          e.toString().contains('MissingPluginException') ||
+          kDebugMode;
+      
+      if (isExpectedFailure) {
+        _logger.w('No se pudo inicializar TensorFlow Lite (modo fallback activado): $e');
+      } else {
+        _logger.e('Error al inicializar el adaptador del modelo',
+            error: e, stackTrace: stackTrace);
+      }
       return false;
     }
   }
