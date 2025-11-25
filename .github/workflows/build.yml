@@ -27,9 +27,12 @@ jobs:
       - name: Build
         run: flutter analyze || true
       - name: Run tests with coverage
+        timeout-minutes: 20
         run: |
           mkdir -p coverage
-          flutter test --coverage || true
+          # Ejecutar tests con timeout para evitar que se cuelguen
+          # 20 minutos deberían ser suficientes para ~130 archivos de test
+          timeout 1200 flutter test --coverage || true
         continue-on-error: true
       - name: Verify coverage file
         run: |
