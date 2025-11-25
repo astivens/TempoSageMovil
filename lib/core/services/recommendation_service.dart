@@ -142,8 +142,8 @@ class RecommendationService {
       if (isExpectedFailure) {
         _logger.w("TensorFlow Lite no disponible, usando modo fallback para recomendaciones");
       } else {
-        _logger.e("Error al inicializar el servicio de recomendaciones",
-            error: e, stackTrace: stackTrace);
+      _logger.e("Error al inicializar el servicio de recomendaciones",
+          error: e, stackTrace: stackTrace);
       }
 
       // Marcar como inicializado pero usando fallback

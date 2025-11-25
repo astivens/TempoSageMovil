@@ -133,17 +133,17 @@ class ServiceLocator {
 
       // Inicializar controladores y servicios adicionales solo si no están inicializados
       if (_activityRecommendationController == null) {
-        _activityRecommendationController = ActivityRecommendationController(
-          activityRepository: _activityRepository,
+      _activityRecommendationController = ActivityRecommendationController(
+        activityRepository: _activityRepository,
           recommendationService: _recommendationService!,
-        );
+      );
       }
 
       if (_habitRecommendationService == null) {
-        _habitRecommendationService = HabitRecommendationService(
+      _habitRecommendationService = HabitRecommendationService(
           recommendationService: _recommendationService!,
-          habitRepository: _habitRepository,
-        );
+        habitRepository: _habitRepository,
+      );
       }
 
       _logger.i('Todos los repositorios inicializados correctamente',

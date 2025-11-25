@@ -53,8 +53,8 @@ class MlModelAdapter {
       if (isExpectedFailure) {
         _logger.w('No se pudo inicializar TensorFlow Lite (modo fallback activado): $e');
       } else {
-        _logger.e('Error al inicializar el adaptador del modelo',
-            error: e, stackTrace: stackTrace);
+      _logger.e('Error al inicializar el adaptador del modelo',
+          error: e, stackTrace: stackTrace);
       }
       return false;
     }

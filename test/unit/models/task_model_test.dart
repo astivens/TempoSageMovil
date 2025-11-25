@@ -64,5 +64,45 @@ void main() {
       expect(task.isCompleted, isTrue);
       expect(task.completedAt, equals(completedAt));
     });
+
+    test('debería crear TaskModel desde JSON', () {
+      final now = DateTime.now();
+      final json = {
+        'id': 'task-1',
+        'title': 'Test Task',
+        'description': 'Test Description',
+        'isCompleted': false,
+        'createdAt': now.toIso8601String(),
+        'subtasks': [],
+      };
+
+      final task = TaskModel.fromJson(json);
+
+      expect(task.id, equals('task-1'));
+      expect(task.title, equals('Test Task'));
+      expect(task.description, equals('Test Description'));
+      expect(task.isCompleted, isFalse);
+      expect(task.subtasks, isEmpty);
+    });
+
+    test('debería convertir TaskModel a JSON', () {
+      final now = DateTime.now();
+      final task = TaskModel(
+        id: 'task-1',
+        title: 'Test Task',
+        description: 'Test Description',
+        isCompleted: false,
+        createdAt: now,
+        subtasks: [],
+      );
+
+      final json = task.toJson();
+
+      expect(json['id'], equals('task-1'));
+      expect(json['title'], equals('Test Task'));
+      expect(json['description'], equals('Test Description'));
+      expect(json['isCompleted'], isFalse);
+      expect(json['subtasks'], isA<List>());
+    });
   });
 }
