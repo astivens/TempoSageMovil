@@ -156,6 +156,86 @@ void main() {
       // Assert
       expect(wasClosed, isTrue);
     });
+
+    testWidgets('Debe actualizar duración cuando cambia el widget', (WidgetTester tester) async {
+      // Arrange
+      const initialDuration = Duration(milliseconds: 200);
+      const newDuration = Duration(milliseconds: 500);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            floatingActionButton: ExpandableFab(
+              icon: const Icon(Icons.add),
+              duration: initialDuration,
+              children: [
+                FloatingActionButton(
+                  onPressed: () {},
+                  child: const Icon(Icons.edit),
+                ),
+              ],
+            ),
+            body: const Text('Body'),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Act - Actualizar el widget con nueva duración
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            floatingActionButton: ExpandableFab(
+              icon: const Icon(Icons.add),
+              duration: newDuration,
+              children: [
+                FloatingActionButton(
+                  onPressed: () {},
+                  child: const Icon(Icons.edit),
+                ),
+              ],
+            ),
+            body: const Text('Body'),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert - Verificar que el widget se actualizó correctamente
+      expect(find.byType(ExpandableFab), findsOneWidget);
+    });
+
+    testWidgets('Debe abrir el FAB usando el método open()', (WidgetTester tester) async {
+      // Arrange
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            floatingActionButton: ExpandableFab(
+              icon: const Icon(Icons.add),
+              children: [
+                FloatingActionButton(
+                  onPressed: () {},
+                  child: const Icon(Icons.edit),
+                ),
+              ],
+            ),
+            body: const Text('Body'),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Act - Obtener el estado y llamar a open()
+      final state = tester.state<ExpandableFabState>(find.byType(ExpandableFab));
+      state.open();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(state.isOpen, isTrue);
+    });
   });
 }
 
